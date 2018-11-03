@@ -13,6 +13,7 @@ if not "%~1" == "" goto next1
 
 set ProbeDir.AnyCPU.1="E:\Prototyping\vlc-2.2.1.32-2013"
 set ProbeDir.AnyCPU.2="C:\deleteme"
+set ProbeDir.AnyCPU.3="E:\Prototyping\vlc2"
 
 for /f "tokens=2 delims==" %%a in ('set ProbeDir.AnyCPU. 2^>nul') do (
     if exist "%%~a" (
