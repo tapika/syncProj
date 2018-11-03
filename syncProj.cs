@@ -574,11 +574,13 @@ public class SolutionOrProject
 
             FieldInfo fi = typeof(FileConfigurationInfo).GetField(commaField);
             List<List<String>> items = new List<List<string>>();
+            List<String> origValues = new List<string>();               // To be able to restore model back for new format.
 
             // Collect all values from semicolon separated string.
             foreach (var cfg in configList)
             {
                 String value = (String)fi.GetValue(cfg);
+                origValues.Add(value);
                 // Sometimes defines can contain linefeeds but from configuration perspective they are useless.
                 value = value.Replace("\n", "");
                 items.Add(value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList());
@@ -606,6 +608,10 @@ public class SolutionOrProject
 
                 ConfigationSpecificValue(proj, configList, commaField, lines2dump, (s) => { return funcNames[iListIndex] + s; });
             } //for
+
+            // Restore original values into model (to process next format if needed)
+            for( int i = 0; i < configList.Count; i++ )
+                fi.SetValue(configList[i], origValues[i]);
         } //for
 
         foreach (String funcName in funcNames)
