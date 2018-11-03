@@ -491,8 +491,13 @@ public class SolutionProjectBuilder
             if (m_project.solution == null)
                 setWorkPath(_path);
 
+            // Measure relative path against solution path if that one is present or against working path.
+            String solPath = m_workPath;
+            if( m_project.solution != null )
+                solPath = Path.GetDirectoryName(m_project.solution.path);
+                
             // Always recalculate relative directory, since it might change if solution is not specified.
-            String dir = Path2.makeRelative(absPath, m_workPath);
+            String dir = Path2.makeRelative(absPath, solPath );
             m_project.RelativePath = Path.Combine(dir, m_project.ProjectName);
 
         }
