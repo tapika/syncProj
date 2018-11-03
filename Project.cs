@@ -540,6 +540,68 @@ public enum ECompileAs
     CompileAsC
 }
 
+/// <summary>
+/// Use of STL library
+/// </summary>
+[Description("")]   // Marker to switch Enum value / Description when parsing
+public enum EUseOfStl
+{
+    /// <summary>
+    /// Minimal C++ runtime library (system)
+    /// </summary>
+    [Description("system")]
+    system,
+
+    /// <summary>
+    /// C++ runtime static library (gabi++_static)
+    /// </summary>
+    [Description("gabi++_static")]
+    gabi_cpp_static,
+
+    /// <summary>
+    /// C++ runtime shared library (gabi++_shared)
+    /// </summary>
+    [Description("gabi++_shared")]
+    gabi_cpp_shared,
+
+    /// <summary>
+    /// STLport runtime static library (stlport_static)
+    /// </summary>
+    [Description("stlport_static")]
+    stlport_static,
+
+    /// <summary>
+    /// STLport runtime shared library (stlport_shared)
+    /// </summary>
+    [Description("stlport_shared")]
+    stlport_shared,
+
+    /// <summary>
+    /// GNU STL static library (gnustl_static)
+    /// </summary>
+    [Description("gnustl_static")]
+    gnustl_static,
+
+    /// <summary>
+    /// GNU STL shared library (gnustl_shared)
+    /// </summary>
+    [Description("gnustl_shared")]
+    gnustl_shared,
+
+    /// <summary>
+    /// LLVM libc++ static library (c++_static)
+    /// </summary>
+    [Description("c++_static")]
+    cpp_static,
+
+    /// <summary>
+    /// LLVM libc++ shared library (c++_shared)
+    /// </summary>
+    [Description("c++_shared")]
+    cpp_shared
+}
+
+
 
 /// <summary>
 /// All values set by default are Visual Studio default.
@@ -566,6 +628,20 @@ public class Configuration: FileConfigurationInfo
     /// 
     /// </summary>
     public String AndroidAPILevel;
+
+    /// <summary>
+    /// Use of STL
+    /// </summary>
+    public EUseOfStl UseOfStl = EUseOfStl.gnustl_static;
+
+    /// <summary>
+    /// Get list of supported UseOfSTL values
+    /// </summary>
+    public static List<String> UseOfStl_getSupportedValues()
+    {
+        List<String> values = typeof(EUseOfStl).GetEnumNames().Select(x => typeof(EUseOfStl).GetMember(x)[0].GetCustomAttribute<DescriptionAttribute>().Description).ToList();
+        return values;
+    }
 
     /// <summary>
     /// Visual studio default depends on cpu architecture - android-19 is default for ARM, android-21 for ARM64.
@@ -1594,8 +1670,17 @@ public class Project
                 if (pts == null) pts = conf.getPlatformToolsetDefault(this);
                 o.AppendLine("    <PlatformToolset>" + pts + "</PlatformToolset>");
 
-                if (Keyword == EKeyword.Android && conf.AndroidAPILevel != null && conf.AndroidAPILevel != Configuration.getAndroidAPILevelDefault(confName))
-                    o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
+                if (Keyword == EKeyword.Android)
+                {
+                    if (conf.AndroidAPILevel != null && conf.AndroidAPILevel != Configuration.getAndroidAPILevelDefault(confName))
+                        o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
+
+                    if (conf.UseOfStl != EUseOfStl.gnustl_static)
+                    {
+                        String v = typeof(EUseOfStl).GetField(conf.UseOfStl.ToString()).GetCustomAttribute<DescriptionAttribute>().Description;
+                        o.AppendLine("    <UseOfStl>" + v + "</UseOfStl>");
+                    }
+                }
             }
 
             if (conf.WholeProgramOptimization != EWholeProgramOptimization.NoWholeProgramOptimization)

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.ComponentModel;
 
 /// <summary>
 /// Helper class for generating solution or projects.
@@ -641,6 +642,23 @@ public class SolutionProjectBuilder
     {
         foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
             conf.AndroidAPILevel = apilevel;
+    }
+
+    /// <summary>
+    /// Sets specific STL library for Android platform.
+    /// </summary>
+    /// <param name="useofstl"></param>
+    static public void useofstl(String useofstl)
+    {
+        var values = Configuration.UseOfStl_getSupportedValues();
+        int index = values.IndexOf(useofstl);
+        if (index == -1)
+            throw new Exception2("Use of STL value '" + useofstl + "' is not supported / invalid.\r\nValid values are: " + String.Join(", ", values));
+
+        EUseOfStl v = (EUseOfStl)Enum.Parse(typeof(EUseOfStl), typeof(EUseOfStl).GetEnumNames()[index]);
+
+        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+            conf.UseOfStl = v;
     }
 
 

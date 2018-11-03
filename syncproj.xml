@@ -465,6 +465,56 @@
             Compile as C Code (-x c)
             </summary>
         </member>
+        <member name="T:EUseOfStl">
+            <summary>
+            Use of STL library
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.system">
+            <summary>
+            Minimal C++ runtime library (system)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.gabi_cpp_static">
+            <summary>
+            C++ runtime static library (gabi++_static)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.gabi_cpp_shared">
+            <summary>
+            C++ runtime shared library (gabi++_shared)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.stlport_static">
+            <summary>
+            STLport runtime static library (stlport_static)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.stlport_shared">
+            <summary>
+            STLport runtime shared library (stlport_shared)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.gnustl_static">
+            <summary>
+            GNU STL static library (gnustl_static)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.gnustl_shared">
+            <summary>
+            GNU STL shared library (gnustl_shared)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.cpp_static">
+            <summary>
+            LLVM libc++ static library (c++_static)
+            </summary>
+        </member>
+        <member name="F:EUseOfStl.cpp_shared">
+            <summary>
+            LLVM libc++ shared library (c++_shared)
+            </summary>
+        </member>
         <member name="T:Configuration">
             <summary>
             All values set by default are Visual Studio default.
@@ -484,6 +534,16 @@
             <summary>
             Android api level, for example "android-22". If null - uses Visual studio default.
             
+            </summary>
+        </member>
+        <member name="F:Configuration.UseOfStl">
+            <summary>
+            Use of STL
+            </summary>
+        </member>
+        <member name="M:Configuration.UseOfStl_getSupportedValues">
+            <summary>
+            Get list of supported UseOfSTL values
             </summary>
         </member>
         <member name="M:Configuration.getAndroidAPILevelDefault(System.String)">
@@ -1013,6 +1073,12 @@
             Sets current android api level. Default is "android-19".
             </summary>
             <param name="apilevel">Android api level</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.useofstl(System.String)">
+            <summary>
+            Sets specific STL library for Android platform.
+            </summary>
+            <param name="useofstl"></param>
         </member>
         <member name="M:SolutionProjectBuilder.characterset(System.String)">
             <summary>

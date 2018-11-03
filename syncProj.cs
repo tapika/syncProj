@@ -462,6 +462,21 @@ public class SolutionOrProject
                 ConfigationSpecificValue(proj, proj.projectConfig, "AndroidAPILevel", lines2dump, (s) => {
                     return "androidapilevel" + brO + "\"" + s + "\"" + brC;
                 });
+
+                ConfigationSpecificValue(proj, proj.projectConfig, "UseOfStl", lines2dump, (s) => 
+                {
+                    List<String> descriptions = Configuration.UseOfStl_getSupportedValues();
+                    List<String> values = typeof(EUseOfStl).GetEnumNames().ToList();
+                    int index = values.IndexOf(s);
+                    String value;
+
+                    if (index == -1)
+                        value = s;
+                    else
+                        value = descriptions[index];
+
+                    return "useofstl" + brO + "\"" + value + "\"" + brC;
+                });
             }
 
             ConfigationSpecificValue(proj, proj.projectConfig, "PlatformToolset", lines2dump, (s) => {
