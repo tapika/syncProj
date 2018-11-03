@@ -808,17 +808,32 @@ public class Exception2 : Exception
 
 class Path2
 {
+    /// <summary>
+    /// Gets source code full path of script, executing given function.
+    /// </summary>
+    /// <param name="iFrame">number of frame in stack.</param>
+    /// <returns>Source code path, null if cannot be determined</returns>
     public static String GetScriptPath(int iFrame = 0)
     {
-        string fileName = new System.Diagnostics.StackTrace(true).GetFrame(iFrame).GetFileName();
+        StackTrace st = new System.Diagnostics.StackTrace(true);
+        string fileName = null;
+
+        if( iFrame < st.FrameCount )
+            fileName = st.GetFrame(iFrame).GetFileName();                       // For C# script.
+        else
+            if(st.FrameCount != 0 )
+                fileName = st.GetFrame(st.FrameCount - 1).GetFileName();        // For syncproj.exe, which is launching C# script.
         //
         // http://www.csscript.net/help/Environment.html
         //
         if (fileName == null)
-            fileName = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyDescriptionAttribute), true)
-                     .Cast<AssemblyDescriptionAttribute>()
-                     .First()
-                     .Description;
+        {
+            AssemblyDescriptionAttribute asa = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyDescriptionAttribute), true).
+                Cast<AssemblyDescriptionAttribute>().FirstOrDefault();
+
+            if ( asa != null )                                                   // If it's not C# script, it will be null
+                fileName = asa.Description;
+        }
 
         return fileName;
     }
@@ -856,7 +871,7 @@ partial class Script
     {
         try
         {
-            String slnFile = null;
+            String inFile = null;
             List<String> formats = new List<string>();
             String outFile = null;
             String outPrefix = "";
@@ -868,7 +883,7 @@ partial class Script
 
                 if (!(arg.StartsWith("-") || arg.StartsWith("/")))
                 {
-                    slnFile = arg;
+                    inFile = arg;
                     continue;
                 }
 
@@ -882,12 +897,13 @@ partial class Script
                 }
             } //foreach
 
-            if (slnFile != null && Path.GetExtension(slnFile).ToLower() == ".cs")
+            if (inFile != null && Path.GetExtension(inFile).ToLower() == ".cs")
             {
                 try
                 {
-                    Console.WriteLine(slnFile + " :");
-                    SolutionProjectBuilder.invokeScript(slnFile);
+                    SolutionProjectBuilder.m_workPath = Path.GetDirectoryName(Path.GetFullPath(inFile));
+                    Console.WriteLine(inFile + " :");
+                    SolutionProjectBuilder.invokeScript(inFile);
                     return 0;
                 }
                 catch (Exception ex)
@@ -897,7 +913,7 @@ partial class Script
                 return -2;
             } //if
 
-            if (slnFile == null || formats.Count == 0)
+            if (inFile == null || formats.Count == 0)
             {
                 Console.WriteLine("Usage(1): syncProj <.sln or .vcxproj file> (-lua|-cs) [-o file]");
                 Console.WriteLine("");
@@ -917,8 +933,8 @@ partial class Script
                 return -2;
             }
 
-            SolutionOrProject proj = new SolutionOrProject(slnFile);
-            String projCacheFile = slnFile + ".cache";
+            SolutionOrProject proj = new SolutionOrProject(inFile);
+            String projCacheFile = inFile + ".cache";
             SolutionOrProject projCache;
 
             if (File.Exists(projCacheFile))
@@ -942,7 +958,7 @@ partial class Script
             foreach ( String format in formats )
                 SolutionOrProject.UpdateProjectScript(uinfo, proj.path, proj.solutionOrProject, outFile, format, bProcessProjects, outPrefix);
 
-            Console.Write(slnFile + ": ");
+            Console.Write(inFile + ": ");
 
             if (uinfo.nUpToDate != 0)
                 Console.Write(uinfo.nUpToDate + " files are up-to-date. ");

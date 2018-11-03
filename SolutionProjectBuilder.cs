@@ -31,7 +31,10 @@ public class SolutionProjectBuilder
 
     static SolutionProjectBuilder()
     {
-        m_workPath = Path.GetDirectoryName(Path2.GetScriptPath(3));
+        String path = Path2.GetScriptPath(3);
+
+        if (path != null)
+            m_workPath = Path.GetDirectoryName(path);
         //Console.WriteLine(m_workPath);
     }
 
