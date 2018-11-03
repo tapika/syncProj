@@ -819,6 +819,8 @@ public class Project
             case EKeyword.Win32Proj:
                 if (Double.Parse(ToolsVersion, CultureInfo.InvariantCulture) <= 4.0)
                     return "vs2012";
+                if (Double.Parse(ToolsVersion, CultureInfo.InvariantCulture) <= 12.0)
+                    return "vs2013";
                 return "vs2015";
         }
     } //getOsBase
