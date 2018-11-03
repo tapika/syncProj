@@ -671,6 +671,38 @@ public class SolutionProjectBuilder
     } //flags
 
     /// <summary>
+    /// Adds one or more obj or lib into project to link against.
+    /// </summary>
+    /// <param name="files"></param>
+    static public void links(params String[] files)
+    { 
+        foreach (var conf in getSelectedConfigurations(false))
+        {
+            if (conf.AdditionalDependencies.Length != 0)
+                conf.AdditionalDependencies += ";";
+
+            conf.AdditionalDependencies += String.Join(";", files);
+        }
+    } //links
+
+
+    /// <summary>
+    /// Adds one or more library directory from where to search .obj / .lib files.
+    /// </summary>
+    /// <param name="folders"></param>
+    static public void libdirs(params String[] folders)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+        {
+            if (conf.AdditionalLibraryDirectories.Length != 0)
+                conf.AdditionalLibraryDirectories += ";";
+
+            conf.AdditionalLibraryDirectories += String.Join(";", folders);
+        }
+    } //links
+
+
+    /// <summary>
     /// Prints more details about given exception. In visual studio format for errors.
     /// </summary>
     /// <param name="ex">Exception occurred.</param>

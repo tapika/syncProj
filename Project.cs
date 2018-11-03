@@ -650,7 +650,7 @@ public class Project
     static public Project LoadProject(Solution solution, String path, Project project = null)
     {
         if (path == null)
-            path = Path.GetDirectoryName(solution.path) + "\\" + project.RelativePath;
+            path = Path.Combine(Path.GetDirectoryName(solution.path) , project.RelativePath);
 
         if (project == null)
             project = new Project() { solution = solution };
@@ -764,11 +764,6 @@ public class Project
 
     StringBuilder o;    // Stream where we serialize project.
 
-    void DumpField(Configuration conf, String field, Func<String, String> postAction )
-    { 
-        o.AppendLine("    <" + field + ">" + postAction(typeof(Configuration).GetField(field).GetValue(conf).ToString()) + "</" + field + ">");
-    }
-
     /// <summary>
     /// Dumps file or project specific configuration.
     /// </summary>
@@ -830,6 +825,13 @@ public class Project
 
         o.AppendLine("  <PropertyGroup Label=\"Globals\">");
         o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
+
+        //
+        // Copied from premake5: VS 2013 adds the <IgnoreWarnCompileDuplicatedFilename> to get rid
+        // of spurious warnings when the same filename is present in different
+        // configurations.
+        //
+        o.AppendLine("    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>");
         o.AppendLine("    <Keyword>Win32Proj</Keyword>");
         o.AppendLine("    <RootNamespace>" + ProjectName + "</RootNamespace>");
         o.AppendLine("  </PropertyGroup>");
@@ -877,7 +879,18 @@ public class Project
             String confName = configurations[iConf];
             Configuration conf = projectConfig[iConf];
             o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
-            DumpField(conf, "LinkIncremental", x => x.ToLower() );
+            o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
+            
+            if(conf.OutDir != "$(SolutionDir)$(Configuration)\\" )      // Visual studio defaults does not needs to be serialized.
+                o.AppendLine("    <OutDir>" + conf.OutDir + "</OutDir>");
+
+            if (conf.IntDir != "$(Configuration)\\") 
+                o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
+            
+            if (conf.TargetName != "$(ProjectName)") 
+                o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
+            
+            o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
             o.AppendLine("  </PropertyGroup>");
         } //for
 

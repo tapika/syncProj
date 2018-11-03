@@ -270,6 +270,13 @@ public class SolutionOrProject
             head = "    ";
             comment = "// ";
         }
+        else
+        {
+            brO = " "; brC = "";
+            arO = " { "; arC = " }";
+            head = "";
+            comment = "-- ";
+        }
 
         String fileName = outFile;
         if( fileName == null ) fileName = Path.GetFileNameWithoutExtension(path);
@@ -719,7 +726,7 @@ public class SolutionOrProject
             o.AppendLine(head + "    filter " + arO + arC);
             o.AppendLine("");
         }
-    } //UpdateLinesToDump
+    } //WriteLinesToDump
 
 
 
@@ -820,7 +827,7 @@ partial class Script
                 {
                     case "lua": formats.Add("lua"); break;
                     case "cs": formats.Add("cs"); break;
-                    case "o": i++;  outFile = args[i]; break;
+                    case "o": i++; outFile = args[i]; break;
                     case "p": i++; outPrefix = args[i]; break;
                     case "sln": bProcessProjects = false; break;
                 }

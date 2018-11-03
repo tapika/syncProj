@@ -552,6 +552,18 @@
             "LinkTimeOptimization" - Enable link-time (i.e. whole program) optimizations.<para />
             </param>
         </member>
+        <member name="M:SolutionProjectBuilder.links(System.String[])">
+            <summary>
+            Adds one or more obj or lib into project to link against.
+            </summary>
+            <param name="files"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.libdirs(System.String[])">
+            <summary>
+            Adds one or more library directory from where to search .obj / .lib files.
+            </summary>
+            <param name="folders"></param>
+        </member>
         <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception,System.String[])">
             <summary>
             Prints more details about given exception. In visual studio format for errors.
