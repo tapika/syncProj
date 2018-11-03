@@ -15,8 +15,15 @@ using System.Collections;
 /// </summary>
 public class SolutionProjectBuilder
 {
-    static Solution m_solution = null;
-    static Project m_project = null;
+    /// <summary>
+    /// Currently selected active solution on which all function below operates upon. null if not selected yet.
+    /// </summary>
+    public static Solution m_solution = null;
+
+    /// <summary>
+    /// Currently selected active project on which all function below operates upon. null if not selected yet.
+    /// </summary>
+    public static Project m_project = null;
     
     /// <summary>
     /// Path where we are building solution / project at. By default same as script is started from.
@@ -59,10 +66,10 @@ public class SolutionProjectBuilder
                 if (!bEverythingIsOk)
                     return;
                 
-                externalproject(null);
-
                 if (m_solution != null)
                 {
+                    // Flush project into solution.
+                    externalproject(null);
                     m_solution.SaveSolution();
 
                     foreach (Project p in m_solution.projects)
@@ -147,7 +154,7 @@ public class SolutionProjectBuilder
     /// <param name="platformList">List of platforms to support</param>
     static public void platforms(params String[] platformList)
     {
-        m_platforms = m_platforms.Concat(platformList).Distinct().ToList();
+        m_platforms = platformList.Distinct().ToList();
         generateConfigurations();
     }
 
@@ -157,7 +164,7 @@ public class SolutionProjectBuilder
     /// <param name="configurationList">Configuration list to support</param>
     static public void configurations(params String[] configurationList)
     {
-        m_configurations = m_configurations.Concat(configurationList).Distinct().ToList();
+        m_configurations = configurationList.Distinct().ToList();
         generateConfigurations();
     }
 
@@ -207,11 +214,16 @@ public class SolutionProjectBuilder
                     m_project.SaveProject();
         }
 
+        // Release active project
+        m_project = null;
+        resetConfigurations();
+
         if (name == null)       // Will be used to "flush" last filled project.
+        {
             return;
+        }
 
         m_project = new Project() { solution = m_solution };
-        resetConfigurations();
         m_project.ProjectName = name;
         m_project.language = "C++";
         m_project.RelativePath = Path.Combine(m_scriptRelativeDir, name);
@@ -239,7 +251,8 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
-    /// Add to solution reference to external project
+    /// Add to solution reference to external project. Call with null parameter to flush currently active project (Either to solution
+    /// or to disk).
     /// </summary>
     /// <param name="name">Project name</param>
     static public void externalproject(String name)
@@ -290,19 +303,46 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
-    /// Specifies project uuid.
+    /// Specifies project uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")
+    /// - use this kind of syntax if you need to produce your project in backwards compatible manner - so existing
+    /// solution can load your project.
+    /// Could be also written in any string form, but you need to take care that string is unique enough accross where your
+    /// project is used. For example project("test1"); uuid("test"); project("test1"); uuid("test"); will result in
+    /// two identical project uuid's and Visual studio will try to resave your project with changed uuid.
     /// </summary>
-    /// <param name="uuid"></param>
-    static public void uuid(String uuid)
+    /// <param name="nameOrUuid">Project uuid or some unique name</param>
+    static public void uuid(String nameOrUuid)
     {
         requireProjectSelected();
 
-        Guid guid;
-        if (!Guid.TryParse(uuid, out guid))
-            throw new Exception2("Invalid uuid value '" + uuid + "'");
+        bool forceGuid = nameOrUuid.Contains('{') || nameOrUuid.Contains('}');
+        String uuid = "";
 
-        m_project.ProjectGuid = "{" + uuid + "}";
-    }
+        var guidMatch = SolutionProjectBuilder.guidMatcher.Match(nameOrUuid);
+        if (guidMatch.Success)
+        {
+            uuid = "{" + guidMatch.Groups[1].Value + "}";
+        }
+        else
+        {
+            if (forceGuid)
+                throw new Exception2("Invalid uuid value '" + nameOrUuid + "'");
+
+            uuid = GenerateGuid(nameOrUuid);
+        }
+
+        if (m_solution != null)
+        {
+            Project p = m_solution.projects.Where(x => x.ProjectGuid == uuid).FirstOrDefault();
+            if (p != null)
+                throw new Exception2("uuid '" + uuid + "' is already used by project '" + 
+                    p.ProjectName + "' - please consider using different uuid. " +
+                    "For more information refer to uuid() function description.");
+        }
+
+        m_project.ProjectGuid = uuid;
+
+    } //uuid
 
     /// <summary>
     /// Sets project programming language (reflects to used project extension)
@@ -377,7 +417,7 @@ public class SolutionProjectBuilder
         String errors = "";
         String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, path);
 
-        if (!CsScript.RunScript(fullPath, true, out errors, "no_exception_handling"))
+        if (!CsScript.RunScript(fullPath, true, true, out errors, "no_exception_handling"))
             throw new Exception(errors);
     }
 
@@ -980,12 +1020,7 @@ public class SolutionProjectBuilder
         Exception2 ex2 = ex as Exception2;
         String fromWhere = "";
         if (ex2 != null)
-        {
-            StackFrame f = ex2.strace.GetFrame(ex2.strace.FrameCount - 1);
-            // Not always can be determined for some reason
-            if(f.GetFileName() != null )
-                fromWhere = f.GetFileName() + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
-        }
+            fromWhere = ex2.getThrowLocation();
 
         if(!ex.Message.Contains("error") )
             Console.WriteLine(fromWhere + "error: " + ex.Message);

@@ -28,10 +28,11 @@ public class CsScript
     ///     When this parameter is set to true, produced assembly will be kept next to C# script path.
     ///     This also means that StackTrace will be able to display correct source code path and code line, unlike when loaded into ram
     ///     false - if you don't care about source code position</param>
+    /// <param name="bAllowThrow">true if allow to throw exceptions</param>
     /// <param name="errors">Errors if any</param>
     /// <param name="args">Main argument parameters</param>
     /// <returns>true if execution was successful.</returns>
-    static public bool RunScript( String _path, bool bCompileNextToCs, out String errors, params String[] args )
+    static public bool RunScript( String _path, bool bCompileNextToCs, bool bAllowThrow, out String errors, params String[] args )
     {
         errors = "";
 
@@ -217,16 +218,21 @@ public class CsScript
             entry.Invoke(null, new object[] { args });
         } catch ( Exception ex )
         {
-            try{
+            Exception2 ex2 = ex.InnerException as Exception2;
+            if (ex2 != null && bAllowThrow)
+                throw ex2;
+
+            try
+                {
                 StackFrame[] stack = new StackTrace(ex.InnerException, true).GetFrames();
                 StackFrame lastCall = stack[0];
 
                 errors = String.Format("{0}({1},{2}): error: {3}\r\n", path,
                     lastCall.GetFileLineNumber(), lastCall.GetFileColumnNumber(), ex.InnerException.Message);
                 
-            } catch (Exception ex2 )
+            } catch (Exception ex3 )
             {
-                errors = String.Format("{0}(1,1): error: Internal error - exception '{3}'\r\n", path, ex2.Message);
+                errors = String.Format("{0}(1,1): error: Internal error - exception '{3}'\r\n", path, ex3.Message);
             }
             return false;
         }

@@ -234,6 +234,21 @@ public class Solution
     {
         String slnPath = path;
         Console.Write("Updating solution '" + slnPath + "' ... ");
+
+        //
+        //  For all projects which does not have uuid, we generated uuid based on project name.
+        //
+        SolutionProjectBuilder.externalproject(null);   // Release any active project if we have one.
+        foreach (Project p in projects)
+        {
+            if (String.IsNullOrEmpty(p.ProjectGuid))
+            {
+                SolutionProjectBuilder.m_project = p;
+                SolutionProjectBuilder.uuid(p.ProjectName);
+                SolutionProjectBuilder.m_project = null;
+            }
+        } //foreach
+
         StringBuilder o = new StringBuilder();
 
         o.AppendLine();

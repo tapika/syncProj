@@ -9,7 +9,7 @@
             class for executing c# script.
             </summary>
         </member>
-        <member name="M:CsScript.RunScript(System.String,System.Boolean,System.String@,System.String[])">
+        <member name="M:CsScript.RunScript(System.String,System.Boolean,System.Boolean,System.String@,System.String[])">
             <summary>
             Compiles .cs script into dll/pdb, loads as assembly, and executes Main function.
             Temporary dll/pdb gets deleted. If .cs throws exception - it will be converted to
@@ -20,6 +20,7 @@
                 When this parameter is set to true, produced assembly will be kept next to C# script path.
                 This also means that StackTrace will be able to display correct source code path and code line, unlike when loaded into ram
                 false - if you don't care about source code position</param>
+            <param name="bAllowThrow">true if allow to throw exceptions</param>
             <param name="errors">Errors if any</param>
             <param name="args">Main argument parameters</param>
             <returns>true if execution was successful.</returns>
@@ -27,6 +28,36 @@
         <member name="T:FunctionNameAttribute">
             <summary>
             Custom class for mapping enumeration values to premake configuration tag.
+            </summary>
+        </member>
+        <member name="F:FunctionNameAttribute.tag">
+            <summary>
+            function name itself.
+            </summary>
+        </member>
+        <member name="M:FunctionNameAttribute.#ctor(System.String)">
+            <summary>
+            function name attribute
+            </summary>
+        </member>
+        <member name="T:EPrecompiledHeaderUse">
+            <summary>
+            Specifies whether or not to use precompiled headers
+            </summary>
+        </member>
+        <member name="F:EPrecompiledHeaderUse.Create">
+            <summary>
+            Create precompiled headers
+            </summary>
+        </member>
+        <member name="F:EPrecompiledHeaderUse.Use">
+            <summary>
+            Use precompiled headers
+            </summary>
+        </member>
+        <member name="F:EPrecompiledHeaderUse.NotUsing">
+            <summary>
+            Default value (not initialized)
             </summary>
         </member>
         <member name="T:EWarningLevel">
@@ -65,6 +96,12 @@
             Displays all /W4 warnings and any other warnings that are not included in /W4—for example, warnings that are off by default.
             </summary>
         </member>
+        <member name="T:IncludeType">
+            <summary>
+            Defines what needs to be done with given item. Not all project types support all enumerations - for example
+            packaging projects / C# projects does not support CustomBuild.
+            </summary>
+        </member>
         <member name="F:IncludeType.ClInclude">
             <summary>
             Header file (.h)
@@ -98,6 +135,11 @@
         <member name="F:IncludeType.Image">
             <summary>
             .ico files.
+            </summary>
+        </member>
+        <member name="F:IncludeType.ProjectReference">
+            <summary>
+            For Android package project: Reference to another project, which needs to be included into package.
             </summary>
         </member>
         <member name="F:IncludeType.Invalid">
@@ -150,6 +192,11 @@
             For debugging purposes - specifies configuration name (Debug|Win32) with which given configuration is accosiated with.
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.PrecompiledHeader">
+            <summary>
+            Precompile header - use or create.
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.PreprocessorDefinitions">
             <summary>
             Defines, ';' separated list.
@@ -179,6 +226,26 @@
         <member name="F:FileConfigurationInfo.ObjectFileName">
             <summary>
             Output filename
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.PrecompiledHeaderFile">
+            <summary>
+            Precompiled header file
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.Optimization">
+            <summary>
+            Optimization level
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.FunctionLevelLinking">
+            <summary>
+            Allows the compiler to package individual functions in the form of packaged functions (COMDATs).
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.IntrinsicFunctions">
+            <summary>
+            Replaces some function calls with intrinsic or otherwise special forms of the function that help your application run faster.
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.EnableCOMDATFolding">
@@ -263,6 +330,11 @@
             <param name="inS">xml string to deserialize</param>
             <returns>CustomBuildRule class instance</returns>
         </member>
+        <member name="T:EConfigurationType">
+            <summary>
+            Project type
+            </summary>
+        </member>
         <member name="F:EConfigurationType.Application">
             <summary>
             .exe
@@ -271,6 +343,11 @@
         <member name="F:EConfigurationType.DynamicLibrary">
             <summary>
             .dll
+            </summary>
+        </member>
+        <member name="T:ECharacterSet">
+            <summary>
+            Character set - unicode MBCS.
             </summary>
         </member>
         <member name="F:ECharacterSet.Unicode">
@@ -288,6 +365,36 @@
             Visual studio default.
             </summary>
         </member>
+        <member name="T:ESubSystem">
+            <summary>
+            Binary image format / target
+            </summary>
+        </member>
+        <member name="F:ESubSystem.NotSet">
+            <summary>
+            Not specified
+            </summary>
+        </member>
+        <member name="F:ESubSystem.Windows">
+            <summary>
+            Windows application
+            </summary>
+        </member>
+        <member name="F:ESubSystem.Console">
+            <summary>
+            Console application
+            </summary>
+        </member>
+        <member name="T:EOptimization">
+            <summary>
+            How to optimize code ?
+            </summary>
+        </member>
+        <member name="F:EOptimization.Disabled">
+            <summary>
+            No optimizations
+            </summary>
+        </member>
         <member name="F:EOptimization.MinSpace">
             <summary>
             Minimize Size
@@ -301,6 +408,26 @@
         <member name="F:EOptimization.Full">
             <summary>
             Full Optimization
+            </summary>
+        </member>
+        <member name="T:EGenerateDebugInformation">
+            <summary>
+            Generate debug information
+            </summary>
+        </member>
+        <member name="F:EGenerateDebugInformation.No">
+            <summary>
+            No
+            </summary>
+        </member>
+        <member name="F:EGenerateDebugInformation.OptimizeForDebugging">
+            <summary>
+            Optimize for debugging
+            </summary>
+        </member>
+        <member name="F:EGenerateDebugInformation.OptimizeForFasterLinking">
+            <summary>
+            Use fast linking
             </summary>
         </member>
         <member name="T:ECompileAs">
@@ -328,6 +455,16 @@
             All values set by default are Visual Studio default.
             </summary>
         </member>
+        <member name="F:Configuration.ConfigurationType">
+            <summary>
+            Project type
+            </summary>
+        </member>
+        <member name="M:Configuration.ConfigurationTypeUpdated">
+            <summary>
+            Called when ConfigurationType has changed.
+            </summary>
+        </member>
         <member name="F:Configuration.AndroidAPILevel">
             <summary>
             Android api level, for example "android-22".
@@ -337,16 +474,32 @@
         <member name="F:Configuration.PlatformToolset">
             <summary>
             For example:
-                'v140' - for Visual Studio 2015.
-                'v120' - for Visual Studio 2013.
+                null - default
+                'Clang_3_8'     - Clang 3.8
+                'v140'          - for Visual Studio 2015.
+                'v120'          - for Visual Studio 2013.
             </summary>
+        </member>
+        <member name="M:Configuration.getPlatformToolsetDefault(Project)">
+            <summary>
+            Queries default value for PlatformToolset.
+            </summary>
+            <param name="p">Project against which to query</param>
+            <returns>Default value</returns>
         </member>
         <member name="F:Configuration.OutDir">
             <summary>
             Output Directory. 
-                Visual studio default:  $(SolutionDir)$(Configuration)\
+                Visual studio default:  can be queried using getOutDirDefault()
                 premake default:        bin\$(Platform)\$(Configuration)\
             </summary>
+        </member>
+        <member name="M:Configuration.getOutDirDefault(Project)">
+            <summary>
+            Gets default value for OutDir field.
+            </summary>
+            <param name="p">Project against which to query</param>
+            <returns>Default value</returns>
         </member>
         <member name="F:Configuration.IntDir">
             <summary>
@@ -355,16 +508,38 @@
                 premake default:        obj\$(Platform)\$(Configuration)\
             </summary>
         </member>
+        <member name="M:Configuration.getIntDirDefault(Project)">
+            <summary>
+            Gets intermediate directory default.
+            </summary>
+            <param name="p">project</param>
+            <returns>Default value of IntDir</returns>
+        </member>
         <member name="F:Configuration.TargetName">
             <summary>
             Target Name.
             Visual studio default: $(ProjectName)
             </summary>
         </member>
+        <member name="M:Configuration.getTargetNameDefault(Project)">
+            <summary>
+            Gets default value for TargetName
+            </summary>
+            <param name="p">Project against which to query</param>
+            <returns>Default value</returns>
+        </member>
         <member name="F:Configuration.TargetExt">
             <summary>
-            Target Extension (.exe, .dll, ...)
+            Target Extension (.exe, .dll, ...).
+            If set to default - must be null.
             </summary>
+        </member>
+        <member name="M:Configuration.getTargetExtDefault(Project)">
+            <summary>
+            Gets default value for target ext.
+            </summary>
+            <param name="p">Project against which to query</param>
+            <returns>Default value</returns>
         </member>
         <member name="F:Configuration.SubSystem">
             <summary>
@@ -624,6 +799,16 @@
             Helper class for generating solution or projects.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.m_solution">
+            <summary>
+            Currently selected active solution on which all function below operates upon. null if not selected yet.
+            </summary>
+        </member>
+        <member name="F:SolutionProjectBuilder.m_project">
+            <summary>
+            Currently selected active project on which all function below operates upon. null if not selected yet.
+            </summary>
+        </member>
         <member name="F:SolutionProjectBuilder.m_workPath">
             <summary>
             Path where we are building solution / project at. By default same as script is started from.
@@ -680,7 +865,8 @@
         </member>
         <member name="M:SolutionProjectBuilder.externalproject(System.String)">
             <summary>
-            Add to solution reference to external project
+            Add to solution reference to external project. Call with null parameter to flush currently active project (Either to solution
+            or to disk).
             </summary>
             <param name="name">Project name</param>
         </member>
@@ -694,7 +880,7 @@
             <summary>
             Specifies IDE / OS where project is targetted upon.
             </summary>
-            <param name="osName">One of following: vs2010, vs2012, vs2015, android, package</param>
+            <param name="osBase">One of following: vs2010, vs2012, vs2015, android, package</param>
         </member>
         <member name="M:SolutionProjectBuilder.location(System.String)">
             <summary>
@@ -704,9 +890,14 @@
         </member>
         <member name="M:SolutionProjectBuilder.uuid(System.String)">
             <summary>
-            Specifies project uuid.
+            Specifies project uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")
+            - use this kind of syntax if you need to produce your project in backwards compatible manner - so existing
+            solution can load your project.
+            Could be also written in any string form, but you need to take care that string is unique enough accross where your
+            project is used. For example project("test1"); uuid("test"); project("test1"); uuid("test"); will result in
+            two identical project uuid's and Visual studio will try to resave your project with changed uuid.
             </summary>
-            <param name="uuid"></param>
+            <param name="nameOrUuid">Project uuid or some unique name</param>
         </member>
         <member name="M:SolutionProjectBuilder.language(System.String)">
             <summary>
@@ -948,6 +1139,23 @@
         <member name="T:Exception2">
             <summary>
             Same as Exception, only we save call stack in here (to be able to report error line later on).
+            </summary>
+        </member>
+        <member name="M:Exception2.#ctor(System.String)">
+            <summary>
+            Creates new exception with stack trace from where exception was thrown.
+            </summary>
+            <param name="_msg"></param>
+        </member>
+        <member name="M:Exception2.getThrowLocation">
+            <summary>
+            Tries to determine from which script position exception was thrown. Returns empty line if cannot be detected.
+            </summary>
+            <returns>Throw source code line</returns>
+        </member>
+        <member name="P:Exception2.Message">
+            <summary>
+            Gets exception message
             </summary>
         </member>
         <member name="M:Path2.GetScriptPath(System.Int32)">

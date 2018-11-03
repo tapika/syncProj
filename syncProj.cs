@@ -888,15 +888,39 @@ public class SolutionOrProject
 /// </summary>
 public class Exception2 : Exception
 {
-    public StackTrace strace;
+    StackTrace strace;
     String msg;
 
+    /// <summary>
+    /// Creates new exception with stack trace from where exception was thrown.
+    /// </summary>
+    /// <param name="_msg"></param>
     public Exception2( String _msg )
     {
         msg = _msg;
         strace = new StackTrace(true);
     }
 
+    /// <summary>
+    /// Tries to determine from which script position exception was thrown. Returns empty line if cannot be detected.
+    /// </summary>
+    /// <returns>Throw source code line</returns>
+    public String getThrowLocation()
+    {
+        if (strace.FrameCount < 2)
+            return "";
+
+        StackFrame f = strace.GetFrame(2);
+        if (f.GetFileName() != null)
+            return f.GetFileName() + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
+        
+        return "";
+    } //getThrowLocation
+
+
+    /// <summary>
+    /// Gets exception message
+    /// </summary>
     public override string Message
     {
         get

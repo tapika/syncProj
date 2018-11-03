@@ -535,13 +535,12 @@ public class Configuration: FileConfigurationInfo
     /// </summary>
     public EConfigurationType ConfigurationType = EConfigurationType.Application;
 
+    /// <summary>
+    /// Called when ConfigurationType has changed.
+    /// </summary>
     public void ConfigurationTypeUpdated()
     {
-        switch (ConfigurationType)
-        {
-            case EConfigurationType.Application: TargetExt = ".exe"; break;
-            case EConfigurationType.DynamicLibrary: TargetExt = ".dll"; break;
-        }
+        // ConfigurationType changes, maybe makes sense to check TargetExt later on ?
     } //ConfigurationTypeUpdated
 
     public bool UseDebugLibraries = false;
@@ -554,10 +553,31 @@ public class Configuration: FileConfigurationInfo
 
     /// <summary>
     /// For example:
-    ///     'v140' - for Visual Studio 2015.
-    ///     'v120' - for Visual Studio 2013.
+    ///     null - default
+    ///     'Clang_3_8'     - Clang 3.8
+    ///     'v140'          - for Visual Studio 2015.
+    ///     'v120'          - for Visual Studio 2013.
     /// </summary>
-    public String PlatformToolset = "v140";
+    public String PlatformToolset;
+
+    /// <summary>
+    /// Queries default value for PlatformToolset.
+    /// </summary>
+    /// <param name="p">Project against which to query</param>
+    /// <returns>Default value</returns>
+    public String getPlatformToolsetDefault(Project p)
+    {
+        switch (p.Keyword)
+        {
+            case EKeyword.Android:
+                return "Clang_3_8";
+            default:
+            case EKeyword.Win32Proj:
+                return "v140";
+        }
+    }
+
+
     public ECharacterSet CharacterSet = ECharacterSet.Unicode;
 
     public bool LinkIncremental = true;
@@ -565,28 +585,99 @@ public class Configuration: FileConfigurationInfo
 
     /// <summary>
     /// Output Directory. 
-    ///     Visual studio default:  $(SolutionDir)$(Configuration)\
+    ///     Visual studio default:  can be queried using getOutDirDefault()
     ///     premake default:        bin\$(Platform)\$(Configuration)\
     /// </summary>
-    public String OutDir = "$(SolutionDir)$(Configuration)\\";
+    public String OutDir;
+
+    /// <summary>
+    /// Gets default value for OutDir field.
+    /// </summary>
+    /// <param name="p">Project against which to query</param>
+    /// <returns>Default value</returns>
+    public String getOutDirDefault( Project p )
+    {
+        switch (p.Keyword)
+        {
+            case EKeyword.Android:
+                return @"$(SolutionDir)$(Platform)\$(Configuration)\";
+            default:
+            case EKeyword.Win32Proj:
+                return "$(SolutionDir)$(Configuration)\\";
+        }
+    }
 
     /// <summary>
     /// Intermediate Directory.
     ///     Visual studio default:  $(Configuration)\
     ///     premake default:        obj\$(Platform)\$(Configuration)\
     /// </summary>
-    public String IntDir = "$(Configuration)\\";
+    public String IntDir;
+
+    /// <summary>
+    /// Gets intermediate directory default.
+    /// </summary>
+    /// <param name="p">project</param>
+    /// <returns>Default value of IntDir</returns>
+    public String getIntDirDefault(Project p)
+    {
+        switch (p.Keyword)
+        {
+            case EKeyword.Android:
+                return @"$(Platform)\$(Configuration)\";
+            default:
+            case EKeyword.Win32Proj:
+                return @"$(Configuration)\";
+        }
+    }
 
     /// <summary>
     /// Target Name.
     /// Visual studio default: $(ProjectName)
     /// </summary>
-    public String TargetName = "$(ProjectName)";
+    public String TargetName;
 
     /// <summary>
-    /// Target Extension (.exe, .dll, ...)
+    /// Gets default value for TargetName
+    /// </summary>
+    /// <param name="p">Project against which to query</param>
+    /// <returns>Default value</returns>
+    public String getTargetNameDefault(Project p)
+    {
+        switch (p.Keyword)
+        {
+            case EKeyword.Android:
+                return "lib$(RootNamespace)";
+            default:
+            case EKeyword.Win32Proj:
+                return "$(ProjectName)";
+        }
+    }
+
+    /// <summary>
+    /// Target Extension (.exe, .dll, ...).
+    /// If set to default - must be null.
     /// </summary>
     public String TargetExt;
+
+    /// <summary>
+    /// Gets default value for target ext.
+    /// </summary>
+    /// <param name="p">Project against which to query</param>
+    /// <returns>Default value</returns>
+    public String getTargetExtDefault(Project p)
+    {
+        switch (p.Keyword)
+        {
+            case EKeyword.Android:
+                return ".so";
+            default:
+            case EKeyword.Win32Proj:
+                return ".dll";
+        }
+    }
+
+
 
     public EWarningLevel WarningLevel = EWarningLevel.Level1;
 
@@ -1278,6 +1369,17 @@ public class Project
     /// </summary>
     public void SaveProject()
     {
+        //
+        // We serialize here using string append, so we can easily compare with Visual studio projects with your favorite comaprison tool.
+        //
+        if (String.IsNullOrEmpty(ProjectGuid))
+        {
+            SolutionProjectBuilder.externalproject(null);
+            SolutionProjectBuilder.m_project = this;
+            SolutionProjectBuilder.uuid(ProjectName);
+            SolutionProjectBuilder.m_project = null;
+        }
+
         String projectPath;
 
         if (solution == null)
@@ -1379,8 +1481,12 @@ public class Project
                 o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
             }
 
-            if ( !bIsPackagingProject )
-                o.AppendLine("    <PlatformToolset>" + conf.PlatformToolset + "</PlatformToolset>");
+            if (!bIsPackagingProject)
+            {
+                String pts = conf.PlatformToolset;
+                if (pts == null) pts = conf.getPlatformToolsetDefault(this);
+                o.AppendLine("    <PlatformToolset>" + pts + "</PlatformToolset>");
+            }
 
             if (conf.WholeProgramOptimization != EWholeProgramOptimization.NoWholeProgramOptimization)
             {
@@ -1436,25 +1542,36 @@ public class Project
                 int iConf = configurations.IndexOf(confName);
                 Configuration conf = projectConfig[iConf];
 
-                if (Keyword == EKeyword.Android)
+                bool bAppendLinkIncremental = Keyword != EKeyword.Android;
+                bool bAppendOutDir = conf.OutDir != null && conf.OutDir != conf.getOutDirDefault(this);
+                bool bAppendIntDir = conf.IntDir != null && conf.IntDir != conf.getOutDirDefault(this);
+                bool bAppendTargetName = conf.TargetName != null && conf.TargetName != conf.getTargetNameDefault(this);
+                bool bAppendTargetExt = conf.TargetExt != null;
+
+                // Empty node.
+                if (!(bAppendLinkIncremental || bAppendOutDir || bAppendIntDir || bAppendTargetName || bAppendTargetExt))
                 { 
                     o.AppendLine("  <PropertyGroup " + condition(confName) + " />");
                     continue;
                 }
 
                 o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
-                o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
+                
+                if (bAppendLinkIncremental)
+                    o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
             
-                if(conf.OutDir != "$(SolutionDir)$(Configuration)\\" )      // Visual studio defaults does not needs to be serialized.
+                if(bAppendOutDir)
                     o.AppendLine("    <OutDir>" + conf.OutDir + "</OutDir>");
 
-                if (conf.IntDir != "$(Configuration)\\") 
+                if(bAppendIntDir) 
                     o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
             
-                if (conf.TargetName != "$(ProjectName)") 
+                if (bAppendTargetName) 
                     o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
             
-                o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
+                if(bAppendTargetExt)
+                    o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
+
                 o.AppendLine("  </PropertyGroup>");
             } //for
 
