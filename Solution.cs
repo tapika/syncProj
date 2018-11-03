@@ -18,6 +18,12 @@ public class Solution
     /// </summary>
     [XmlIgnore]
     public String path;
+
+    public String getSolutionFolder()
+    {
+        return Path.GetDirectoryName(path);
+    }
+
     double slnVer;                                      // 11.00 - vs2010, 12.00 - vs2015
 
     /// <summary>
@@ -51,7 +57,7 @@ public class Solution
     /// </summary>
     public IEnumerable<String> getPlatforms()
     {
-        return configurations.Select(x => "\"" + x.Split('|')[0]).Distinct();
+        return configurations.Select(x => x.Split('|')[1]).Distinct();
     }
 
     /// <summary>
@@ -59,7 +65,7 @@ public class Solution
     /// </summary>
     public IEnumerable<String> getConfigurations()
     {
-        return configurations.Select(x => "\"" + x.Split('|')[1]).Distinct();
+        return configurations.Select(x => x.Split('|')[0]).Distinct();
     }
 
 

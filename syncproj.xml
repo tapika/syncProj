@@ -1347,6 +1347,13 @@
             <param name="script2compile">Script which shall be compiled once script2include is changed</param>
             <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
         </member>
+        <member name="M:SolutionProjectBuilder.configmap(System.String[])">
+            <summary>
+            Defines configuration mapping from solution (first argument) to project (second argument)
+            For example configmap( "Development", "Debug" )
+            </summary>
+            <param name="confList"></param>
+        </member>
         <member name="M:SolutionProjectBuilder.flags(System.String[])">
             <summary>
             Enables certain flags for specific configurations.

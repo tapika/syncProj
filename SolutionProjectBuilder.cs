@@ -238,7 +238,9 @@ public class SolutionProjectBuilder
 
         m_project.ProjectName = name;
         m_project.language = "C++";
-        m_project.RelativePath = Path.Combine(m_scriptRelativeDir, name);
+        String path = Path.Combine(m_scriptRelativeDir, name);
+        path = new Regex(@"[^\\/]+[\\/]..[\\/]").Replace(path, "");     // Remove extra upper folder references if any
+        m_project.RelativePath = path;
 
         Project parent = m_solutionRoot;
         String pathSoFar = "";
@@ -666,8 +668,16 @@ public class SolutionProjectBuilder
                 throw new Exception2("kind value is not supported '" + _kind + "' - supported values are: " + String.Join(",", enums.Select(x => x.ToString()) ));
         }
 
-        if (type == EConfigurationType.Utility && m_project.getPlatforms().Contains("x86"))
-            throw new Exception("Utility projects can use only 'Win32' as a platform, not 'x86'");
+        if (type == EConfigurationType.Utility )
+        {
+            foreach (String _platform in m_project.getPlatforms())
+            {
+                String platform = _platform.ToLower();
+                    
+                if( platform != "win32" && platform != "x64" )
+                    throw new Exception("Utility projects can be defined only on platform 'Win32' or 'x64' - not others.");
+            }
+        }
 
         foreach (var conf in getSelectedProjectConfigurations())
         {
@@ -1098,10 +1108,18 @@ public class SolutionProjectBuilder
     } //buildrule
 
 
-    static void selfCompileScript(String script2include, String script2compile, String pathToSyncProjExe)
+    static void selfCompileScript(String script2include, String script2compile, String pathToSyncProjExe, String inDir)
     {
         if (script2compile == null)
             script2compile = script2include;
+
+        String inPath = pathToSyncProjExe;
+
+        if (!Path.IsPathRooted(inPath))
+            inPath = Path.Combine(inDir, pathToSyncProjExe);
+
+        if (!File.Exists(inPath))
+            throw new Exception2("Executable not found: '" + inPath + "'");
 
         using (new UsingSyncProj(2 /*called from projectScript & solutionScript - 2 frames in call stack */))
         {
@@ -1131,7 +1149,8 @@ public class SolutionProjectBuilder
     /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
     static public void projectScript(String script2include, String script2compile, String pathToSyncProjExe )
     {
-        selfCompileScript(script2include, script2compile, pathToSyncProjExe);
+        requireProjectSelected();
+        selfCompileScript(script2include, script2compile, pathToSyncProjExe, m_project.getProjectFolder());
     }
 
     /// <summary>
@@ -1152,21 +1171,97 @@ public class SolutionProjectBuilder
         {
             group("0 Solution Update");
             project(projectName);
-                // Utility projects allow only 'Win32' as a platform
-                var lplatforms = m_platforms.Select(x => (x == "x86") ? "Win32" : x).ToArray();
-                // Same platforms and configurations as in solution.
-                platforms(lplatforms);
-                
+                platforms("Win32");
                 configurations(m_configurations.ToArray());
                 kind("Utility");
                 // Redirect so would not conflict with existing projects.
                 objdir("obj/" + projectName + "_temp");
+
+            foreach (String plat in m_solution.getPlatforms())
+                configmap(plat, "Win32");
         }
 
-        selfCompileScript(script2include, script2compile, pathToSyncProjExe);
+        selfCompileScript(script2include, script2compile, pathToSyncProjExe, m_solution.getSolutionFolder());
         group("");
         solutionUpdateProject = projectName;
     }
+
+    /// <summary>
+    /// Defines configuration mapping from solution (first argument) to project (second argument)
+    /// For example configmap( "Development", "Debug" )
+    /// </summary>
+    /// <param name="confList"></param>
+    static public void configmap(params String[] confList)
+    {
+        requireSolutionSelected();
+        requireProjectSelected();
+
+        if (confList.Length % 2 == 1)
+            throw new Exception2("Input argument count must be dividable by 2 (solution, project configuration pairs)");
+
+        if (m_project.slnConfigurations == null || m_solution.configurations.Count != m_project.slnConfigurations.Count)
+        {
+            m_project.slnConfigurations.Clear();
+            // Make 1 to 1 mapping.
+            m_project.slnConfigurations.AddRange(m_solution.configurations);
+        }
+
+        for (int i = 0; i < confList.Length; i += 2)
+        {
+            String from = confList[i].ToLower();
+            String to = confList[i + 1];
+            int matchMethod = 0;
+
+            for( int iConf = 0; iConf < m_solution.configurations.Count; iConf++)
+            {
+                String conf = m_solution.configurations[iConf];
+                bool match = false;
+                String targetConf = "";
+
+                // In full style, for example "Debug|Win32"
+                if (from.Contains('|'))
+                {
+                    match = from == conf.ToLower();
+                    targetConf = to;
+                }
+                else
+                {
+                    String[] confPlat = conf.Split('|');
+
+                    // In partial style, for example "Debug" or "Win32"
+                    if (matchMethod == 0)
+                    {
+                        // Once we have detected whether we are matching configuration name or platform, 
+                        // we keep matching same thing.
+                        if (from == confPlat[0].ToLower())
+                        {
+                            matchMethod = 1;
+                        }
+                        else
+                        {
+                            if (from == confPlat[1].ToLower())
+                                matchMethod = 2;
+                        }
+                    } //if
+
+                    switch (matchMethod)
+                    {
+                        case 1:
+                            match = (from == confPlat[0].ToLower());
+                            targetConf = to + "|" + confPlat[1];
+                            break;
+                        case 2:
+                            match = (from == confPlat[1].ToLower());
+                            targetConf = confPlat[0] + "|" + to;
+                            break;
+                    }
+                }
+
+                if (match)
+                    m_project.slnConfigurations[iConf] = targetConf;
+            } //foreach
+        } //for
+    } //configmap
 
     /// <summary>
     /// Enables certain flags for specific configurations.
