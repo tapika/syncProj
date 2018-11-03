@@ -699,7 +699,7 @@ public class Project
             o.AppendLine("      <DebugInformationFormat" + sCond + ">" + conf.DebugInformationFormat.ToString() + "</DebugInformationFormat>");
 
         if (conf.AdditionalIncludeDirectories.Length != 0 )
-            o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + "</AdditionalIncludeDirectories>");
+            o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>");
 
         if ( conf.ClCompile_AdditionalOptions.Length != 0)
             o.AppendLine("      <AdditionalOptions" + sCond + ">" + conf.ClCompile_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
