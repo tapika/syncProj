@@ -1,0 +1,22 @@
+syncProj exited with no error
+TestSyncProjModelAccess.cs :
+--------- List of files by pattern 'x86/**.asm' ---------
+x86\1.asm
+x86\2.asm
+x86\3.asm
+x86\subdir\4.asm
+--------- List of files by pattern 'x86/*.asm' ---------
+x86\1.asm
+x86\2.asm
+x86\3.asm
+--------- List of files by pattern '**' ---------
+some.cpp
+x86\1.asm
+x86\2.asm
+x86\3.asm
+x86\subdir\4.asm
+--------- List of files by pattern 'does_not_exists' ---------
+Exception: 'File not found: 'does_not_exists' - please specify correct filename. Should be registered via 'files' function.'
+--------- List of files by pattern 'does_not_exists' ---------
+--------- List of files by pattern 'does_not_exists_with_pattern/**' ---------
+3 files updated

@@ -82,6 +82,10 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Custom</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Custom</Optimization>
     </ClCompile>
+    <ClCompile Include="dir\test5.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)\test51.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)\test51.obj</ObjectFileName>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

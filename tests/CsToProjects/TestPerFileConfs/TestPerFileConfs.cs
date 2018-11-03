@@ -3,6 +3,13 @@ using System;
 
 partial class Builder : SolutionProjectBuilder
 {
+    static void fileOptimize( String file, String optLevel )
+    {
+        files( "?" + file );
+        filter( "files:" + file );
+        optimize( optLevel );
+    }
+
     static void Main(String[] args)
     {
         try
@@ -14,51 +21,30 @@ partial class Builder : SolutionProjectBuilder
             platforms("Win32");
             kind("ConsoleApp");
 
-            files("?test.cpp");
-            filter("files:test.cpp");
-            optimize("off");
-
-            files("?test2.cpp");
-            filter("files:test2.cpp");
-            optimize("speed");
-
-            files( "?test3.cpp" );
-            filter( "files:test3.cpp" );
-            optimize( "full" );
-
-            files( "?test4.cpp" );
-            filter( "files:test4.cpp" );
-            optimize( "size" );
-
-            files( "?test5.cpp" );
-            filter( "files:test5.cpp" );
-            optimize( "custom" );
+            fileOptimize( "test.cpp", "off" );
+            fileOptimize( "test2.cpp", "speed" );
+            fileOptimize( "test3.cpp", "full" );
+            fileOptimize( "test4.cpp", "size" );
+            fileOptimize( "test5.cpp", "custom" );
+            
+            // Will end up with same .obj filename, will create separate configuration for that file.
+            // Must use same optimization level as project
+            files( "?dir/test5.cpp");
 
             project( "out_TestAndroid" );
             vsver( 2012 );
             platforms( "ARM" );
             kind( "ConsoleApp", "android" );
 
-            files( "?test.cpp" );
-            filter( "files:test.cpp" );
-            optimize( "off" );
+            fileOptimize( "test.cpp", "off" );
+            fileOptimize( "test2.cpp", "speed" );
+            fileOptimize( "test3.cpp", "full" );
+            fileOptimize( "test4.cpp", "size" );
+            fileOptimize( "test5.cpp", "custom" );
 
-            files( "?test2.cpp" );
-            filter( "files:test2.cpp" );
-            optimize( "speed" );
-
-            files( "?test3.cpp" );
-            filter( "files:test3.cpp" );
-            optimize( "full" );
-
-            files( "?test4.cpp" );
-            filter( "files:test4.cpp" );
-            optimize( "size" );
-
-            files( "?test5.cpp" );
-            filter( "files:test5.cpp" );
-            optimize( "custom" );
-
+            // Will end up with same .obj filename, will create separate configuration for that file.
+            // Must use same optimization level as project
+            files( "?dir/test5.cpp" );
         }
         catch (Exception ex)
         {

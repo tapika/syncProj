@@ -1537,6 +1537,12 @@
                 or by file name, for example: "files:my.cpp"
             </param>
         </member>
+        <member name="M:SolutionProjectBuilder.selectConfigurations(FileInfo)">
+            <summary>
+            Selects file specific configurations
+            </summary>
+            <param name="fi">File information upon which to select configurations.</param>
+        </member>
         <member name="M:SolutionProjectBuilder.removefiles(System.String[])">
             <summary>
             Removes files from project or disables them from particular build configuration (If selected via filter)
@@ -1674,12 +1680,14 @@
             </summary>
             <returns>List of files matches your selection</returns>
         </member>
-        <member name="M:SolutionProjectBuilder.matchExistingFiles(System.String)">
+        <member name="M:SolutionProjectBuilder.getCurrentProjectFiles(System.String,System.Boolean)">
             <summary>
-            Matches existing filename using filepattern.
+            Locates one or more files from current project by file pattern.
             </summary>
             <param name="_filePattern">Either file path or glob file pattern</param>
+            <param name="bAllowNoFiles">set to true if don't throw exception if file does not exists (return empty array)</param>
             <returns>List of files matching given pattern</returns>
+            <exception cref="T:Exception2">Exception is thrown if no files were matched</exception>
         </member>
         <member name="M:SolutionProjectBuilder.files(System.String[])">
             <summary>

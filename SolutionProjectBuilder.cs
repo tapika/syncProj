@@ -785,7 +785,7 @@ public class SolutionProjectBuilder
 
         if( dFilt.ContainsKey("files"))
         {
-            confs2scan = matchExistingFiles( dFilt["files"] ).Select( x => x.fileConfig ).Cast<IList>().ToArray();
+            confs2scan = getCurrentProjectFiles( dFilt["files"] ).Select( x => x.fileConfig ).Cast<IList>().ToArray();
             type = typeof( FileConfigurationInfo );
             bLastSetFilterWasFileSpecific = true;
         }
@@ -874,6 +874,25 @@ public class SolutionProjectBuilder
     } //filter
 
     /// <summary>
+    /// Selects file specific configurations
+    /// </summary>
+    /// <param name="fi">File information upon which to select configurations.</param>
+    static public void selectConfigurations( FileInfo fi )
+    {
+        bLastSetFilterWasFileSpecific = true;
+        
+        while( fi.fileConfig.Count < m_project.configurations.Count )
+            fi.fileConfig.Add( new FileConfigurationInfo() 
+                { 
+                    confName = m_project.configurations[fi.fileConfig.Count],
+                    Optimization = EOptimization.ProjectDefault
+                } 
+            );
+        
+        selectedFileConfigurations = fi.fileConfig.ToList();
+    }
+
+    /// <summary>
     /// Removes files from project or disables them from particular build configuration (If selected via filter)
     /// </summary>
     /// <param name="filesToRemove">List of files to remove / disable</param>
@@ -883,7 +902,7 @@ public class SolutionProjectBuilder
 
         foreach( String file in filesToRemove )
         {
-            foreach( FileInfo fi in matchExistingFiles( file ) )
+            foreach( FileInfo fi in getCurrentProjectFiles( file, true ) )
             {
                 if( !bLastSetFilterWasFileSpecific )
                 {
@@ -1368,11 +1387,13 @@ public class SolutionProjectBuilder
 
 
     /// <summary>
-    /// Matches existing filename using filepattern.
+    /// Locates one or more files from current project by file pattern.
     /// </summary>
     /// <param name="_filePattern">Either file path or glob file pattern</param>
+    /// <param name="bAllowNoFiles">set to true if don't throw exception if file does not exists (return empty array)</param>
     /// <returns>List of files matching given pattern</returns>
-    static public FileInfo[] matchExistingFiles( String _filePattern )
+    /// <exception cref="Exception2">Exception is thrown if no files were matched</exception>
+    static public FileInfo[] getCurrentProjectFiles( String _filePattern, bool bAllowNoFiles = false )
     {
         requireProjectSelected();
         FileInfo[] selectedFiles = null;
@@ -1399,7 +1420,10 @@ public class SolutionProjectBuilder
             selectedFiles = m_project.files.Where( x => re.Match( x.relativePath ).Success ).ToArray();
         }
 
-        if( selectedFiles == null || selectedFiles.Length == 0 )
+        if( selectedFiles == null && bAllowNoFiles )
+            selectedFiles = new FileInfo[] { };
+
+        if( !bAllowNoFiles && (selectedFiles == null || selectedFiles.Length == 0 ))
             throw new Exception2( "File not found: '" + _filePattern + "' - please specify correct filename. Should be registered via 'files' function.", 1 );
 
         return selectedFiles;
