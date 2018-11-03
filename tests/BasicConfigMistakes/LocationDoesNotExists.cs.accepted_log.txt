@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+LocationDoesNotExists.cs :
+LocationDoesNotExists.cs(11,17): error: Path 'subdir_WhichDoesNotExists' does not exists

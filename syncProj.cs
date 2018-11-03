@@ -798,6 +798,9 @@ public class SolutionOrProject
 
             List<FileInfo> files2dump = proj.files.Where(x => x.includeType != IncludeType.ProjectReference).ToList();
 
+            // Sort files by path, so it would be easier to check what is included and what is not included.
+            files2dump.Sort(delegate (FileInfo f1, FileInfo f2) { return String.Compare(f1.relativePath, f2.relativePath); });
+
             //
             // Dump files array.
             //
@@ -1190,7 +1193,7 @@ public class SolutionOrProject
             if (pos != -1 && !multiLineQuotedString)
                 multiLineQuotedString = true;
 
-            if(multiLineQuotedString && reEndOfMuiltLineString.Match(line, pos + 2, line.Length - pos - 2).Success )
+            if(multiLineQuotedString && line.Length >= 2 && reEndOfMuiltLineString.Match(line, pos + 2, line.Length - pos - 2).Success )
                 multiLineQuotedString = false;
         } //forach
 

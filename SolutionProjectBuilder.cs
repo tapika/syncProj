@@ -39,10 +39,42 @@ public class SolutionProjectBuilder
     public static String m_workPath;
 
     /// <summary>
+    /// Sets currently work path (where we are building project / solutions )
+    /// </summary>
+    /// <param name="path">Path relative or aboslute</param>
+    public static void setWorkPath(String path)
+    {
+        if (!Path.IsPathRooted(path))
+            path = Path.Combine(getCurrentlyExecutingScriptDirectory(), path);
+
+        if (!Directory.Exists(path))
+            throw new Exception2("Path '" + Exception2.getPath(path) + "' does not exists", 1);
+
+        m_workPath = path;
+    }
+
+    /// <summary>
     /// Full path from where current execution proceeds (location of .cs script)
     /// </summary>
     public static String m_currentlyExecutingScriptPath = "";
-    
+
+    /// <summary>
+    /// Gets directory under which script is currently executing. This is either determined from script executed by invokeScript
+    /// or C# initial script location (script which created SolutionProjectBuilder)
+    /// </summary>
+    /// <returns></returns>
+    public static String getCurrentlyExecutingScriptDirectory()
+    {
+        String dir;
+        if (!String.IsNullOrEmpty(m_currentlyExecutingScriptPath))
+            dir = Path.GetDirectoryName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
+        else
+            // C# script specific
+            dir = SolutionProjectBuilder.m_workPath;
+
+        return dir;
+    }
+
     /// <summary>
     /// Relative directory from solution. Set by RunScript.
     /// </summary>
@@ -371,24 +403,26 @@ public class SolutionProjectBuilder
     /// <summary>
     /// The location function sets the destination directory for a generated solution or project file.
     /// </summary>
-    /// <param name="path"></param>
-    static public void location(String path)
+    /// <param name="_path"></param>
+    static public void location(String _path)
     {
         if (m_project == null)
         {
-            m_workPath = path;
+            setWorkPath(_path);
         }
         else
         {
+            String absPath = _path;
+
+            if (!Path.IsPathRooted(_path))
+                absPath = Path.Combine(m_project.getProjectFolder(), _path);
+
             // Building only project, save current work path as well.
             if (m_project.solution == null)
-                m_workPath = path;
+                setWorkPath(_path);
 
-            String dir = path;
-
-            if (Path.IsPathRooted(dir))
-                dir = Path2.makeRelative(path, m_workPath);
-
+            // Always recalculate relative directory, since it might change if solution is not specified.
+            String dir = Path2.makeRelative(absPath, m_workPath);
             m_project.RelativePath = Path.Combine(dir, m_project.ProjectName);
 
         }
@@ -583,10 +617,7 @@ public class SolutionProjectBuilder
         if (!Path.IsPathRooted(fullPath))
         {
             // By default search from same place where script is.
-            if (!String.IsNullOrEmpty(SolutionProjectBuilder.m_currentlyExecutingScriptPath))
-                dir = Path.GetDirectoryName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
-            else
-                dir = SolutionProjectBuilder.m_workPath;
+            dir = SolutionProjectBuilder.getCurrentlyExecutingScriptDirectory();
 
             fullPath = Path.Combine(dir, path);
         }
@@ -1143,13 +1174,13 @@ public class SolutionProjectBuilder
     {
         if (filePattern.IndexOfAny(new char[] { '*', '?' }) == -1)      // Speed up matching, if no asterisk / widlcard, then it can be simply file path.
         {
-            String path = Path.Combine(_dir, filePattern);
+            String path = Path.Combine(_dir.Replace("/", "\\"), filePattern);
             if (File.Exists(path))
                 return new String[] { filePattern };
             return new String[] { };
         }
 
-        String dir = Path.GetFullPath(_dir);        // Make it absolute, just so we can extract relative path'es later on.
+        String dir = Path.GetFullPath(_dir.Replace("/", "\\"));        // Make it absolute, just so we can extract relative path'es later on.
         String[] pattParts = filePattern.Replace("/", "\\").Split('\\');
         List<String> scanDirs = new List<string>();
         scanDirs.Add(dir);
@@ -1379,13 +1410,12 @@ public class SolutionProjectBuilder
             files(script2include);
             filter("files:" + script2include);
 
-            String scriptDir = Path.GetDirectoryName(m_currentlyExecutingScriptPath);
             String tempLogFile = "$(IntermediateOutputPath)" + Path.GetFileName(script2compile).Replace('.', '_') + "_log.txt";
 
             //
             //  We collect all C# script dependencies and add them as additional inputs.
             //
-            CsScriptInfo csInfo = CsScript.getCsFileInfo( Path.Combine(scriptDir, script2include), false);
+            CsScriptInfo csInfo = CsScript.getCsFileInfo( Path.Combine(inDir, script2include), false);
             String additionalInputs = "";
 
             foreach (String _file in csInfo.csFiles)
@@ -1415,7 +1445,7 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
-    /// Configures project rebuild step. Sets also project generation location into same folder where script resides.
+    /// Configures project rebuild step.
     /// </summary>
     /// <param name="script2include">Script to include into project</param>
     /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
@@ -1423,10 +1453,7 @@ public class SolutionProjectBuilder
     static public void projectScript(String script2include, String script2compile = null, String pathToSyncProjExe = null )
     {
         requireProjectSelected();
-
-        String dir = Path.GetDirectoryName(m_currentlyExecutingScriptPath);
-        location(dir);
-
+        
         selfCompileScript(script2include, script2compile, pathToSyncProjExe, m_project.getProjectFolder());
     }
 

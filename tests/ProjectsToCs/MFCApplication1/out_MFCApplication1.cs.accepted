@@ -40,18 +40,18 @@ class Builder: SolutionProjectBuilder
                 filter (  );
 
                 files( 
-                    "ReadMe.txt",
-                    "MFCApplication1.h",
-                    "MFCApplication1Dlg.h",
-                    "Resource.h",
-                    "stdafx.h",
-                    "targetver.h",
                     "MFCApplication1.cpp",
-                    "MFCApplication1Dlg.cpp",
-                    "stdafx.cpp",
+                    "MFCApplication1.h",
                     "MFCApplication1.rc",
+                    "MFCApplication1Dlg.cpp",
+                    "MFCApplication1Dlg.h",
+                    "ReadMe.txt",
+                    "res/MFCApplication1.ico",
                     "res/MFCApplication1.rc2",
-                    "res/MFCApplication1.ico"
+                    "Resource.h",
+                    "stdafx.cpp",
+                    "stdafx.h",
+                    "targetver.h"
                  );
                 filter (  );
                 pchsource("stdafx.cpp");

@@ -324,13 +324,12 @@ public class CsScript
     /// Scans through C# script and gets additional information about C# script itself, 
     /// like dependent .cs files, and so on.
     /// </summary>
-    /// <param name="csPath">C# script to load & scan</param>
+    /// <param name="csPath">C# script to load and scan</param>
     /// <param name="bUseAbsolutePaths">true if to use absolute paths, false if not</param>
     /// <returns>C# script info</returns>
-    static public CsScriptInfo getCsFileInfo( String _csPath, bool bUseAbsolutePaths )
+    static public CsScriptInfo getCsFileInfo( String csPath, bool bUseAbsolutePaths )
     {
         CsScriptInfo csInfo = new CsScriptInfo();
-        String csPath = Path.GetFullPath(_csPath);
 
         // ----------------------------------------------------------------
         //  Using C# kind of syntax - like this:

@@ -21,7 +21,15 @@
             <param name="args">Main argument parameters</param>
             <returns>true if execution was successful.</returns>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:CsScript.getCsFileInfo(System.String,System.Boolean)" -->
+        <member name="M:CsScript.getCsFileInfo(System.String,System.Boolean)">
+            <summary>
+            Scans through C# script and gets additional information about C# script itself, 
+            like dependent .cs files, and so on.
+            </summary>
+            <param name="csPath">C# script to load and scan</param>
+            <param name="bUseAbsolutePaths">true if to use absolute paths, false if not</param>
+            <returns>C# script info</returns>
+        </member>
         <member name="T:CsScriptInfo">
             <summary>
             Additional info about c# script.
@@ -1229,10 +1237,23 @@
             Path where we are building solution / project at. By default same as script is started from.
             </summary>
         </member>
+        <member name="M:SolutionProjectBuilder.setWorkPath(System.String)">
+            <summary>
+            Sets currently work path (where we are building project / solutions )
+            </summary>
+            <param name="path">Path relative or aboslute</param>
+        </member>
         <member name="F:SolutionProjectBuilder.m_currentlyExecutingScriptPath">
             <summary>
             Full path from where current execution proceeds (location of .cs script)
             </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.getCurrentlyExecutingScriptDirectory">
+            <summary>
+            Gets directory under which script is currently executing. This is either determined from script executed by invokeScript
+            or C# initial script location (script which created SolutionProjectBuilder)
+            </summary>
+            <returns></returns>
         </member>
         <member name="F:SolutionProjectBuilder.m_scriptRelativeDir">
             <summary>
@@ -1310,7 +1331,7 @@
             <summary>
             The location function sets the destination directory for a generated solution or project file.
             </summary>
-            <param name="path"></param>
+            <param name="_path"></param>
         </member>
         <member name="M:SolutionProjectBuilder.setLocationFromScriptPath(System.String)">
             <summary>
@@ -1554,7 +1575,7 @@
         </member>
         <member name="M:SolutionProjectBuilder.projectScript(System.String,System.String,System.String)">
             <summary>
-            Configures project rebuild step. Sets also project generation location into same folder where script resides.
+            Configures project rebuild step.
             </summary>
             <param name="script2include">Script to include into project</param>
             <param name="script2compile">Script which shall be compiled once script2include is changed</param>
