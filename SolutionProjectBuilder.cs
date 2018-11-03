@@ -1184,6 +1184,9 @@ public class SolutionProjectBuilder
                 
                 continue;
             }
+
+            if (bIsLast)
+                pattern += "$";     // String must end, otherwise don't match. *.h matches .h files, but not ".h.in" and other files
                 
             Regex re = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
             int nScanItems = scanDirs.Count;
