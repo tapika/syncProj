@@ -1169,6 +1169,12 @@
             </summary>
             <param name="path"></param>
         </member>
+        <member name="M:SolutionProjectBuilder.setLocationFromScriptPath(System.String)">
+            <summary>
+            Sets project / solution generate location to be the same as script current location
+            </summary>
+            <param name="subDir">Additional sub-directory if any</param>
+        </member>
         <member name="M:SolutionProjectBuilder.uuid(System.String)">
             <summary>
             Specifies project uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")

@@ -1288,7 +1288,7 @@ public class FileSpecificException : Exception2
 
 
 
-class Path2
+public class Path2
 {
     /// <summary>
     /// Gets source code full path of script, executing given function.

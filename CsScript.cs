@@ -380,7 +380,7 @@ public class CsScript
                         fileFullPath = Path.Combine(Path.GetDirectoryName(csPath), file);
 
                     if (!File.Exists(fileFullPath))
-                        throw new FileSpecificException("Include file specified in '" + fileFullPath + "' was not found (Specified from '" + csPath + "')", csPath, iLine);
+                        throw new FileSpecificException("Include file specified in '" + fileFullPath + "' was not found (Included from '" + csPath + "')", csPath, iLine);
 
                     if( bUseAbsolutePaths )
                         csInfo.csFiles.Add(fileFullPath);

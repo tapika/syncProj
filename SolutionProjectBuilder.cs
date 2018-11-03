@@ -336,8 +336,26 @@ public class SolutionProjectBuilder
         else
         {
             m_project.RelativePath = Path.Combine(path, m_project.ProjectName);
+
+            // Building only project, save current work path as well.
+            if (m_project.solution == null)
+                m_workPath = path;
         }
     }
+
+    /// <summary>
+    /// Sets project / solution generate location to be the same as script current location
+    /// </summary>
+    /// <param name="subDir">Additional sub-directory if any</param>
+    static public void setLocationFromScriptPath( String subDir = null )
+    {
+        String scriptPath = Path2.GetScriptPath(2 /* 1 - this function, + 1 - One function call back */);
+        String dir = Path.GetDirectoryName(scriptPath);
+        if(subDir != null )
+            dir = Path.Combine(dir, subDir);
+        location(dir);
+    }
+
 
     /// <summary>
     /// Specifies project uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")
