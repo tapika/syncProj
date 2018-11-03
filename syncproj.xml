@@ -207,6 +207,11 @@
             Additional Include Directories, ';' separated list.
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.ShowIncludes">
+            <summary>
+            In windows projects only: Set to true if includes needs to be shown. Used for debug purposes, not loaded by script as configuration parameter.
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.AdditionalDependencies">
             <summary>
             obj / lib files, ';' separated list.
@@ -653,6 +658,11 @@
             gets relative path based on programming language
             </summary>
             <returns></returns>
+        </member>
+        <member name="M:Project.getProjectFolder">
+            <summary>
+            Gets folder where project will be saved in.
+            </summary>
         </member>
         <member name="F:Project.slnConfigurations">
             <summary>
@@ -1145,6 +1155,12 @@
             <param name="outExtension">Output file extension</param>
             <param name="bDoPreprocess">true if you want to preprocess file, false if compile normally, but include only preprocessed output</param>
         </member>
+        <member name="M:SolutionProjectBuilder.showIncludes(System.String[])">
+            <summary>
+            Enables show includes only for specific file.
+            </summary>
+            <param name="fileList">files for which to enable showIncludes.</param>
+        </member>
         <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception,System.String[])">
             <summary>
             Prints more details about given exception. In visual studio format for errors.
@@ -1196,9 +1212,37 @@
             Writes lines to dump into built string.
             </summary>
         </member>
+        <member name="T:UsingSyncProj">
+            <summary>
+            use this class like this:
+            
+                using ( new UsingSyncProj(1) )
+                {
+                    files ...
+                    filter ...
+                    
+                }
+            </summary>
+        </member>
+        <member name="M:UsingSyncProj.#ctor(System.Int32)">
+            <summary>
+            Shifts all callstack frames by N frames.
+            </summary>
+        </member>
+        <member name="M:UsingSyncProj.Dispose">
+            <summary>
+            Restores call stack frame back.
+            </summary>
+        </member>
         <member name="T:Exception2">
             <summary>
             Same as Exception, only we save call stack in here (to be able to report error line later on).
+            </summary>
+        </member>
+        <member name="F:Exception2.shiftCallerFrame">
+            <summary>
+            Global variable for those cases when syncProj uses functions meant for end-users (like files, filter, etc...)
+            To get excepting address correctly.
             </summary>
         </member>
         <member name="M:Exception2.#ctor(System.String,System.Int32)">

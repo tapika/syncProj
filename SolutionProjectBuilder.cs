@@ -823,8 +823,9 @@ public class SolutionProjectBuilder
             if (bExist)
                 continue;
 
-            if (bMandatory && !File.Exists(file))
-                throw new Exception2("File '" + file + "' does not exist." +
+            String fullFilePath = Path.Combine(m_project.getProjectFolder(), file);    
+            if (bMandatory && !File.Exists(fullFilePath))
+                throw new Exception2("File '" + file + "' does not exist.\r\n" +
                     "If file is generated during project build, please mark it as optional with '?' character in front of filename - for example files(\"?temp.txt\") "
                 );
 
@@ -892,21 +893,24 @@ public class SolutionProjectBuilder
         if (script2compile == null)
             script2compile = script2include;
 
-        files(script2include);
-        filter("files:" + script2include);
+        using (new UsingSyncProj(1))
+        {
+            files(script2include);
+            filter("files:" + script2include);
 
-        String scriptDir = Path.Combine(m_workPath, m_scriptRelativeDir);
-        String tempLogFile = "$(IntermediateOutputPath)" + Path.GetFileName(script2compile).Replace('.','_') + "_log.txt";
+            String scriptDir = Path.Combine(m_workPath, m_scriptRelativeDir);
+            String tempLogFile = "$(IntermediateOutputPath)" + Path.GetFileName(script2compile).Replace('.', '_') + "_log.txt";
 
-        buildrule(
-            new CustomBuildRule()
-            {
-                Command = "\"" + pathToSyncProjExe + "\" $(ProjectDir)" + script2compile + "\r\n" + "echo 1>" + tempLogFile,
-                Outputs = tempLogFile,
-                Message = ""
-            }
-        );
-        filter();
+            buildrule(
+                new CustomBuildRule()
+                {
+                    Command = "\"" + pathToSyncProjExe + "\" $(ProjectDir)" + script2compile + "\r\n" + "echo 1>" + tempLogFile,
+                    Outputs = tempLogFile,
+                    Message = ""
+                }
+            );
+            filter();
+        }
     }
 
 
@@ -1132,6 +1136,47 @@ public class SolutionProjectBuilder
         files("?" + file + outExtension);
     } //preprocessFiles
 
+
+    /// <summary>
+    /// Enables show includes only for specific file.
+    /// </summary>
+    /// <param name="fileList">files for which to enable showIncludes.</param>
+    static public void showIncludes(params String[] fileList)
+    {
+        requireProjectSelected();
+
+        using (new UsingSyncProj(1))
+        {
+            foreach (String file in fileList)
+            {
+                // If file already exists in project, we just ignore and continue.
+                FileInfo fi = m_project.files.Where(x => x.relativePath == file).FirstOrDefault();
+                if (fi == null)
+                {
+                    files(file);
+                    fi = m_project.files.Where(x => x.relativePath == file).FirstOrDefault();
+                }
+
+                filter("files:" + file);
+
+                foreach (var conf in getSelectedConfigurations(false))
+                {
+                    if (m_project.Keyword == EKeyword.Win32Proj)
+                    {
+                        conf.ShowIncludes = true;
+                    }
+                    else
+                    {
+                        buildoptions("-M");
+                        objectfilename("");
+                    }
+                }
+            } //foreach
+            
+            filter();
+        } //using
+
+    } //showIncludes
 
     /// <summary>
     /// Prints more details about given exception. In visual studio format for errors.

@@ -213,7 +213,11 @@ public class FileConfigurationInfo
     /// Additional Include Directories, ';' separated list.
     /// </summary>
     public String AdditionalIncludeDirectories = "";
-    public String ShowIncludes;
+    
+    /// <summary>
+    /// In windows projects only: Set to true if includes needs to be shown. Used for debug purposes, not loaded by script as configuration parameter.
+    /// </summary>
+    public bool ShowIncludes = false;
 
     /// <summary>
     /// obj / lib files, ';' separated list.
@@ -920,6 +924,21 @@ public class Project
     } //getRelativePath
 
 
+    /// <summary>
+    /// Gets folder where project will be saved in.
+    /// </summary>
+    public String getProjectFolder()
+    {
+        String dir;
+        if (solution == null)
+            dir = SolutionProjectBuilder.m_workPath;
+        else
+            dir = Path.Combine(Path.GetDirectoryName(solution.path), Path.GetDirectoryName(RelativePath));
+
+        return dir;
+    }
+
+
     public bool IsSubFolder()
     {
         return bIsFolder;
@@ -1049,7 +1068,14 @@ public class Project
             if (subField != null)
                 type = type.GetField(subField).FieldType;       //==typeof(CustomBuildRule)
 
-            FieldInfo fi = type.GetField(fileProps.Name.LocalName);
+            FieldInfo fi = null;
+            String xmlNodeName = fileProps.Name.LocalName;
+
+
+            if (xmlNodeName == "AdditionalOptions")
+                xmlNodeName = "ClCompile_AdditionalOptions";
+
+            fi = type.GetField(xmlNodeName);
             if (fi == null)
             {
                 if (Debugger.IsAttached) Debugger.Break();
@@ -1323,6 +1349,9 @@ public class Project
 
         if (projectConf != null && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
             o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
+
+        if(conf.ShowIncludes)
+            o.AppendLine("      <ShowIncludes" + sCond + ">true</ShowIncludes>");
     } //DumpConfiguration
 
 

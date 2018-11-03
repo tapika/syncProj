@@ -250,7 +250,14 @@ public class SolutionOrProject
         } //for
 
         foreach (var cvpair in configToValue)
-            lines2dump[cvpair.Key].Add(valueToLine(cvpair.Value));
+        {
+            String line = valueToLine(cvpair.Value);
+            
+            if (String.IsNullOrEmpty(line))
+                continue;
+
+            lines2dump[cvpair.Key].Add(line);
+        }
     } //ConfigationSpecificValue
 
 
@@ -649,12 +656,16 @@ public class SolutionOrProject
             ConfigationSpecificValue(proj, configList, "ClCompile_AdditionalOptions", lines2dump, (s) =>
             {
                 s = s.Replace(" %(AdditionalOptions)", "");     // Just a extra garbage we don't want.
+                if (s == "")
+                    return null;
                 return "buildoptions" + brO + "\"" + s + "\"" + brC;
             });
 
             ConfigationSpecificValue(proj, configList, "Link_AdditionalOptions", lines2dump, (s) =>
             {
                 s = s.Replace(" %(AdditionalOptions)", "");     // Just a extra garbage we don't want.
+                if (s == "")
+                    return null;
                 return "linkoptions" + brO + "\"" + s + "\"" + brC;
             });
 
@@ -903,6 +914,40 @@ public class SolutionOrProject
 }
 
 /// <summary>
+/// use this class like this:
+/// 
+///     using ( new UsingSyncProj(1) )
+///     {
+///         files ...
+///         filter ...
+///         
+///     }
+/// </summary>
+public class UsingSyncProj : IDisposable
+{
+    int shiftCallerFrame;
+    
+    /// <summary>
+    /// Shifts all callstack frames by N frames.
+    /// </summary>
+    public UsingSyncProj(int _shiftCallerFrame)
+    {
+        shiftCallerFrame = _shiftCallerFrame;
+        Exception2.shiftCallerFrame += shiftCallerFrame;
+    }
+
+    /// <summary>
+    /// Restores call stack frame back.
+    /// </summary>
+    public void Dispose()
+    {
+        Exception2.shiftCallerFrame -= shiftCallerFrame;
+    }
+};
+
+
+
+/// <summary>
 /// Same as Exception, only we save call stack in here (to be able to report error line later on).
 /// </summary>
 public class Exception2 : Exception
@@ -910,6 +955,11 @@ public class Exception2 : Exception
     StackTrace strace;
     String msg;
     int nCallerFrame = 0;
+    /// <summary>
+    /// Global variable for those cases when syncProj uses functions meant for end-users (like files, filter, etc...)
+    /// To get excepting address correctly.
+    /// </summary>
+    public static int shiftCallerFrame = 0;
 
     /// <summary>
     /// Creates new exception with stack trace from where exception was thrown.
@@ -920,7 +970,7 @@ public class Exception2 : Exception
     {
         msg = _msg;
         strace = new StackTrace(true);
-        nCallerFrame = callerFrame;
+        nCallerFrame = callerFrame + shiftCallerFrame;
     }
 
     /// <summary>
