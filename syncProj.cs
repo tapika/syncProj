@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -11,6 +11,7 @@ using System.Xml.Serialization;
 using System.Xml.Linq;
 using System.Collections;
 using System.Reflection;
+using System.Security.Cryptography;
 
 public enum PrecompiledHeaderUse
 {
@@ -125,7 +126,35 @@ public class CustomBuildToolProperties
 [DebuggerDisplay("{ProjectName}, {RelativePath}, {ProjectGuid}")]
 public class Project
 {
-    public string ParentProjectGuid;
+    /// <summary>
+    /// true if it's folder (in solution), false if it's project. (default)
+    /// </summary>
+    public bool bIsFolder = false;
+
+
+    /// <summary>
+    /// Made as a property so can be set over reflection.
+    /// </summary>
+    public String ProjectHostGuid
+    { 
+        get
+        {
+            if (bIsFolder)
+                return "{2150E333-8FDC-42A3-9474-1A3956D46DE8}";
+            else
+                return "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}";
+        }
+        set
+        {
+            switch (value)
+            {
+                case "{2150E333-8FDC-42A3-9474-1A3956D46DE8}": bIsFolder = true; break;
+                case "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}": bIsFolder = false; break;
+                default:
+                    throw new Exception2("Invalid project host guid '" + value + "'");
+            }
+        }
+    }
 
     public String Keyword;
     
@@ -136,12 +165,32 @@ public class Project
 
     public string ProjectName;
     public string RelativePath;
+    public string language;                             // if null - RelativePath includes file extension, if non-null - "C++" or "C#" - defines project file extension.
+
+    /// <summary>
+    /// gets relative path based on programming language
+    /// </summary>
+    /// <returns></returns>
+    public String getRelativePath()
+    {
+        String path = RelativePath.Replace("/", "\\");
+
+        if (language != null)
+        {
+            switch (language)
+            {
+                case "C++": return path + ".vcxproj";
+                case "C#": return path + ".csproj";
+            }
+        }
+    
+        return path;    
+    }
+
 
     public bool IsSubFolder()
     {
-        // Currently made it like this - is there any other way to detect this ?
-        bool b = ProjectName == RelativePath;
-        return b;
+        return bIsFolder;
     }
 
 
@@ -159,12 +208,12 @@ public class Project
     /// <summary>
     /// true or false whether to build project or not.
     /// </summary>
-    public List<bool> build = new List<bool>();
+    public List<bool> slnBuildProject = new List<bool>();
 
     /// <summary>
     /// true to deploy project, false - not, null - invalid. List is null if not used at all.
     /// </summary>
-    public List<bool?> deploy = null;
+    public List<bool?> slnDeployProject = null;
 
     /// <summary>
     /// Project guid, for example "{65787061-7400-0000-0000-000000000000}"
@@ -172,7 +221,7 @@ public class Project
     public string ProjectGuid;
 
     /// <summary>
-    /// Project dependent guids.
+    /// Project dependent guids. Set to null if not used.
     /// </summary>
     public List<String> ProjectDependencies { get; set; }
 
@@ -185,7 +234,7 @@ public class Project
 
     public string AsSlnString()
     {
-        return "Project(\"" + ParentProjectGuid + "\") = \"" + ProjectName + "\", \"" + RelativePath + "\", \"" + ProjectGuid + "\"";
+        return "Project(\"" + ((bIsFolder) ? "Folder":"Project") + "\") = \"" + ProjectName + "\", \"" + RelativePath + "\", \"" + ProjectGuid + "\"";
     }
 
     static String[] RegexExract(String pattern, String input)
@@ -370,7 +419,24 @@ public class Solution
     public String MinimumVisualStudioVersion;           // null for old visual studio's
     
     public List<Project> projects = new List<Project>();
+    
+    /// <summary>
+    /// List of configuration list, in form "{Configuration}|{Platform}", for example "Release|Win32".
+    /// To extract individual platforms / configuration list, use following functions.
+    /// </summary>
     public List<String> configurations = new List<string>();
+
+    public IEnumerable<String> getPlatforms()
+    { 
+        return configurations.Select(x => "\"" + x.Split('|')[0]).Distinct();
+    }
+
+    public IEnumerable<String> getConfigurations()
+    {
+        return configurations.Select(x => "\"" + x.Split('|')[1]).Distinct();
+    }
+
+
 
     public Solution() { }
 
@@ -397,7 +463,7 @@ public class Solution
         }
 
         Regex reProjects = new Regex(
-            "Project\\(\"(?<ParentProjectGuid>{[A-F0-9-]+})\"\\) = \"(?<ProjectName>.*?)\", \"(?<RelativePath>.*?)\", \"(?<ProjectGuid>{[A-F0-9-]+})\"[\r\n]*(?<dependencies>.*?)EndProject[\r\n]+", 
+            "Project\\(\"(?<ProjectHostGuid>{[A-F0-9-]+})\"\\) = \"(?<ProjectName>.*?)\", \"(?<RelativePath>.*?)\", \"(?<ProjectGuid>{[A-F0-9-]+})\"[\r\n]*(?<dependencies>.*?)EndProject[\r\n]+", 
             RegexOptions.Singleline);
 
         
@@ -410,10 +476,21 @@ public class Solution
                     if (g == "0")   //"0" - RegEx special kind of group
                         continue;
 
+                    //
+                    // ProjectHostGuid, ProjectName, RelativePath, ProjectGuid fields/properties are set here.
+                    //
                     String v = m.Groups[g].ToString();
                     if (g != "dependencies")
-                    { 
-                        p.GetType().GetField(g).SetValue(p, v);
+                    {
+                        FieldInfo fi = p.GetType().GetField(g);
+                        if (fi != null)
+                        {
+                            fi.SetValue(p, v);
+                        }
+                        else
+                        {
+                            p.GetType().GetProperty(g).SetValue(p, v);
+                        }
                         continue;
                     }
 
@@ -462,7 +539,7 @@ public class Solution
                 while (p.slnConfigurations.Count < s.configurations.Count)
                 {
                     p.slnConfigurations.Add(null);
-                    p.build.Add(false);
+                    p.slnBuildProject.Add(false);
                 }
 
                 if (action == "ActiveCfg")
@@ -473,18 +550,18 @@ public class Solution
                 {
                     if (action.StartsWith("Build"))
                     {
-                        p.build[iConfigIndex] = true;
+                        p.slnBuildProject[iConfigIndex] = true;
                     }
                     else
                     {
                         if (action.StartsWith("Deploy"))
                         {
-                            if (p.deploy == null) p.deploy = new List<bool?>();
+                            if (p.slnDeployProject == null) p.slnDeployProject = new List<bool?>();
 
-                            while (p.deploy.Count < s.configurations.Count)
-                                p.deploy.Add(null);
+                            while (p.slnDeployProject.Count < s.configurations.Count)
+                                p.slnDeployProject.Add(null);
 
-                            p.deploy[iConfigIndex] = true;
+                            p.slnDeployProject[iConfigIndex] = true;
                         }
                     }
                 } //if-esle
@@ -575,20 +652,55 @@ public class SolutionOrProject
     }
 
     /// <summary>
-    /// Builds solution or project .lua script.
+    /// Builds solution or project .lua/.cs scripts
     /// </summary>
     /// <param name="format">lua or cs</param>
-    public void UpdateProjectScript(String format)
+    /// <param name="outFile">Output filename without extension</param>
+    public void UpdateProjectScript(String outFile, String format)
     {
-        String fileName = Path.GetFileNameWithoutExtension(path);
+        bool bCsScript = (format == "cs");
+        String brO = " ", brC = "";
+        String arO = " { ", arC = " }";
+        String head = "";
+        if (bCsScript)
+        {
+            brO = "("; brC = ");";
+            arO = "( "; arC = " );";
+            head = "    ";
+        }
+
+        String fileName = outFile;
+        if( fileName == null ) fileName = Path.GetFileNameWithoutExtension(path);
+        
         String outPath = Path.Combine(Path.GetDirectoryName(path), fileName + "." + format);
+
+        Console.WriteLine("- Updating '" + fileName + "." + format + "...");
         StringBuilder o = new StringBuilder();
+
+        //
+        // C# script header
+        //
+        if (bCsScript)
+        {
+            o.AppendLine("//css_ref " +
+                Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(path)));
+            o.AppendLine("using System;         //Exception");
+            o.AppendLine();
+            o.AppendLine("class Script: SolutionProjectBuilder");
+            o.AppendLine("{");
+            o.AppendLine();
+            o.AppendLine("  static void Main()");
+            o.AppendLine("  {");
+            o.AppendLine();
+            o.AppendLine("    try {");
+        }
+
         o.AppendLine("");
-        o.AppendLine("solution \"" + fileName + "\"");
+        o.AppendLine(head + "solution" + brO + "\"" + fileName + "\"" + brC);
 
         Solution sln = solutionOrProject as Solution;
-        o.AppendLine("    configurations { " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + " }");
-        o.AppendLine("    platforms { " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + " }");
+        o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
+        o.AppendLine(head + "    platforms" + arO + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
 
         String wasInSubGroup = "";
         List<String> groupParts = new List<string>();
@@ -608,7 +720,7 @@ public class SolutionOrProject
             if (wasInSubGroup != newGroup)
             {
                 o.AppendLine();
-                o.AppendLine("    group \"" + newGroup + "\"");
+                o.AppendLine(head + "    group" + brO + "\"" + newGroup + "\"" + brC);
             }
             wasInSubGroup = newGroup;
 
@@ -616,11 +728,11 @@ public class SolutionOrProject
             String name = Path.GetFileNameWithoutExtension(p.RelativePath);
             String dir = Path.GetDirectoryName(p.RelativePath);
             o.AppendLine();
-            o.AppendLine("    externalproject \"" + name + "\"");
-            o.AppendLine("        location \"" + dir.Replace("\\", "/") + "\"");
-            o.AppendLine("        uuid \"" + p.ProjectGuid.Substring(1, p.ProjectGuid.Length-2) + "\"");
-            o.AppendLine("        language \"C++\"");
-            o.AppendLine("        kind \"SharedLib\"");
+            o.AppendLine(head + "    externalproject" + brO + "\"" + name + "\"" + brC);
+            o.AppendLine(head + "        location" + brO + "\"" + dir.Replace("\\", "/") + "\"" + brC);
+            o.AppendLine(head + "        uuid" + brO + "\"" + p.ProjectGuid.Substring(1, p.ProjectGuid.Length-2) + "\"" + brC);
+            o.AppendLine(head + "        language" + brO + "\"C++\"" + brC);
+            o.AppendLine(head + "        kind" + brO + "\"SharedLib\"" + brC);
 
             //
             // Define dependencies of project.
@@ -635,15 +747,53 @@ public class SolutionOrProject
                     if (depp == null)
                         continue;
 
-                    o.AppendLine("        dependson \"" + depp.ProjectName + "\"");
+                    o.AppendLine(head + "        dependson" + brO + "\"" + depp.ProjectName + "\"" + brC);
                 } //foreach
             } //if
         } //foreach
+        
         o.AppendLine();
+        //
+        // C# script trailer
+        //
+        if (bCsScript)
+        { 
+            o.AppendLine("    } catch( Exception ex )");
+            o.AppendLine("    {");
+            o.AppendLine("        ConsolePrintException(ex);");
+            o.AppendLine("    }");
+            o.AppendLine("  } //Main");
+            o.AppendLine("}; //class Script");
+            o.AppendLine();
+        }
 
         File.WriteAllText(outPath, o.ToString());
     } //UpdateProjectScript
 }
+
+/// <summary>
+/// Same as Exception, only we save call stack in here (to be able to report error line later on).
+/// </summary>
+public class Exception2 : Exception
+{
+    public StackTrace strace;
+    String msg;
+
+    public Exception2( String _msg )
+    {
+        msg = _msg;
+        strace = new StackTrace(true);
+    }
+
+    public override string Message
+    {
+        get
+        {
+            return msg;
+        }
+    }
+};
+
 
 /// <summary>
 /// Helper class for generating solution or projects.
@@ -653,22 +803,165 @@ public class SolutionProjectBuilder
     static Solution m_solution = null;
     static Project  m_project = null;
     static String   m_solutionDir;         // Path where we are building solution / project at. By default same as script is started from.
-    static String[] m_platforms;
-    static String[] m_configurations;
+    static List<String> m_platforms = new List<String>();
+    static List<String> m_configurations = new List<String>();
+    static Project m_solutionRoot = new Project();
+    static String m_groupPath = "";
     private static readonly Destructor Finalise = new Destructor();
 
     static SolutionProjectBuilder()
     {
-        m_solutionDir = Path.GetDirectoryName(GetScriptPath(3));
+        m_solutionDir = Path.GetDirectoryName(Path2.GetScriptPath(3));
         //Console.WriteLine(buildDir);
     }
 
+    /// <summary>
+    /// Execute once for each script using SolutionProjectBuilder class.
+    /// </summary>
     private sealed class Destructor
     {
         ~Destructor()
         {
-            //Console.WriteLine("shutdown");
-            externalproject(null);
+            try
+            {
+                externalproject(null);
+
+                String slnPath = m_solution.path;
+                Console.Write("Writing solution '" + slnPath + "' ... ");
+                StringBuilder o = new StringBuilder();
+
+                o.AppendLine();
+                // For now hardcoded for vs2013, get rid of this hardcoding later on.
+                o.AppendLine("Microsoft Visual Studio Solution File, Format Version 12.00");
+                o.AppendLine("# Visual Studio 2013");
+                //o.AppendLine("VisualStudioVersion = 12.0.30501.0");
+                //o.AppendLine("MinimumVisualStudioVersion = 10.0.40219.1");
+
+                //
+                // Dump projects.
+                //
+                foreach (Project p in m_solution.projects)
+                {
+                    o.AppendLine("Project(\"" + p.ProjectHostGuid + "\") = \"" + p.ProjectName + "\", \"" + p.getRelativePath() + "\", \"" + p.ProjectGuid + "\"");
+
+                    //
+                    // Dump project dependencies.
+                    //
+                    if (p.ProjectDependencies != null)
+                    {
+                        o.AppendLine("	ProjectSection(ProjectDependencies) = postProject");
+                        foreach (String depProjName in p.ProjectDependencies)
+                        {
+                            Project dproj = m_solution.projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
+                            if (dproj != null)
+                                o.AppendLine("		" + dproj.ProjectGuid + " = " + dproj.ProjectGuid);
+                        }
+                        o.AppendLine("	EndProjectSection");
+                    } //if
+
+                    o.AppendLine("EndProject");
+                }
+
+                //
+                // Dump configurations.
+                //
+                o.AppendLine("Global");
+                o.AppendLine("	GlobalSection(SolutionConfigurationPlatforms) = preSolution");
+                foreach (String cfg in m_solution.configurations)
+                {
+                    o.AppendLine("		" + cfg + " = " + cfg);
+                }
+                o.AppendLine("	EndGlobalSection");
+
+
+                //
+                // Dump solution to project configuration mapping and whether or not to build specific project.
+                //
+                o.AppendLine("	GlobalSection(ProjectConfigurationPlatforms) = postSolution");
+                foreach (Project p in m_solution.projects)
+                {
+                    for( int iConf = 0; iConf < m_solution.configurations.Count; iConf++)
+                    {
+                        String conf = m_solution.configurations[iConf];
+                        String mappedConf = conf;
+
+                        if (p.slnConfigurations != null && iConf < p.slnConfigurations.Count)
+                            mappedConf = p.slnConfigurations[iConf];
+
+                        bool bPeformBuild = true;
+
+                        if (p.slnBuildProject != null && iConf < p.slnBuildProject.Count)
+                            bPeformBuild = p.slnBuildProject[iConf];
+
+
+                        o.AppendLine("		" + p.ProjectGuid + "." + conf + ".ActiveCfg = " + mappedConf);
+                        if(bPeformBuild)
+                            o.AppendLine("		" + p.ProjectGuid + "." + conf + ".Build.0 = " + mappedConf);
+                        
+                    } //for
+                } //foreach
+                o.AppendLine("	EndGlobalSection");
+                o.AppendLine("	GlobalSection(SolutionProperties) = preSolution");
+                o.AppendLine("		HideSolutionNode = FALSE");
+                o.AppendLine("	EndGlobalSection");
+
+                //
+                // Dump project dependency hierarchy.
+                //
+                Project root = m_solution.projects.FirstOrDefault();
+
+                if (root != null)
+                {
+                    while (root.parent != null) root = root.parent;
+                    o.AppendLine("	GlobalSection(NestedProjects) = preSolution");
+
+                    //
+                    // Flatten tree without recursion.
+                    //
+                    int treeIndex = 0;
+                    List<Project> projects2 = new List<Project>();
+                    projects2.AddRange(root.nodes);
+
+                    for (; treeIndex < projects2.Count; treeIndex++)
+                    {
+                        if (projects2[treeIndex].nodes.Count == 0)
+                            continue;
+                        projects2.AddRange(projects2[treeIndex].nodes);
+                    }
+
+                    foreach (Project p in projects2)
+                    {
+                        if (p.parent.parent == null)
+                            continue;
+                        o.AppendLine("		" + p.ProjectGuid + " = " + p.parent.ProjectGuid);
+                    }
+                    
+                    o.AppendLine("	EndGlobalSection");
+                } //if
+
+                o.AppendLine("EndGlobal");
+
+                String currentSln = "";
+                if( File.Exists(slnPath) ) currentSln = File.ReadAllText(slnPath);
+                
+                String newSln = o.ToString().Replace("\r\n", "\n");
+                //
+                // Save only if needed.
+                //
+                if (currentSln == newSln)
+                {
+                    Console.WriteLine("up-to-date.");
+                }
+                else
+                {
+                    File.WriteAllText(slnPath, newSln, Encoding.UTF8);
+                    Console.WriteLine("ok.");
+                } //if-else
+            }
+            catch (Exception ex)
+            {
+                ConsolePrintException(ex);
+            }
         }
     }
 
@@ -684,6 +977,14 @@ public class SolutionProjectBuilder
             m_solution.path += ".sln";
     }
 
+
+    static void generateConfigurations()
+    {
+        foreach (String platform in m_platforms)
+            foreach (String configuration in m_configurations)
+                m_solution.configurations.Add(configuration + "|" + platform);
+    }
+
     /// <summary>
     /// Specify platform list to be used for your solution or project.
     ///     For example: platforms("x32", "x64");
@@ -691,7 +992,8 @@ public class SolutionProjectBuilder
     /// <param name="platformList">List of platforms to support</param>
     static public void platforms( params String[] platformList )
     {
-        m_platforms = platformList;
+        m_platforms = m_platforms.Concat(platformList).Distinct().ToList();
+        generateConfigurations();
     }
 
     /// <summary>
@@ -700,8 +1002,43 @@ public class SolutionProjectBuilder
     /// <param name="configurationList">Configuration list to support</param>
     static public void configurations(params String[] configurationList )
     {
-        m_configurations = configurationList;
+        m_configurations = m_configurations.Concat(configurationList).Distinct().ToList();
+        generateConfigurations();
     }
+
+
+    /// <summary>
+    /// Generates Guid based on String. Key assumption for this algorithm is that name is unique (across where it it's being used)
+    /// and if name byte length is less than 16 - it will be fetched directly into guid, if over 16 bytes - then we compute sha-1
+    /// hash from string and then pass it to guid.
+    /// </summary>
+    /// <param name="name">Unique name which is unique across where this guid will be used.</param>
+    /// <returns>For example "{706C7567-696E-7300-0000-000000000000}" for "plugins"</returns>
+    static public String GenerateGuid(String name)
+    {
+        byte[] buf = Encoding.UTF8.GetBytes(name);
+        byte[] guid = new byte[16];
+        if (buf.Length < 16)
+        {
+            Array.Copy(buf, guid, buf.Length);
+        }
+        else
+        {
+            using (SHA1 sha1 = SHA1.Create())
+            {
+                byte[] hash = sha1.ComputeHash(buf);
+                // Hash is 20 bytes, but we need 16. We loose some of "uniqueness", but I doubt it will be fatal
+                Array.Copy(hash, guid, 16);
+            }
+        }
+
+        // Don't use Guid constructor, it tends to swap bytes. We want to preserve original string as hex dump.
+        String guidS = "{" + String.Format("{0:X2}{1:X2}{2:X2}{3:X2}-{4:X2}{5:X2}-{6:X2}{7:X2}-{8:X2}{9:X2}-{10:X2}{11:X2}{12:X2}{13:X2}{14:X2}{15:X2}", 
+            guid[0], guid[1], guid[2], guid[3], guid[4], guid[5], guid[6], guid[7], guid[8], guid[9], guid[10], guid[11], guid[12], guid[13], guid[14], guid[15]) + "}";
+
+        return guidS;
+    }
+
 
     /// <summary>
     /// Add to solution reference to external project
@@ -717,6 +1054,27 @@ public class SolutionProjectBuilder
 
         m_project = new Project();
         m_project.ProjectName = name;
+
+        Project parent = m_solutionRoot;
+        String pathSoFar = "";
+
+        foreach (String pathPart in m_groupPath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            Project p = parent.nodes.Where(x => x.ProjectName == pathPart && x.RelativePath == pathPart).FirstOrDefault();
+            pathSoFar = pathSoFar + ((pathSoFar.Length != 0) ? "/" : "") + pathPart;
+            if (p == null)
+            {
+                p = new Project() { ProjectName = pathPart, RelativePath = pathPart, ProjectGuid = GenerateGuid(pathSoFar), bIsFolder = true };
+                m_solution.projects.Add(p);
+                parent.nodes.Add(p);
+                p.parent = parent;
+            }
+            
+            parent = p;
+        }
+
+        parent.nodes.Add(m_project);
+        m_project.parent = parent;
     }
 
     /// <summary>
@@ -738,13 +1096,83 @@ public class SolutionProjectBuilder
     { 
     }
 
+    /// <summary>
+    /// Specifies project uuid.
+    /// </summary>
+    /// <param name="uuid"></param>
     static public void uuid(String uuid)
     {
+        if (m_project == null)
+            throw new Exception2("Cannot specify uuid - no project selected");
+
+        Guid guid;
+        if( !Guid.TryParse(uuid, out guid) )
+            throw new Exception2("Invalid uuid value '" + uuid + "'");
+
+        m_project.ProjectGuid = "{" + uuid + "}";
     }
 
+    /// <summary>
+    /// Sets project programming language (reflects to used project extension)
+    /// </summary>
+    /// <param name="lang"></param>
+    static public void language(String lang)
+    {
+        if (m_project == null)
+            throw new Exception2("Project not selected");
 
+        switch (lang)
+        {
+            case "C++": m_project.language = lang; break;
+            case "C#": m_project.language = lang; break;
+            default:
+                throw new Exception2("Language '" + lang + "' is not supported");
+        } //switch
+    }
 
-    static String GetScriptPath(int iFrame = 0)
+    static public void dependson(String projectName)
+    {
+        if (m_project.ProjectDependencies == null)
+            m_project.ProjectDependencies = new List<string>();
+
+        m_project.ProjectDependencies.Add(projectName);
+    }
+
+    /// <summary>
+    /// Sets current "directory" where project should be placed.
+    /// </summary>
+    /// <param name="groupPath"></param>
+    static public void group(String groupPath)
+    {
+        m_groupPath = groupPath;
+    }
+
+    /// <summary>
+    /// Prints more details about given exception. In visual studio format for errors.
+    /// </summary>
+    /// <param name="ex">Exception occurred.</param>
+    static public void ConsolePrintException(Exception ex)
+    {
+        Exception2 ex2 = ex as Exception2;
+        String fromWhere = "";
+        if (ex2 != null)
+        {
+            StackFrame f = ex2.strace.GetFrame(ex2.strace.FrameCount - 1);
+            fromWhere = f.GetFileName() + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
+        }
+        
+        Console.WriteLine(fromWhere + "error: " + ex.Message);
+        Console.WriteLine();
+        Console.WriteLine("----------------------- Full call stack trace follows -----------------------");
+        Console.WriteLine();
+        Console.WriteLine(ex.StackTrace);
+        Console.WriteLine();
+    }
+};
+
+class Path2
+{
+    public static String GetScriptPath(int iFrame = 0)
     {
         string fileName = new System.Diagnostics.StackTrace(true).GetFrame(iFrame).GetFileName();
         //
@@ -759,21 +1187,44 @@ public class SolutionProjectBuilder
         return fileName;
     }
 
-};
+    /// <summary>
+    /// Rebases file with path fromPath to folder with baseDir.
+    /// </summary>
+    /// <param name="fromPath">Full file path (absolute)</param>
+    /// <param name="baseDir">Full base directory path (absolute)</param>
+    /// <returns>Relative path to file in respect of baseDir</returns>
+    static public String makeRelative(String fromPath, String baseDir)
+    {
+        String pathSep = "\\";
+        String[] p1 = Regex.Split(fromPath, "[\\\\/]").Where(x => x.Length != 0).ToArray();
+        String[] p2 = Regex.Split(baseDir, "[\\\\/]").Where(x => x.Length != 0).ToArray();
+        int i = 0;
 
+        for (; i < p1.Length && i < p2.Length; i++)
+            if (String.Compare(p1[i], p2[i], true) != 0)    // Case insensitive match
+                break;
+
+        String r = String.Join(pathSep, Enumerable.Repeat("..", p2.Length - i).Concat(p1.Skip(i).Take(p1.Length - i)));
+        return r;
+    }
+};
 
 
 class Script
 {
+
     static int Main(String[] args)
     {
         try
         {
             String slnFile = null;
-            String format = null;
+            List<String> formats = new List<string>();
+            String outFile = null;
 
-            foreach (String arg in args)
+            for( int i = 0; i < args.Length; i++ )
             {
+                String arg = args[i];
+
                 if (!(arg.StartsWith("-") || arg.StartsWith("/")))
                 {
                     slnFile = arg;
@@ -782,17 +1233,20 @@ class Script
 
                 switch (arg.Substring(1).ToLower())
                 {
-                    case "lua": format = "lua"; break;
-                    case "cs": format = "cs"; break;
+                    case "lua": formats.Add("lua"); break;
+                    case "cs": formats.Add("cs"); break;
+                    case "o": i++;  outFile = args[i]; break;
                 }
             } //foreach
 
-            if (slnFile == null || format == null)
+            if (slnFile == null || formats.Count == 0)
             {
-                Console.WriteLine("Usage: syncProj <.sln or .vcxproj file> (-lua|-cs)");
+                Console.WriteLine("Usage: syncProj <.sln or .vcxproj file> (-lua|-cs) [-o file]");
                 Console.WriteLine("");
                 Console.WriteLine(" -cs     - C# script output");
                 Console.WriteLine(" -lua    - premake5's lua script output");
+                Console.WriteLine("");
+                Console.WriteLine(" -o      - sets output file (without extension)");
                 Console.WriteLine("");
                 return -2;
             }
@@ -817,7 +1271,8 @@ class Script
             }
 
             proj.SaveCache(projCacheFile);
-            proj.UpdateProjectScript(format);
+            foreach ( String format in formats )
+                proj.UpdateProjectScript(outFile, format);
         }
         catch (Exception ex)
         {

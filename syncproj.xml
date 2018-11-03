@@ -84,6 +84,22 @@
             Visual studio: additional dependencies
             </summary>
         </member>
+        <member name="F:Project.bIsFolder">
+            <summary>
+            true if it's folder (in solution), false if it's project. (default)
+            </summary>
+        </member>
+        <member name="P:Project.ProjectHostGuid">
+            <summary>
+            Made as a property so can be set over reflection.
+            </summary>
+        </member>
+        <member name="M:Project.getRelativePath">
+            <summary>
+            gets relative path based on programming language
+            </summary>
+            <returns></returns>
+        </member>
         <member name="F:Project.slnConfigurations">
             <summary>
             Same amount of configurations as in solution, this however lists project configurations, which correspond to solution configuration
@@ -95,12 +111,12 @@
             List of supported configuration|platform permutations, like "Debug|Win32", "Debug|x64" and so on.
             </summary>
         </member>
-        <member name="F:Project.build">
+        <member name="F:Project.slnBuildProject">
             <summary>
             true or false whether to build project or not.
             </summary>
         </member>
-        <member name="F:Project.deploy">
+        <member name="F:Project.slnDeployProject">
             <summary>
             true to deploy project, false - not, null - invalid. List is null if not used at all.
             </summary>
@@ -112,7 +128,7 @@
         </member>
         <member name="P:Project.ProjectDependencies">
             <summary>
-            Project dependent guids.
+            Project dependent guids. Set to null if not used.
             </summary>
         </member>
         <member name="F:Project.files">
@@ -145,6 +161,12 @@
             .sln loaded into class.
             </summary>
         </member>
+        <member name="F:Solution.configurations">
+            <summary>
+            List of configuration list, in form "{Configuration}|{Platform}", for example "Release|Win32".
+            To extract individual platforms / configuration list, use following functions.
+            </summary>
+        </member>
         <member name="M:Solution.LoadSolution(System.String)">
             <summary>
             Loads visual studio .sln solution
@@ -156,15 +178,26 @@
             Let's make system flexible enough that we can load projects and solutions independently of file format.
             </summary>
         </member>
-        <member name="M:SolutionOrProject.UpdateProjectScript(System.String)">
+        <member name="M:SolutionOrProject.UpdateProjectScript(System.String,System.String)">
             <summary>
-            Builds solution or project .lua script.
+            Builds solution or project .lua/.cs scripts
             </summary>
             <param name="format">lua or cs</param>
+            <param name="outFile">Output filename without extension</param>
+        </member>
+        <member name="T:Exception2">
+            <summary>
+            Same as Exception, only we save call stack in here (to be able to report error line later on).
+            </summary>
         </member>
         <member name="T:SolutionProjectBuilder">
             <summary>
             Helper class for generating solution or projects.
+            </summary>
+        </member>
+        <member name="T:SolutionProjectBuilder.Destructor">
+            <summary>
+            Execute once for each script using SolutionProjectBuilder class.
             </summary>
         </member>
         <member name="M:SolutionProjectBuilder.solution(System.String)">
@@ -186,6 +219,15 @@
             </summary>
             <param name="configurationList">Configuration list to support</param>
         </member>
+        <member name="M:SolutionProjectBuilder.GenerateGuid(System.String)">
+            <summary>
+            Generates Guid based on String. Key assumption for this algorithm is that name is unique (across where it it's being used)
+            and if name byte length is less than 16 - it will be fetched directly into guid, if over 16 bytes - then we compute sha-1
+            hash from string and then pass it to guid.
+            </summary>
+            <param name="name">Unique name which is unique across where this guid will be used.</param>
+            <returns>For example "{706C7567-696E-7300-0000-000000000000}" for "plugins"</returns>
+        </member>
         <member name="M:SolutionProjectBuilder.externalproject(System.String)">
             <summary>
             Add to solution reference to external project
@@ -197,6 +239,38 @@
             The location function sets the destination directory for a generated solution or project file.
             </summary>
             <param name="path"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.uuid(System.String)">
+            <summary>
+            Specifies project uuid.
+            </summary>
+            <param name="uuid"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.language(System.String)">
+            <summary>
+            Sets project programming language (reflects to used project extension)
+            </summary>
+            <param name="lang"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.group(System.String)">
+            <summary>
+            Sets current "directory" where project should be placed.
+            </summary>
+            <param name="groupPath"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception)">
+            <summary>
+            Prints more details about given exception. In visual studio format for errors.
+            </summary>
+            <param name="ex">Exception occurred.</param>
+        </member>
+        <member name="M:Path2.makeRelative(System.String,System.String)">
+            <summary>
+            Rebases file with path fromPath to folder with baseDir.
+            </summary>
+            <param name="fromPath">Full file path (absolute)</param>
+            <param name="baseDir">Full base directory path (absolute)</param>
+            <returns>Relative path to file in respect of baseDir</returns>
         </member>
     </members>
 </doc>
