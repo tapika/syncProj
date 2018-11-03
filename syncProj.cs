@@ -1608,7 +1608,6 @@ public partial class syncProj
             }
 
             SolutionOrProject proj = new SolutionOrProject(inFile);
-            SolutionOrProject projCache;
 
             Solution s = proj.solutionOrProject as Solution;
             if (s != null && bProcessProjects)
