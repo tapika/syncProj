@@ -440,38 +440,77 @@ public class SolutionProjectBuilder
     /// <summary>
     /// Specify one or more non-linking project build order dependencies.
     /// </summary>
-    /// <param name="dependencies">List of dependent project. Can include only project name. Can include first guid and then project path. (For android packaging project)</param>
+    /// <param name="dependencies">List of dependent projects</param>
     static public void dependson(params String[] dependencies)
     {
         requireProjectSelected();
 
-        for (int i = 0; i < dependencies.Length; i++)
-        {
-            String nameOrGuid = dependencies[i];
-            String name = "";
+        if (m_project.ProjectDependencies == null)
+            m_project.ProjectDependencies = new List<string>();
 
-            Match mGuid = guidMatcher.Match(nameOrGuid);
-            if (mGuid.Success)
-            {
-                if (i + 1 != dependencies.Length) name = dependencies[i + 1];
-
-                files(name);
-                FileInfo fi = m_project.files.Last();
-                fi.includeType = IncludeType.ProjectReference;
-                fi.Project = "{" + mGuid.Groups[1].Value + "}";
-                i++;
-            }
-            else
-            {
-                name = nameOrGuid;
-            }
-
-            if (m_project.ProjectDependencies == null)
-                m_project.ProjectDependencies = new List<string>();
-
-            m_project.ProjectDependencies.Add(nameOrGuid);
-        } //for
+        m_project.ProjectDependencies.AddRange(dependencies);
     } //dependson
+
+    /// <summary>
+    /// Specifies reference to another project. As an input you should provide project path, with optional project guid.
+    /// If project guid is not provided, it will be loaded from project itself. (Slight performance penalties)
+    /// </summary>
+    /// <param name="fileGuidList">Project file path + project guid list</param>
+    static public void references(params String[] fileGuidList)
+    { 
+        requireProjectSelected();
+
+        for (int i = 0; i < fileGuidList.Length; i++)
+        {
+            String relPath = fileGuidList[i];
+            String path = Path.Combine(m_project.getProjectFolder(), relPath);
+
+            String guid = null;
+
+            if (i + 1 < fileGuidList.Length)
+            {
+                guid = fileGuidList[i + 1];
+
+                Match mGuid = guidMatcher.Match(guid);
+                if (!mGuid.Success)
+                {
+                    String nameForGuid = guid;
+                    if(nameForGuid.Length == 0 ) 
+                        nameForGuid = Path.GetFileNameWithoutExtension(relPath);
+
+                    guid = GenerateGuid(nameForGuid);
+                }
+                else
+                {
+                    guid = "{" + mGuid.Groups[1].Value + "}";
+                }
+                i++;
+            } //if
+
+            if (guid == null)
+            {
+                if (!File.Exists(path))
+                    throw new Exception2("Referenced project '" + path + "' does not exists.\r\n" +
+                        "You can avoid loading project by specifying project guid after project path, for example:\r\n" +
+                        "\r\n" +
+                        "    references(\"project.vcxproj\", \"{E3A9D624-DA07-DBBF-B4DD-0E33BE2390AE}\" ); \r\n" + 
+                        "\r\n" +
+                        "or if you're using syncProj on that project:\r\n" +
+                        "\r\n" +
+                        "    references(\"project.vcxproj\", \"unique name\" ); or \r\n" +
+                        "    references(\"project.vcxproj\", \"\" );  - same as references(\"project.vcproj\", \"project\" );"
+                        );
+                guid = Project.getProjectGuid(path);
+            }
+
+            files(relPath);
+            FileInfo fi = m_project.files.Last();
+            fi.includeType = IncludeType.ProjectReference;
+            fi.Project = guid;
+        } //for
+    } //references
+
+
 
     /// <summary>
     /// Sets current "directory" where project should be placed.

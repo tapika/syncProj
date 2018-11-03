@@ -534,6 +534,26 @@ public class SolutionOrProject
             } //foreach
         }
         else {
+            List<FileInfo> projReferences = proj.files.Where(x => x.includeType == IncludeType.ProjectReference).ToList();
+
+            // ---------------------------------------------------------------------------------
+            // Dump project references, pass 1.
+            // ---------------------------------------------------------------------------------
+            if (projReferences.Count != 0 && format == "lua")
+            {
+                foreach (FileInfo fi in projReferences)
+                {
+                    String projPath = fi.relativePath;
+                    String projName = Path.GetFileNameWithoutExtension(projPath);
+                    String projDir = Path.GetDirectoryName(projPath);
+                    o.AppendLine(head + "externalproject" + brO + "\"" + projName + "\"" + brC);
+                    o.AppendLine(head + "    location" + brO + "\"" + projDir.Replace("\\", "/") + "\"" + brC);
+                    o.AppendLine(head + "    uuid" + brO + "\"" + fi.Project.Substring(1, fi.Project.Length - 2) + "\"" + brC);
+                    o.AppendLine(head + "    kind \"SharedLib\"");
+                    o.AppendLine();
+                }
+            }
+
             // ---------------------------------------------------------------------------------
             //  Building project
             // ---------------------------------------------------------------------------------
@@ -544,12 +564,33 @@ public class SolutionOrProject
 
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
-            o.AppendLine(head + "    uuid" + brO + "\"" + proj.ProjectGuid.Substring(1, proj.ProjectGuid.Length - 2) + "\"" + brC);
-            o.AppendLine(head + "    vsver" + brO + proj.fileFormatVersion + brC);
+            o.AppendLine(head + "    uuid" + brO + "\"" + proj.ProjectGuidShort + "\"" + brC);
+            
+            if (format != "lua")
+                o.AppendLine(head + "    vsver" + brO + proj.fileFormatVersion + brC);
             
             // Packaging projects cannot have custom build step.
             if( bCsScript && proj.Keyword != EKeyword.Package)
                 o.AppendLine(head + "    projectScript(\"" + fileName + ".cs" + "\");");
+
+            // ---------------------------------------------------------------------------------
+            // Dump project references, pass 2.
+            // ---------------------------------------------------------------------------------
+            if (format == "lua")
+            {
+                foreach (FileInfo fi in projReferences)
+                {
+                    String projPath = fi.relativePath;
+                    String projName = Path.GetFileNameWithoutExtension(projPath);
+
+                    o.AppendLine(head + "    links " + arO + "\"" + projName + "\"" + arC);
+                }
+            }
+            else
+            {
+                foreach (FileInfo fi in projReferences)
+                    o.AppendLine(head + "    references(\"" + fi.relativePath.Replace("\\", "/") + "\", \"" + fi.Project.Substring(1, fi.Project.Length - 2) + "\");");
+            }
 
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
             
@@ -645,7 +686,6 @@ public class SolutionOrProject
 
 
             List<FileInfo> files2dump = proj.files.Where(x => x.includeType != IncludeType.ProjectReference).ToList();
-            List<FileInfo> projReferences = proj.files.Where(x => x.includeType == IncludeType.ProjectReference).ToList();
 
             //
             // Dump files array.
@@ -663,24 +703,6 @@ public class SolutionOrProject
                 o.AppendLine();
                 o.AppendLine(head + "    " + arC);
             } //if
-
-            //
-            // Dump project references
-            //
-            if (projReferences.Count != 0)
-            {
-                if (files2dump.Count != 0) o.AppendLine();
-                o.AppendLine(head + "     dependson" + arO);
-                bool first = true;
-                foreach (FileInfo fi in projReferences)
-                {
-                    if (!first) o.AppendLine(",");
-                    first = false;
-                    o.Append(head + "        \"" + fi.Project.Substring(1, fi.Project.Length - 2) + "\", \"" + fi.relativePath.Replace("\\", "/") + "\"");
-                }
-                o.AppendLine();
-                o.AppendLine(head + "    " + arC);
-            }
 
             foreach (FileInfo fi in proj.files)
             { 
@@ -787,6 +809,14 @@ public class SolutionOrProject
     }
 
 
+    static String luaQuoteString(String s)
+    {
+        s = Regex.Replace(s, @"\r\n|\n\r|\n|\r", "\n");     // Linefeed normalize, take 1.
+        s = s.Replace("\\", "\\\\").Replace("\n", "\\r\\n").Replace("\"", "\\\"");
+        return "\"" + s + "\"";
+    }
+
+
     /// <param name="proj"></param>
     /// <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
     /// <param name="fileName">name of file of which configuration is being parsed.</param>
@@ -881,9 +911,9 @@ public class SolutionOrProject
                 else
                 {
                     r = "buildrule" + arO + lf;
-                    r += "    description = \"" + cbp.Message + "\", " + lf;
-                    r += "    commands = \"" + cbp.Command + "\", " + lf;
-                    r += "    output = \"" + cbp.Outputs + "\"" + lf;
+                    r += "    description = " + luaQuoteString(cbp.Message) + ", " + lf;
+                    r += "    commands = " + luaQuoteString(cbp.Command) + ", " + lf;
+                    r += "    output = " + luaQuoteString(cbp.Outputs)  + lf;
                     r += arC;
                 }
 
@@ -1395,10 +1425,11 @@ partial class Script
                 return -2;
             } //if
 
+            String ext = Path.GetExtension(inFile).ToLower();
             //
             // If we have solution, let's export by default in C# script format.
             //
-            if (inFile != null && inFile.EndsWith(".sln", StringComparison.InvariantCulture) && formats.Count == 0 )
+            if (inFile != null && ( ext == ".sln" || ext == ".vcxproj" ) && formats.Count == 0 )
                 formats.Add("cs");
 
             if (inFile == null || formats.Count == 0)

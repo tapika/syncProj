@@ -327,7 +327,7 @@ public class FileInfo
     public String relativePath;
 
     /// <summary>
-    /// Android specific: when includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
+    /// When includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
     /// </summary>
     public String Project;
 

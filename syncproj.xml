@@ -156,6 +156,11 @@
             Project guid, for example "{65787061-7400-0000-0000-000000000000}"
             </summary>
         </member>
+        <member name="P:Project.ProjectGuidShort">
+            <summary>
+            Without "{}"
+            </summary>
+        </member>
         <member name="F:Project.projectConfig">
             <summary>
             per configuration list
@@ -192,11 +197,21 @@
             </summary>
             <returns>false if fails (value does not exists(</returns>
         </member>
-        <member name="M:Project.LoadProject(Solution,System.String,Project)">
+        <member name="M:Project.getProjectGuid(System.String)">
+            <summary>
+            Gets projects guid from file.
+            </summary>
+            <param name="path">path from where to load project</param>
+            <returns>Project guid</returns>
+        </member>
+        <member name="M:Project.LoadProject(Solution,System.String,Project,System.Int32)">
             <summary>
             Loads project. If project exists in solution, it's loaded in same instance.
             </summary>
             <param name="solution">Solution if any exists, null if not available.</param>
+            <param name="path">path from where to load project</param>
+            <param name="project">instance into which to load, null if create new</param>
+            <param name="loadLevel">1 if interested only in guid</param>
         </member>
         <member name="M:Project.DumpConfiguration(FileConfigurationInfo,System.String,Configuration)">
             <summary>
@@ -529,7 +544,7 @@
         </member>
         <member name="F:FileInfo.Project">
             <summary>
-            Android specific: when includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
+            When includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
             </summary>
         </member>
         <member name="F:FileInfo.HintPath">
@@ -1196,7 +1211,14 @@
             <summary>
             Specify one or more non-linking project build order dependencies.
             </summary>
-            <param name="dependencies">List of dependent project. Can include only project name. Can include first guid and then project path. (For android packaging project)</param>
+            <param name="dependencies">List of dependent projects</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.references(System.String[])">
+            <summary>
+            Specifies reference to another project. As an input you should provide project path, with optional project guid.
+            If project guid is not provided, it will be loaded from project itself. (Slight performance penalties)
+            </summary>
+            <param name="fileGuidList">Project file path + project guid list</param>
         </member>
         <member name="M:SolutionProjectBuilder.group(System.String)">
             <summary>

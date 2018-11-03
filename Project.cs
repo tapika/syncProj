@@ -266,6 +266,17 @@ public class Project
     public string ProjectGuid;
 
     /// <summary>
+    /// Without "{}"
+    /// </summary>
+    public String ProjectGuidShort
+    {
+        get 
+        {
+            return ProjectGuid.Substring(1, ProjectGuid.Length - 2);
+        }
+    }
+
+    /// <summary>
     /// per configuration list
     /// </summary>
     public List<Configuration> projectConfig = new List<Configuration>();
@@ -505,12 +516,25 @@ public class Project
     } //extractGeneralCompileOptions
 
 
+    /// <summary>
+    /// Gets projects guid from file.
+    /// </summary>
+    /// <param name="path">path from where to load project</param>
+    /// <returns>Project guid</returns>
+    static public String getProjectGuid(String path)
+    {
+        Project p = LoadProject(null, path, null, 1);
+        return p.ProjectGuid;
+    }
 
     /// <summary>
     /// Loads project. If project exists in solution, it's loaded in same instance.
     /// </summary>
     /// <param name="solution">Solution if any exists, null if not available.</param>
-    static public Project LoadProject(Solution solution, String path, Project project = null)
+    /// <param name="path">path from where to load project</param>
+    /// <param name="project">instance into which to load, null if create new</param>
+    /// <param name="loadLevel">1 if interested only in guid</param>
+    static public Project LoadProject(Solution solution, String path, Project project = null, int loadLevel = 0 )
     {
         if (path == null)
             path = Path.Combine(Path.GetDirectoryName(solution.path) , project.RelativePath);
@@ -532,6 +556,7 @@ public class Project
             switch (lname)
             {
                 case "ItemGroup":
+                    if (loadLevel == 1) continue;
                     // ProjectConfiguration has Configuration & Platform sub nodes, but they cannot be reconfigured to anything else then this attribute.
                     if (node.Attribute("Label")?.Value == "ProjectConfigurations")
                     {
@@ -550,7 +575,7 @@ public class Project
                             f.relativePath = igNode.Attribute("Include").Value;
 
                             if (f.includeType == IncludeType.Reference)
-                                f.HintPath = igNode.Elements().Where( x => x.Name.LocalName == "HintPath").FirstOrDefault()?.Value;
+                                f.HintPath = igNode.Elements().Where(x => x.Name.LocalName == "HintPath").FirstOrDefault()?.Value;
 
                             if (f.includeType == IncludeType.ClCompile || f.includeType == IncludeType.CustomBuild)
                                 project.ExtractCompileOptions(igNode, f, (f.includeType == IncludeType.CustomBuild) ? "customBuildRule" : null );
@@ -578,6 +603,9 @@ public class Project
                                             // Android packaging projects does not have Keyword
                                             project.Keyword = EKeyword.Package;
                                     } //if
+
+                                    if (project.ProjectGuid != null && loadLevel == 1)
+                                        return project;
                                 }
                                 break;
 
@@ -591,7 +619,12 @@ public class Project
                                     foreach (XElement subNode in node.Elements())
                                     {
                                         if (subNode.Name.LocalName == "ProjectGuid")
+                                        {
                                             project.ProjectGuid = subNode.Value;
+
+                                            if (project.ProjectGuid != null && loadLevel == 1)
+                                                return project;
+                                        }
                                     }
                                     continue;
                                 }
@@ -600,6 +633,7 @@ public class Project
                                 break;
 
                             case "Configuration":
+                                if (loadLevel == 1) continue;
                                 project.extractGeneralCompileOptions(node);
                                 break;
                             case "UserMacros":
@@ -616,6 +650,7 @@ public class Project
                 case "Import": break;           // Skip for now.
                 case "ImportGroup": break;      // Skip for now.
                 case "ItemDefinitionGroup":
+                    if (loadLevel == 1) continue;
                     project.extractGeneralCompileOptions(node);
                     break;
 
@@ -1051,7 +1086,9 @@ public class Project
             }
 
             o.AppendLine("    <ClCompile>");
-            o.AppendLine("      <PrecompiledHeader>" + conf.PrecompiledHeader.ToString() + "</PrecompiledHeader>");
+
+            if( conf.PrecompiledHeader != EPrecompiledHeaderUse.ProjectDefault )
+                o.AppendLine("      <PrecompiledHeader>" + conf.PrecompiledHeader.ToString() + "</PrecompiledHeader>");
 
             // No need to specify if it's default header file.
             if (conf.PrecompiledHeader == EPrecompiledHeaderUse.Use && conf.PrecompiledHeaderFile != "stdafx.h")
