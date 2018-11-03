@@ -970,6 +970,11 @@ public class Configuration : FileConfigurationInfo
     public EGenerateDebugInformation GenerateDebugInformation;
 
     /// <summary>
+    /// .def file location
+    /// </summary>
+    public String ModuleDefinitionFile = "";
+
+    /// <summary>
     /// Android specific.
     /// </summary>
     public String AndroidAppLibName;

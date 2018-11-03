@@ -1189,6 +1189,9 @@ public class Project
                     case EGenerateDebugInformation.OptimizeForFasterLinking: v = "DebugFastLink"; break;
                 }
                 o.AppendLine("      <GenerateDebugInformation>" + v + "</GenerateDebugInformation>");
+
+                if( conf.ModuleDefinitionFile != "" )
+                    o.AppendLine("      <ModuleDefinitionFile>" + conf.ModuleDefinitionFile + "</ModuleDefinitionFile>");
             } //if
 
             // Link libraries.

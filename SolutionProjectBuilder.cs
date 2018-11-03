@@ -1303,6 +1303,12 @@ public class SolutionProjectBuilder
                     case ".txt":
                         fi.includeType = IncludeType.Text; break;
 
+                    case ".def":
+                        fi.includeType = IncludeType.None;
+                        foreach (var conf in getSelectedProjectConfigurations())
+                            conf.ModuleDefinitionFile = fi.relativePath;
+                        break;
+
                     default:
                         fi.includeType = IncludeType.None; break;
                 }

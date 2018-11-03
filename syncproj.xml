@@ -1002,6 +1002,11 @@
             Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
             </summary>
         </member>
+        <member name="F:Configuration.ModuleDefinitionFile">
+            <summary>
+            .def file location
+            </summary>
+        </member>
         <member name="F:Configuration.AndroidAppLibName">
             <summary>
             Android specific.
