@@ -15,7 +15,7 @@ using System.ComponentModel;
 
 class Dictionary2<TKey, TValue> : Dictionary<TKey, TValue>
 {
-    public TValue this[TKey name]
+    new public TValue this[TKey name]
     {
         get
         {
@@ -409,7 +409,7 @@ public class SolutionOrProject
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
 
             ConfigationSpecificValue(proj, proj.projectConfig, "ConfigurationType", lines2dump, (s) => {
-                    String r = typeof(EConfigurationType).GetMember(s)[0].GetCustomAttribute<PremakeTagAttribute>().tag;
+                    String r = typeof(EConfigurationType).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
                     return "kind" + brO + "\"" + r + "\"" + brC;
             } );
 
@@ -422,7 +422,7 @@ public class SolutionOrProject
             });
 
             ConfigationSpecificValue(proj, proj.projectConfig, "CharacterSet", lines2dump, (s) => {
-                String r = typeof(ECharacterSet).GetMember(s)[0].GetCustomAttribute<PremakeTagAttribute>().tag;
+                String r = typeof(ECharacterSet).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
                 return "characterset" + brO + "\"" + r + "\"" + brC;
             });
 

@@ -12,11 +12,11 @@ using System.Xml.Serialization;
 /// <summary>
 /// Custom class for mapping enumeration values to premake configuration tag.
 /// </summary>
-public class PremakeTagAttribute : Attribute
+public class FunctionNameAttribute : Attribute
 {
     public String tag;
 
-    public PremakeTagAttribute(String s)
+    public FunctionNameAttribute(String s)
     {
         tag = s;
     }
@@ -172,13 +172,13 @@ public enum EConfigurationType
     /// <summary>
     /// .exe
     /// </summary>
-    [PremakeTag("WindowedApp")]
+    [FunctionName("WindowedApp")]
     Application = 0,
-    
+
     /// <summary>
     /// .dll
     /// </summary>
-    [PremakeTag("SharedLib")]
+    [FunctionName("SharedLib")]
     DynamicLibrary
 };
 
@@ -187,13 +187,13 @@ public enum ECharacterSet
     /// <summary>
     /// Unicode
     /// </summary>
-    [PremakeTag("Unicode")]
+    [FunctionName("Unicode")]
     Unicode = 0,
     
     /// <summary>
     /// Ansi
     /// </summary>
-    [PremakeTag("MBCS")]
+    [FunctionName("MBCS")]
     MultiByte
 }
 
@@ -258,13 +258,13 @@ public enum EOptimization
 [Description("")]   // Marker to switch Enum value / Description when parsing
 public enum EGenerateDebugInformation
 {
-    [Description("false"), PremakeTag("off")]
+    [Description("false"), FunctionName("off")]
     No = 0,
 
-    [Description("true"), PremakeTag("on")]
+    [Description("true"), FunctionName("on")]
     OptimizeForDebugging,
 
-    [Description("DebugFastLink"), PremakeTag("fastlink")]
+    [Description("DebugFastLink"), FunctionName("fastlink")]
     OptimizeForFasterLinking
 }
 

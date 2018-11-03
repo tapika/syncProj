@@ -24,7 +24,7 @@
             <param name="args">Main argument parameters</param>
             <returns>true if execution was successful.</returns>
         </member>
-        <member name="T:PremakeTagAttribute">
+        <member name="T:FunctionNameAttribute">
             <summary>
             Custom class for mapping enumeration values to premake configuration tag.
             </summary>
@@ -310,6 +310,11 @@
             Helper class for generating solution or projects.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.m_scriptRelativeDir">
+            <summary>
+            Relative directory from solution. Set by RunScript.
+            </summary>
+        </member>
         <member name="F:SolutionProjectBuilder.bEverythingIsOk">
             <summary>
             Just an indicator that we did not have any exception.
@@ -376,7 +381,13 @@
             <summary>
             Sets project programming language (reflects to used project extension)
             </summary>
-            <param name="lang"></param>
+            <param name="lang">C++ or C#</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.dependson(System.String)">
+            <summary>
+            Specify one or more non-linking project build order dependencies.
+            </summary>
+            <param name="projectName">project name on which your currently selected project depends on</param>
         </member>
         <member name="M:SolutionProjectBuilder.group(System.String)">
             <summary>
@@ -389,6 +400,124 @@
             Invokes C# Script by source code path. If any error, exception will be thrown.
             </summary>
             <param name="path">c# script path</param>
+        </member>
+        <member name="F:SolutionProjectBuilder.selectedFileConfigurations">
+            <summary>
+            Selected configurations (Either project global or file specific) selected by filter.
+            selectedFileConfigurations is file specific, selectedConfigurations is project wide.
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.getSelectedConfigurations(System.Boolean)">
+            <summary>
+            Gets currently selected configurations by filter.
+            </summary>
+            <param name="bForceNonFileSpecific">true to force project specific configuration set.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.filter(System.String[])">
+            <summary>
+            Selects to which configurations to apply subsequent function calls (like "kind", "symbols", "files"
+            and so on...)
+            </summary>
+            <param name="filters">
+                Either configuration name, for example "Debug" / "Release" or
+                by platform name, for example: "platforms:Win32", "platforms:x64"
+                or by file name, for example: "files:my.cpp"
+            </param>
+        </member>
+        <member name="M:SolutionProjectBuilder.kind(System.String)">
+            <summary>
+            Specifies application type, one of following: 
+            </summary>
+            <param name="_kind">
+            WindowedApp, Application    - Window application<para />
+            DynamicLibrary, SharedLib   - .dll<para />
+            </param>
+        </member>
+        <member name="M:SolutionProjectBuilder.toolset(System.String)">
+            <summary>
+            Selects the compiler, linker, etc. which are used to build a project or configuration.
+            </summary>
+            <param name="toolset">
+            For example:<para />
+                'v140' - for Visual Studio 2015.<para />
+                'v120' - for Visual Studio 2013.<para />
+            </param>
+        </member>
+        <member name="M:SolutionProjectBuilder.characterset(System.String)">
+            <summary>
+            Selects character set.
+            </summary>
+            <param name="charset">One of following: "Unicode", "Multibyte", "MBCS"</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.targetdir(System.String)">
+            <summary>
+            Specifies output directory.
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.objdir(System.String)">
+            <summary>
+            Specifies intermediate Directory.
+            </summary>
+            <param name="directory">For example "$(Configuration)\" or "obj\$(Platform)\$(Configuration)\"</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.targetname(System.String)">
+            <summary>
+            Specifies target name. (Filename without extension)
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.targetextension(System.String)">
+            <summary>
+            Specifies target file extension, including comma separator.
+            </summary>
+            <param name="extension">For example ".dll", ".exe"</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.pchheader(System.String)">
+            <summary>
+            Specifies the #include form of the precompiled header file name.
+            </summary>
+            <param name="file">header file</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.pchsource(System.String)">
+            <summary>
+            Specifies the C/C++ source code file which controls the compilation of the header.
+            </summary>
+            <param name="file">precompiled source code which needs to be compiled</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.symbols(System.String)">
+            <summary>
+            Specified whether debug symbols are enabled or not.
+            </summary>
+            <param name="value">
+            "on" - debug symbols are enabled<para />
+            "off" - debug symbols are disabled<para />
+            "fastlink" - debug symbols are enabled + faster linking enabled.<para />
+            </param>
+        </member>
+        <member name="M:SolutionProjectBuilder.includedirs(System.String[])">
+            <summary>
+            Specifies additional include directories.
+            </summary>
+            <param name="dirs">List of additional include directories.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.defines(System.String[])">
+            <summary>
+            Specifies additional defines.
+            </summary>
+            <param name="defines">defines, like for example "DEBUG", etc...</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.files(System.String[])">
+            <summary>
+            Adds one or more file into project.
+            </summary>
+            <param name="files">Files to be added</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.flags(System.String[])">
+            <summary>
+            Enables certain flags for specific configurations.
+            </summary>
+            <param name="flags">
+            "LinkTimeOptimization" - Enable link-time (i.e. whole program) optimizations.<para />
+            </param>
         </member>
         <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception,System.String[])">
             <summary>
