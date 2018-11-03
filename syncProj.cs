@@ -437,6 +437,11 @@ public class SolutionOrProject
             ConfigationSpecificValue(proj, proj.projectConfig, "TargetName", lines2dump, (s) => { return "targetname" + brO + "\"" + s + "\"" + brC; });
             ConfigationSpecificValue(proj, proj.projectConfig, "TargetExt", lines2dump, (s) => { return "targetextension" + brO + "\"" + s + "\"" + brC; });
             
+            ConfigationSpecificValue(proj, proj.projectConfig, "Optimization", lines2dump, (s) => {
+                String r = typeof(EOptimization).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
+                return "optimize" + brO + "\"" + r + "\"" + brC; 
+            });
+
             // Can be used only to enabled, for .lua - ConfigationSpecificValue should be changed to operate on some default (false) value.
             ConfigationSpecificValue(proj, proj.projectConfig, "WholeProgramOptimization", lines2dump, (s) => {
                 if(s == "UseLinkTimeCodeGeneration" )
@@ -505,36 +510,46 @@ public class SolutionOrProject
     } //UpdateProjectScript
 
 
-    /// <summary>
-    /// 
-    /// </summary>
+    static void TagPchEntries(IEnumerable<FileConfigurationInfo> config, String fileName, bool bTag)
+    {
+        foreach (var cfg in config)
+        {
+            switch (cfg.PrecompiledHeader)
+            {
+                case EPrecompiledHeaderUse.NotUsing: cfg.PrecompiledHeaderFile = ""; break;
+                case EPrecompiledHeaderUse.Create:
+                    if( bTag )
+                        cfg.PrecompiledHeaderFile = "?C" + fileName;
+                    else
+                        cfg.PrecompiledHeaderFile = cfg.PrecompiledHeaderFile.Substring(2);
+                    break;
+                case EPrecompiledHeaderUse.Use:
+                    if( bTag )
+                        cfg.PrecompiledHeaderFile = "?U" + cfg.PrecompiledHeaderFile;
+                    else
+                        cfg.PrecompiledHeaderFile = cfg.PrecompiledHeaderFile.Substring(2);
+                    break;
+            } //switch
+        }
+    } //TagPchEntries
+
+
+
+
     /// <param name="proj"></param>
     /// <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
     /// <param name="fileName">name of file of which configuration is being parsed.</param>
     static void UpdateConfigurationEntries(Project proj, IEnumerable<FileConfigurationInfo> config, Dictionary2<String, List<String>> lines2dump, String fileName = "")
     {
         List<FileConfigurationInfo> configList = config.ToList();
-
-        foreach (var cfg in config)
-        {
-            switch (cfg.PrecompiledHeader)
-            {
-                case EPrecompiledHeaderUse.NotUsing: cfg.PrecompiledHeaderFile = ""; break;
-                case EPrecompiledHeaderUse.Create: 
-                    cfg.PrecompiledHeaderFile = "C" + fileName; 
-                    break;
-                case EPrecompiledHeaderUse.Use: 
-                    cfg.PrecompiledHeaderFile = "U" + cfg.PrecompiledHeaderFile; 
-                    break;
-            }
-        }
-
+        
+        TagPchEntries(config, fileName, true);
         ConfigationSpecificValue(proj, configList, "PrecompiledHeaderFile", lines2dump, (s) => {
             if( s == "" )
                 return "flags" + arO + "\"NoPch\"" + arC;
 
-            char cl = s[0];
-            s = s.Substring(1);
+            char cl = s[1];
+            s = s.Substring(2);
             switch (cl)
             {
                 case 'C': 
@@ -544,6 +559,7 @@ public class SolutionOrProject
                     return "pchheader" + brO + "\"" + s + "\"" + brC;
             }
         });
+        TagPchEntries(config, fileName, false);
 
         //---------------------------------------------------------------------------------
         // Semicolon (';') separated lists.

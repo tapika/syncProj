@@ -407,7 +407,11 @@ public class SolutionProjectBuilder
             if (reConfMatch.Match(m_project.configurations[i]).Success)
             {
                 if (i >= configItems.Count)
-                    configItems.Add(Activator.CreateInstance(type));
+                {
+                    FileConfigurationInfo fci = (FileConfigurationInfo)Activator.CreateInstance(type);
+                    fci.confName = m_project.configurations[i];
+                    configItems.Add(fci);
+                }
             
                 if(bLastSetFilterWasFileSpecific)
                     selectedFileConfigurations.Add((FileConfigurationInfo)configItems[i]);
@@ -431,9 +435,11 @@ public class SolutionProjectBuilder
     {
         EConfigurationType type;
         var enums = Enum.GetValues(typeof(EConfigurationType)).Cast<EConfigurationType>();
+        ESubSystem subsystem = ESubSystem.Windows;
 
         switch (_kind)
         {
+            case "ConsoleApp":          type = EConfigurationType.Application; subsystem = ESubSystem.Console; break;
             case "WindowedApp":         type = EConfigurationType.Application; break;
             case "Application":         type = EConfigurationType.Application; break;
             case "SharedLib":           type = EConfigurationType.DynamicLibrary; break;
@@ -442,8 +448,11 @@ public class SolutionProjectBuilder
                 throw new Exception2("kind value is not supported '" + _kind + "' - supported values are: " + String.Join(",", enums.Select(x => x.ToString()) ));
         }
 
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where( x => x != null) )
+        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        {
             conf.ConfigurationType = type;
+            conf.SubSystem = subsystem;
+        }
     } //kind
 
     /// <summary>
@@ -526,7 +535,10 @@ public class SolutionProjectBuilder
     static public void pchheader(String file)
     {
         foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        {
+            conf.PrecompiledHeader = EPrecompiledHeaderUse.Use;
             conf.PrecompiledHeaderFile = file;
+        }
     }
 
     /// <summary>
@@ -563,18 +575,27 @@ public class SolutionProjectBuilder
     /// </param>
     static public void symbols(String value)
     {
+        //
+        //  symbols preconfigures multiple flags. premake5 also preconfigures multiple. Maybe later if needs to be separated - create separate functions calls for
+        //  each configurable parameter.
+        //
         EGenerateDebugInformation d;
+        bool bUseDebugLibraries = false;
         switch (value.ToLower())
         {
-            case "on":          d = EGenerateDebugInformation.OptimizeForDebugging; break;
-            case "off":         d = EGenerateDebugInformation.No; break;
-            case "fastlink":    d = EGenerateDebugInformation.OptimizeForFasterLinking; break;
+            case "on":          d = EGenerateDebugInformation.OptimizeForDebugging; bUseDebugLibraries = true;  break;
+            case "off":         d = EGenerateDebugInformation.No; bUseDebugLibraries = false; break;
+            case "fastlink":    d = EGenerateDebugInformation.OptimizeForFasterLinking; bUseDebugLibraries = true; break;
             default:
                 throw new Exception2("Allowed symbols() values are: on, off, fastlink");
         }
 
         foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        {
             conf.GenerateDebugInformation = d;
+            conf.UseDebugLibraries = bUseDebugLibraries;
+            optimize_symbols_recheck(conf);
+        } //foreach
     }
 
     /// <summary>
@@ -701,6 +722,91 @@ public class SolutionProjectBuilder
         }
     } //links
 
+
+    /// <summary>
+    /// optimize and symbols reflect to debug format chosen.
+    /// </summary>
+    /// <param name="fconf"></param>
+    static void optimize_symbols_recheck(FileConfigurationInfo fconf)
+    {
+        Configuration conf = fconf as Configuration;
+        if (conf == null) 
+            return;     // Project wide configuration only.
+
+        EDebugInformationFormat debugFormat = EDebugInformationFormat.None;
+        if (conf.UseDebugLibraries)
+        {
+            if (conf.Optimization == EOptimization.Full)
+            {
+                debugFormat = EDebugInformationFormat.ProgramDatabase;
+            }
+            else
+            { 
+                debugFormat = EDebugInformationFormat.EditAndContinue;
+            }
+        }
+        else 
+        { 
+            debugFormat = EDebugInformationFormat.None;
+        }
+
+        conf.DebugInformationFormat = debugFormat;
+    } //optimize_symbols_recheck
+
+
+    /// <summary>
+    /// Specifies optimization level to be used.
+    /// </summary>
+    /// <param name="optLevel">Optimization level to enable - one of following: off, size, speed, on(or full)</param>
+    static public void optimize(String optLevel)
+    {
+        EOptimization opt;
+        bool bFunctionLevelLinking = true;
+        bool bIntrinsicFunctions = true;
+        bool bEnableCOMDATFolding = false;
+        bool bOptimizeReferences = false;
+        //
+        // premake5 notes:
+        // editandcontinue "Off"        => EDebugInformationFormat.ProgramDatabase.
+        // symbols "On" + optimize "On" =>  EDebugInformationFormat.ProgramDatabase.
+        //
+
+        switch (optLevel.ToLower())
+        {
+            case "custom": 
+                opt = EOptimization.Custom; 
+                break;
+            case "off": 
+                opt = EOptimization.Disabled; 
+                bFunctionLevelLinking = false; 
+                bIntrinsicFunctions = false; 
+                break;
+            case "full":
+            case "on": 
+                opt = EOptimization.Full; 
+                bEnableCOMDATFolding = true; 
+                bOptimizeReferences = true;
+                break;
+            case "size": 
+                opt = EOptimization.MinSpace; 
+                break;
+            case "speed": 
+                opt = EOptimization.MaxSpeed;
+                break;
+            default:
+                throw new Exception2("Allowed optimization() values are: off, size, speed, on(or full)");
+        }
+
+        foreach (var conf in getSelectedConfigurations(false))
+        {
+            conf.Optimization = opt;
+            conf.FunctionLevelLinking = bFunctionLevelLinking;
+            conf.IntrinsicFunctions = bIntrinsicFunctions;
+            conf.EnableCOMDATFolding = bEnableCOMDATFolding;
+            conf.OptimizeReferences = bOptimizeReferences;
+            optimize_symbols_recheck(conf);
+        }
+    } //optimize
 
     /// <summary>
     /// Prints more details about given exception. In visual studio format for errors.
