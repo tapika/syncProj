@@ -109,12 +109,14 @@ public class SolutionOrProject
     /// <param name="list">List to get values from</param>
     /// <param name="fieldName">Field name to scan </param>
     /// <param name="lines2dump">Lines which shall be created / updated.</param>
-    /// <param name="valueToLine">value to config line translator function</param>
+    /// <param name="valueToLine">value to config line translator function. Function can return null if no lines needs to be provided.</param>
+    /// <param name="forceDefaultValue">If value cannot be configured in style - enabled/disable (one kind of flag only - enable) - specify here default value</param>
     static void ConfigationSpecificValue(Project proj, 
         IList list, 
         String fieldName, 
         Dictionary2<String, List<String>> lines2dump,
-        Func<String, String> valueToLine
+        Func<String, String> valueToLine,
+        String forceDefaultValue = null
     )
     {
         if (list.Count == 0)
@@ -127,26 +129,42 @@ public class SolutionOrProject
         bool bCheckPlatformsVariation = proj.getPlatforms().Count > 1;
         bool bCheckConfigurationNameVariation = proj.getConfigurationNames().Count > 1;
 
-        //---------------------------------------------------------------------
-        // Select generic value, which is repeated in most of configurations.
-        //---------------------------------------------------------------------
+        String defaultValue = forceDefaultValue;
+
+        //-----------------------------------------
+        //  Collect all values for comparison.
+        //-----------------------------------------
+        String[] values = new string[list.Count];
         for (int i = 0; i < list.Count; i++)
         {
             Object o = fi.GetValue(list[i]);
             if (o == null) continue;
             String value = o.ToString();
-            weigths[value]++;
+            values[i] = value;
         }
 
-        String defaultValue = null;
-        
-        if (weigths.Values.Count != 0)
+        if (defaultValue == null)
         {
-            int maxWeight = weigths.Values.Max();
-            List<String> maxValues = weigths.Where(x => x.Value == maxWeight).Select(x => x.Key).ToList();
+            //---------------------------------------------------------------------
+            // Select generic value, which is repeated in most of configurations.
+            //---------------------------------------------------------------------
+            for (int i = 0; i < list.Count; i++)
+            {
+                Object o = fi.GetValue(list[i]);
+                if (o == null) continue;
+                String value = o.ToString();
+                weigths[value]++;
+            }
 
-            if (maxValues.Count == 1)
-                defaultValue = maxValues[0];
+
+            if (weigths.Values.Count != 0)
+            {
+                int maxWeight = weigths.Values.Max();
+                List<String> maxValues = weigths.Where(x => x.Value == maxWeight).Select(x => x.Key).ToList();
+
+                if (maxValues.Count == 1)
+                    defaultValue = maxValues[0];
+            } //if
         } //if
 
         weigths.Clear();
@@ -154,19 +172,46 @@ public class SolutionOrProject
         // Select by config or by platform specific values repeated in most of
         // configuration, and which are not satisfied by defaultValue if any.
         //---------------------------------------------------------------------
-        for (int i = 0; i < list.Count; i++)
-        {
-            Object o = fi.GetValue(list[i]);
-            if (o == null) continue;
-            String value = o.ToString();
+        Dictionary<String, String> confKeyToValue = new Dictionary<string, string>();
+        Dictionary<String, bool> confKeyUseValue = new Dictionary<string, bool>();
 
-            if (defaultValue != null && value == defaultValue)
-                continue;
+        for (int i = 0; i < values.Length; i++)
+        {
+            String value = values[i];
+            if (value == null) continue;
 
             String[] configNamePlatform = proj.configurations[i].Split('|');
-            weigths["c" + configNamePlatform[0]]++;
-            weigths["p" + configNamePlatform[1]]++;
-        }
+
+            //
+            // We try to match by configuration name or by platform name, but we must have all values identical for 
+            // same configuration or platform - if they are not, then we reset weights counter.
+            //
+            foreach ( String confKey in new String[] { "c" + configNamePlatform[0], "p" + configNamePlatform[1] })
+            {
+                if (confKeyUseValue.ContainsKey(confKey))
+                {
+                    if (!confKeyUseValue[confKey])          //Disallowed to use, values not identical.
+                        continue;
+
+                    if (confKeyToValue[confKey] != value)   // Are values identical - if not then disable selection of same config again.
+                    {
+                        confKeyUseValue[confKey] = false;
+                        weigths.Remove(confKey);
+                        continue;
+                    }
+
+                    if (defaultValue == null || value != defaultValue)
+                        weigths[confKey]++;                 // Increment usage count if not default value
+                }
+                else { 
+                    confKeyUseValue[confKey] = true;        // Let's hope that all values will match.
+                    confKeyToValue[confKey] = value;
+                    
+                    if (defaultValue == null || value != defaultValue)
+                        weigths[confKey]++;                 // Increment usage count if not default value
+                }
+            }
+        } //for
         
         // if we have some configuration defined, try to add to it.
         foreach (var kv in lines2dump)
@@ -304,11 +349,15 @@ public class SolutionOrProject
         if( fileName == null ) fileName = Path.GetFileNameWithoutExtension(path);
         if (outPrefix != "") fileName = outPrefix + fileName;
 
+        Solution sln = solutionOrProject as Solution;
+
+        if (sln != null)            // Visual studio MFC wizard can generate solution name = project name - we try here to separate solution from projects by using suffix.
+            fileName += "_sln";
+
         String outDir = Path.GetDirectoryName(path);
         String outPath = Path.Combine(outDir, fileName + "." + format);
 
         StringBuilder o = new StringBuilder();
-        Solution sln = solutionOrProject as Solution;
         Project proj = solutionOrProject as Project;
 
         String pathToSyncProjExe = "";
@@ -479,6 +528,15 @@ public class SolutionOrProject
                 });
             }
 
+            if (proj.Keyword == EKeyword.MFCProj)
+            {
+                o.AppendLine(head + "    flags" + brO + "\"MFC\"" + brC);
+
+                if( !String.IsNullOrEmpty(proj.WindowsTargetPlatformVersion) )
+                    o.AppendLine(head + "    systemversion" + brO + "\"" + proj.WindowsTargetPlatformVersion + "\"" + brC);
+            }
+
+
             ConfigationSpecificValue(proj, proj.projectConfig, "PlatformToolset", lines2dump, (s) => {
                 return "toolset" + brO + "\"" + s + "\"" + brC;
             });
@@ -487,6 +545,13 @@ public class SolutionOrProject
                 String r = typeof(ECharacterSet).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
                 return "characterset" + brO + "\"" + r + "\"" + brC;
             });
+
+            ConfigationSpecificValue(proj, proj.projectConfig, "UseOfMfc", lines2dump, (s) => {
+                if (s == "Static")
+                    return "flags" + brO + "\"StaticRuntime\"" + brC;
+
+                return null;
+            }, "Dynamic");
 
             ConfigationSpecificValue(proj, proj.projectConfig, "OutDir", lines2dump, (s) => { return "targetdir" + brO + "\"" + s.Replace("\\", "\\\\") + "\"" + brC; });
             ConfigationSpecificValue(proj, proj.projectConfig, "IntDir", lines2dump, (s) => { 

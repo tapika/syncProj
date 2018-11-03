@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="CsScript.cs" />
     <Compile Include="Project.cs" />
+    <Compile Include="ProjectTypes.cs" />
     <Compile Include="Solution.cs" />
     <Compile Include="SolutionProjectBuilder.cs" />
     <Compile Include="syncProj.cs" />

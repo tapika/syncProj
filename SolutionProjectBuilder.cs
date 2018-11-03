@@ -1062,9 +1062,35 @@ public class SolutionProjectBuilder
                             conf.WholeProgramOptimization = EWholeProgramOptimization.UseLinkTimeCodeGeneration;
                     }
                     break;
+
+                case "mfc":
+                    m_project.Keyword = EKeyword.MFCProj;
+
+                    foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+                        if (conf.UseOfMfc == EUseOfMfc.None )
+                            conf.UseOfMfc = EUseOfMfc.Dynamic;
+                    break;
+
+                case "staticruntime":
+                    foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+                        conf.UseOfMfc = EUseOfMfc.Static;
+                    break;
+
+                default:
+                    throw new Exception2("Flag '" + flag + "' is not supported");
             } //switch 
         } //foreach
     } //flags
+
+    /// <summary>
+    /// Sets platform version.
+    /// </summary>
+    /// <param name="ver">Target Platform Version, e.g. "8.1" or "10.0.14393.0"</param>
+    static public void systemversion(String ver)
+    { 
+        requireProjectSelected();
+        m_project.WindowsTargetPlatformVersion = ver;
+    }
 
     /// <summary>
     /// Adds one or more obj or lib into project to link against.
