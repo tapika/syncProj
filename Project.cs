@@ -1488,6 +1488,7 @@ public class Project
         }
         else
         {
+            if (SolutionProjectBuilder.isDeveloper() && File.Exists(path)) File.Copy(path, path + ".bkp", true);
             File.WriteAllText(path, newFileContents, Encoding.UTF8);
             uinfo.MarkFileUpdated(path, true);
             return true;
