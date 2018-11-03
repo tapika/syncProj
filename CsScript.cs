@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-
+using System.Threading;
 
 /// <summary>
 /// class for executing c# script.
@@ -73,7 +73,24 @@ public class CsScript
                 break;
             }
 
-            if (File.ReadAllText(dllInfoFile) == path)
+            String pathFromFile = "";
+            //
+            // Another instance of syncProj might be accessing same file at the same time, we try to retry automatically after some delay.
+            //
+            for ( int iTry = 0 ; iTry < 20; iTry++)
+            {
+                try
+                {
+                    pathFromFile = File.ReadAllText(dllInfoFile);
+                    break;
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(10 + iTry * 5);   // 5*20+10, overall (5*20+10)*20 / 2 = 1.1 sec
+                }
+            }
+
+            if (pathFromFile == path)
             {
                 dllInfoRealDate = File.GetLastWriteTime(dllInfoFile);
                 break;

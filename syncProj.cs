@@ -1591,6 +1591,8 @@ public partial class syncProj
                         SolutionProjectBuilder.bSaveGeneratedProjects = false;
                         break;
                     case "x": Exception2.g_bReportFullPath = false; break;
+                    case "css_debug":
+                        CsScriptInfo.g_bCsDebug = true; break;
                 }
             } //foreach
 
