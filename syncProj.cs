@@ -9,11 +9,87 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using System.Xml.Linq;
+using System.Collections;
+using System.Reflection;
+
+public enum PrecompiledHeaderUse
+{
+    Create,
+    Use,
+    NotSpecified
+}
+
+public enum IncludeType
+{
+    /// <summary>
+    /// Header file (.h)
+    /// </summary>
+    ClInclude,
+
+    /// <summary>
+    /// Any custom file with custom build step
+    /// </summary>
+    CustomBuild,
+
+    /// <summary>
+    /// Source codes (.cpp) files
+    /// </summary>
+    ClCompile,
+
+    /// <summary>
+    /// .def / .bat
+    /// </summary>
+    None
+}
+
+
+[DebuggerDisplay("{relativePath} ({includeType})")]
+public class FileInfo
+{
+    public IncludeType includeType;
+
+    public String relativePath;
+
+    /// <summary>
+    /// Pre-configuration list.
+    /// </summary>
+    public List<PrecompiledHeaderUse> phUse = new List<PrecompiledHeaderUse>();
+
+    /// <summary>
+    /// null if not in use, non-null if custom build tool is in use.
+    /// </summary>
+    public List<CustomBuildToolProperties> customBuildTool;
+}
+
+
+[DebuggerDisplay("Custom Build Tool '{Message}'")]
+public class CustomBuildToolProperties
+{
+    /// <summary>
+    /// Visual studio: Command line
+    /// </summary>
+    public String Command = "";
+    /// <summary>
+    /// Visual studio: description
+    /// </summary>
+    public String Message = "";
+    /// <summary>
+    /// Visual studio: outputs
+    /// </summary>
+    public String Outputs = "";
+    /// <summary>
+    /// Visual studio: additional dependencies
+    /// </summary>
+    public String AdditionalInputs = "";
+}
+
 
 [DebuggerDisplay("{ProjectName}, {RelativePath}, {ProjectGuid}")]
 public class Project
 {
     public string ParentProjectGuid;
+
+    public String Keyword;
     
     [XmlIgnore]
     public List<Project> nodes = new List<Project>();   // Child nodes (Empty folder also does not have any children)
@@ -26,6 +102,11 @@ public class Project
     /// <summary>
     /// Same amount of configurations as in solution, this however lists project configurations, which correspond to solution configuration
     /// using same index.
+    /// </summary>
+    public List<String> slnConfigurations = new List<string>();
+
+    /// <summary>
+    /// List of supported configuration|platform permutations, like "Debug|Win32", "Debug|x64" and so on.
     /// </summary>
     public List<String> configurations = new List<string>();
     
@@ -49,10 +130,75 @@ public class Project
     /// </summary>
     public List<String> ProjectDependencies { get; set; }
 
+    /// <summary>
+    /// This array includes all items from ItemGroup, independently whether it's include file or file to compile, because
+    /// visual studio is ordering them alphabetically - we keep same array to be able to sort files.
+    /// </summary>
+    public List<FileInfo> files = new List<FileInfo>();
+
+
     public string AsSlnString()
     {
         return "Project(\"" + ParentProjectGuid + "\") = \"" + ProjectName + "\", \"" + RelativePath + "\", \"" + ProjectGuid + "\"";
     }
+
+    static String[] RegexExract(String pattern, String input)
+    {
+        Match m = Regex.Match(input, pattern);
+        if (!m.Success)
+            throw new Exception("Error: Parse failed (input string '" + input + "', regex: '" + pattern + "'");
+
+        return m.Groups.Cast<Group>().Skip(1).Select(x => x.Value).ToArray();
+    } //RegexExract
+
+
+    /// <summary>
+    /// Extracts configuration name in readable form.
+    /// Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" => "Debug|x64"
+    /// </summary>
+    static String getConfiguration(XElement node)
+    {
+        String config = RegexExract("^'\\$\\(Configuration\\)\\|\\$\\(Platform\\)'=='(.*)'", node.Attribute("Condition").Value)[0];
+        return config;
+    }
+
+
+    /// <summary>
+    /// Extracts compilation options for single cpp/cs file.
+    /// </summary>
+    /// <param name="clCompile">xml node from where to get</param>
+    /// <param name="file2compile">compiler options to fill out</param>
+    void ExtractCompileOptions( XElement clCompile, FileInfo file2compile )
+    {
+        foreach (XElement fileProps in clCompile.Elements())
+        {
+            switch (fileProps.Name.LocalName)
+            {
+                case "PrecompiledHeader":
+                    String config = getConfiguration(fileProps);
+                    
+                    while (file2compile.phUse.Count < configurations.Count)
+                        file2compile.phUse.Add(PrecompiledHeaderUse.NotSpecified);
+                    
+                    int iCfg = configurations.IndexOf(config);
+                    if(iCfg != -1)
+                        file2compile.phUse[iCfg] = (PrecompiledHeaderUse)Enum.Parse(typeof(PrecompiledHeaderUse), fileProps.Value);
+                    
+                    break;
+
+                default:
+                    if (Debugger.IsAttached)
+                        Debugger.Break();
+                    break;
+            } //switch
+        } //foreach
+    } //ExtractCompileOptions
+
+    static void CopyField(object o2set, String field, XElement node)
+    { 
+        o2set.GetType().GetField(field).SetValue(o2set, node.Element(node.Document.Root.Name.Namespace + field)?.Value);
+    }
+
 
     /// <summary>
     /// Loads project. If project exists in solution, it's loaded in same instance.
@@ -67,6 +213,74 @@ public class Project
             project = new Project();
 
         XDocument p = XDocument.Load(path);
+
+        foreach (XElement node in p.Root.Elements())
+        {
+            String lname = node.Name.LocalName;
+
+            switch (lname)
+            {
+                case "ItemGroup":
+                    // ProjectConfiguration has Configuration & Platform sub nodes, but they cannot be reconfigured to anything else then this attribute.
+                    if (node.Attribute("Label")?.Value == "ProjectConfigurations")
+                    {
+                        project.configurations = node.Elements().Select(x => x.Attribute("Include").Value).ToList();
+                    }
+                    else {
+                        //
+                        // .h / .cpp / custom build files are picked up here.
+                        //
+                        foreach (XElement igNode in node.Elements())
+                        {
+                            FileInfo f = new FileInfo();
+                            f.includeType = (IncludeType)Enum.Parse(typeof(IncludeType), igNode.Name.LocalName);
+                            f.relativePath = igNode.Attribute("Include").Value;
+                            
+                            if(f.includeType == IncludeType.ClCompile )
+                                project.ExtractCompileOptions(igNode, f);
+
+                            //
+                            // Custom build tool
+                            //
+                            if (f.includeType == IncludeType.CustomBuild)
+                            {
+                                f.customBuildTool = new List<CustomBuildToolProperties>(project.configurations.Count);
+                                
+                                while (f.customBuildTool.Count < project.configurations.Count)
+                                    f.customBuildTool.Add(new CustomBuildToolProperties());
+
+                                foreach(XElement custbNode in igNode.Elements())
+                                {
+                                    FieldInfo fi = typeof(CustomBuildToolProperties).GetField(custbNode.Name.LocalName);
+                                    if (fi == null) continue;
+
+                                    String config = getConfiguration(custbNode);
+                                    int iCfg = project.configurations.IndexOf(config);
+
+                                    if (iCfg == -1)
+                                        continue;
+
+                                    fi.SetValue(f.customBuildTool[iCfg], custbNode.Value);
+                                } //for
+                            } //if
+
+                            project.files.Add(f);
+                        } //for
+                    }
+                    break;
+                
+                case "PropertyGroup":
+                    {
+                        if (node.Attribute("Label")?.Value == "Globals")
+                        {
+                            foreach (String field in new String[] { "ProjectGuid", "Keyword" /*, "RootNamespace"*/ })
+                                CopyField(project, field, node);
+                        }
+                    }
+                    break;
+            } //switch
+        } //foreach
+
         return project;
     }
 }
@@ -173,15 +387,15 @@ public class Solution
                if(iConfigIndex == -1)
                     continue;
 
-                while (p.configurations.Count < s.configurations.Count)
+                while (p.slnConfigurations.Count < s.configurations.Count)
                 {
-                    p.configurations.Add(null);
+                    p.slnConfigurations.Add(null);
                     p.build.Add(false);
                 }
 
                 if (action == "ActiveCfg")
                 {
-                    p.configurations[iConfigIndex] = projectConfig;
+                    p.slnConfigurations[iConfigIndex] = projectConfig;
                 }
                 else
                 {
@@ -292,8 +506,7 @@ class Script
 {
     static int Main(String[] args)
     {
-        //String slnFile = @"E:\Prototyping\vlc-2.2.1.32-2013\modules\audio_output\opensles_plugin\opensles_plugin.sln";
-        String slnFile = @"C:\!deleteme!\Android1.sln";
+        String slnFile = args[0];
 
         try
         {
@@ -303,8 +516,6 @@ class Script
 
             if (File.Exists(projCacheFile))
                 projCache = SolutionOrProject.LoadCache(projCacheFile);
-
-            proj.SaveCache(projCacheFile);
 
             Solution s = proj.solutionOrProject as Solution;
             if (s != null)
@@ -317,6 +528,8 @@ class Script
                     Project.LoadProject(s, null, p);
                 }
             }
+
+            proj.SaveCache(projCacheFile);
         }
         catch (Exception ex)
         {
