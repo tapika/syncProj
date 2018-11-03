@@ -1,0 +1,3 @@
+syncProj exited with no error
+TestProject.cs :
+3 files updated
