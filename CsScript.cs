@@ -449,7 +449,7 @@ public class CsScript
 
                     if (!bContains)
                     {
-                        csInfo.csFiles.Add(fPath);
+                        csInfo.csFiles.Add(fPath.Replace("/", "\\"));
                         exceptFiles.Add(fileFullPath);
                     }
 
