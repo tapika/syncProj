@@ -1489,9 +1489,14 @@ public class Path2
 };
 
 
+/// <summary>
+/// syncProj tool.
+/// </summary>
 public partial class syncProj
 {
-
+    /// <summary>
+    /// Entry point
+    /// </summary>
     public static int Main(params String[] args)
     {
         try
@@ -1622,6 +1627,9 @@ public partial class syncProj
         }
         catch (Exception ex)
         {
+            if (bAllowExceptionThrow)
+                throw;
+
             Console.WriteLine("Error: " + ex.Message);
             return -2;
         }

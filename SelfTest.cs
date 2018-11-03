@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
 /// Just a helper class so Visual studio would be able to see our test system and
@@ -23,12 +24,13 @@ public class TestStarter
     [TestMethod]
     public void RunSyncProjectTests()
     {
-        syncProj.Main("-t");
+        syncProj.Main("-t", "-testexplorer");
     }
 }
 
 partial class syncProj
 {
+    static bool bAllowExceptionThrow = false;
     /// <summary>
     /// Starts self diagnostic tests.
     /// 
@@ -45,6 +47,7 @@ partial class syncProj
     /// </summary>
     /// <param name="args">command line arguments to syncProj tool</param>
     /// <param name="i">args should be parsed from i'th position</param>
+    [ExcludeFromCodeCoverage]
     public static void StartSelfTests( String[] args, int i )
     {
         String testToStart = null;
@@ -63,6 +66,9 @@ partial class syncProj
             switch (arg.Substring(1).ToLower())
             {
                 case "keep": bKeepResults = true; break;
+                case "testexplorer":
+                    bAllowExceptionThrow = true;
+                    break;
             }
         }
 
@@ -276,6 +282,9 @@ partial class syncProj
 
                         if (dr == DialogResult.Cancel)
                         {
+                            if (bAllowExceptionThrow)
+                                throw new Exception("Testing aborted");
+
                             Console.WriteLine();
                             Console.WriteLine("Testing aborted.");
                             return;

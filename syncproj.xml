@@ -1037,8 +1037,18 @@
             Runs all tests
             </summary>
         </member>
+        <member name="T:syncProj">
+            <summary>
+            syncProj tool.
+            </summary>
+        </member>
         <!-- Badly formed XML comment ignored for member "M:syncProj.StartSelfTests(System.String[],System.Int32)" -->
         <!-- Badly formed XML comment ignored for member "M:syncProj.ExecCmd(System.String,System.String@)" -->
+        <member name="M:syncProj.Main(System.String[])">
+            <summary>
+            Entry point
+            </summary>
+        </member>
         <member name="T:Solution">
             <summary>
             .sln loaded into class.
