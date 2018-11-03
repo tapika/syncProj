@@ -399,6 +399,11 @@ public class FileConfigurationInfo
     public bool OptimizeReferences = false;
 
     /// <summary>
+    /// Set to true to enable profiling (/PROFILE linker flag)
+    /// </summary>
+    public bool Profile = false;
+
+    /// <summary>
     /// Format of debug information.
     /// </summary>
     public EDebugInformationFormat DebugInformationFormat = EDebugInformationFormat.Invalid;

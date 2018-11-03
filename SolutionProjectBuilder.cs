@@ -2077,6 +2077,16 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Produces output, which can be used with the Performance Tools profiler.
+    /// </summary>
+    /// <param name="bProfile">true to enable profiling</param>
+    static public void Linker_Advanced_Profile(bool bProfile)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.Profile = bProfile;
+    }
+
+    /// <summary>
     /// Enable function level linking.
     /// </summary>
     /// <param name="b">true to enable, false to disable</param>

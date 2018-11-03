@@ -925,7 +925,17 @@ public class Project
         if (projectConf != null && conf.Optimization != EOptimization.ProjectDefault && conf.Optimization != projectConf.Optimization)
             o.AppendLine( "      <Optimization" + sCond + ">" + conf.getOptimization(this) + "</Optimization>" );
 
-        if( conf.ShowIncludes)
+        // Not applicable for Android platform
+        if( Keyword != EKeyword.Android && projectConf != null)
+        {
+            if (conf.IntrinsicFunctions && conf.IntrinsicFunctions != projectConf.IntrinsicFunctions)
+                o.AppendLine("      <IntrinsicFunctions" + sCond + ">true</IntrinsicFunctions>");
+
+            if (conf.FunctionLevelLinking && conf.FunctionLevelLinking != projectConf.FunctionLevelLinking)
+                o.AppendLine("      <FunctionLevelLinking" + sCond + ">true</FunctionLevelLinking>");
+        }
+
+        if ( conf.ShowIncludes)
             o.AppendLine("      <ShowIncludes" + sCond + ">true</ShowIncludes>");
 
         if(conf.ExcludedFromBuild )
@@ -1391,6 +1401,8 @@ public class Project
                 o.AppendLine("      <EnableCOMDATFolding>true</EnableCOMDATFolding>");
             if (conf.OptimizeReferences)
                 o.AppendLine("      <OptimizeReferences>true</OptimizeReferences>");
+            if (conf.Profile)
+                o.AppendLine("      <Profile>true</Profile>");
 
             if (conf.AdditionalLibraryDirectories.Length != 0)
                 o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + "</AdditionalLibraryDirectories>");

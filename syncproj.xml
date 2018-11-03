@@ -655,6 +655,11 @@
             Eliminates functions and data that are never referenced
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.Profile">
+            <summary>
+            Set to true to enable profiling (/PROFILE linker flag)
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.DebugInformationFormat">
             <summary>
             Format of debug information.
@@ -1975,6 +1980,12 @@
             Eliminates functions and data that are never referenced (/OPT:REF option)
             </summary>
             <param name="bOptimizeReferences">true to enable, false to disable</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.Linker_Advanced_Profile(System.Boolean)">
+            <summary>
+            Produces output, which can be used with the Performance Tools profiler.
+            </summary>
+            <param name="bProfile">true to enable profiling</param>
         </member>
         <member name="M:SolutionProjectBuilder.CCpp_CodeGeneration_EnableFunctionLevelLinking(System.Boolean)">
             <summary>

@@ -18,6 +18,7 @@ partial class Builder : SolutionProjectBuilder
             files("?test.cpp");
             Linker_Optimizations_References();
             Linker_General_EnableIncrementalLinking(false);
+            Linker_Advanced_Profile(true);
             CCpp_CodeGeneration_EnableFunctionLevelLinking();
             Ccpp_Optimization_WholeProgramGeneration(EWholeProgramOptimization.UseLinkTimeCodeGeneration);
             Ccpp_Optimization_Optimization(EOptimization.MinSpace);
