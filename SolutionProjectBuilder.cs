@@ -1147,7 +1147,7 @@ public class SolutionProjectBuilder
     /// <param name="script2include">Script to include into project</param>
     /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
     /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
-    static public void projectScript(String script2include, String script2compile, String pathToSyncProjExe = null )
+    static public void projectScript(String script2include, String script2compile = null, String pathToSyncProjExe = null )
     {
         requireProjectSelected();
         selfCompileScript(script2include, script2compile, pathToSyncProjExe, m_project.getProjectFolder());
@@ -1159,7 +1159,7 @@ public class SolutionProjectBuilder
     /// <param name="script2include">Script to include into project</param>
     /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
     /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
-    static public void solutionScript(String script2include, String script2compile, String pathToSyncProjExe = null )
+    static public void solutionScript(String script2include, String script2compile = null, String pathToSyncProjExe = null )
     {
         if (script2compile == null)
             script2compile = script2include;

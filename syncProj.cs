@@ -455,7 +455,7 @@ public class SolutionOrProject
 
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
-            o.AppendLine(head + "    solutionScript(\"" + fileName + ".cs" + "\", null, \"" + pathToSyncProjExe.Replace("\\", "\\\\") + "\");");
+            o.AppendLine(head + "    solutionScript(\"" + fileName + ".cs" + "\");");
 
             String wasInSubGroup = "";
             List<String> groupParts = new List<string>();
@@ -549,7 +549,7 @@ public class SolutionOrProject
             
             // Packaging projects cannot have custom build step.
             if( bCsScript && proj.Keyword != EKeyword.Package)
-                o.AppendLine(head + "    projectScript(\"" + fileName + ".cs" + "\", null, \"" + pathToSyncProjExe.Replace("\\", "\\\\") + "\");");
+                o.AppendLine(head + "    projectScript(\"" + fileName + ".cs" + "\");");
 
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
             
@@ -1339,6 +1339,12 @@ partial class Script
                 }
                 return -2;
             } //if
+
+            //
+            // If we have solution, let's export by default in C# script format.
+            //
+            if (inFile != null && inFile.EndsWith(".sln", StringComparison.InvariantCulture) && formats.Count == 0 )
+                formats.Add("cs");
 
             if (inFile == null || formats.Count == 0)
             {
