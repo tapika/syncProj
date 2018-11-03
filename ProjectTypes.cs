@@ -159,7 +159,7 @@ public enum IncludeType
 public enum EDebugInformationFormat
 {
     /// <summary>
-    /// Applicable for windows projects only
+    /// Applicable for windows projects only. /ZI compiler flag.
     /// </summary>
     EditAndContinue,
 
@@ -174,7 +174,7 @@ public enum EDebugInformationFormat
     OldStyle,
 
     /// <summary>
-    /// Applicable for windows projects only
+    /// Applicable for windows projects only. /Zi compiler flag.
     /// </summary>
     ProgramDatabase,
 
@@ -186,7 +186,12 @@ public enum EDebugInformationFormat
     /// <summary>
     /// Applicable for android projects only.
     /// </summary>
-    FullDebug
+    FullDebug,
+
+    /// <summary>
+    /// Just some value, just to indicate that enumeration value is invalid.
+    /// </summary>
+    Invalid
 }
 
 
@@ -298,9 +303,43 @@ public class FileConfigurationInfo
     public bool OptimizeReferences = false;
 
     /// <summary>
-    /// Format of debug information
+    /// Format of debug information.
     /// </summary>
-    public EDebugInformationFormat DebugInformationFormat = EDebugInformationFormat.ProgramDatabase;
+    public EDebugInformationFormat DebugInformationFormat = EDebugInformationFormat.Invalid;
+
+    /// <summary>
+    /// Gets visual studio default format for specific configuration.
+    /// </summary>
+    /// <param name="confName">configuration name (E.g. Debug|Win32) for which to query, null if use this configuration</param>
+    /// <returns>Default value</returns>
+    public EDebugInformationFormat getDebugInformationFormatDefault( String confName )
+    {
+        String platform;
+        
+        if( confName != null )
+            platform = confName.Split('|')[1];
+        else
+            platform = this.confName.Split('|')[1];
+
+        if (platform == "Win32" || platform == "x86")
+            return EDebugInformationFormat.EditAndContinue;
+
+        if (platform == "x64")
+            return EDebugInformationFormat.ProgramDatabase;
+
+        // Android projects does not have "default" configuration, so they needs to be specified anyway.
+        if (platform == "ARM" || platform == "ARM64")
+            return EDebugInformationFormat.Invalid;
+
+        if (SolutionProjectBuilder.isDeveloper())
+        {
+            // Default needs to be checked from Visual studio.
+            Debugger.Break();
+        }
+
+        return EDebugInformationFormat.ProgramDatabase;
+    }
+
 
     /// <summary>
     /// Custom build step for includeType.CustomBuild specification. Can be null if not defined.
@@ -463,7 +502,9 @@ public enum ECharacterSet
     MultiByte
 }
 
-
+/// <summary>
+/// Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
+/// </summary>
 [Description("")]   // Marker to switch Enum value / Description when parsing
 public enum EWholeProgramOptimization
 {
@@ -473,6 +514,9 @@ public enum EWholeProgramOptimization
     [Description("false")]
     NoWholeProgramOptimization = 0,
 
+    /// <summary>
+    /// Yes / /GL compiler option.
+    /// </summary>
     [Description("true")]
     UseLinkTimeCodeGeneration,
 
@@ -840,6 +884,10 @@ public class Configuration : FileConfigurationInfo
 
 
     public bool LinkIncremental = true;
+
+    /// <summary>
+    /// Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
+    /// </summary>
     public EWholeProgramOptimization WholeProgramOptimization;
 
     /// <summary>

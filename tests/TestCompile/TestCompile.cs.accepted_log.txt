@@ -1,0 +1,40 @@
+syncProj exited with no error
+TestCompile.cs :
+0) invokeScript: (compiled):
+_test1.cs dll will be compiled.
+
+1) invokeScript: (compiled):
+_test1.cs dll will be compiled.
+
+2) invokeScript: (up-to-date):
+_test1.cs dll is up-to-date.
+
+3) invokeScript: (compiled):
+_test1.cs dll will be compiled.
+
+4) invokeScript: (compiled):
+_test1.cs dll will be compiled.
+
+5) invokeScript: (up-to-date):
+_test1.cs dll is up-to-date.
+
+6) invokeScript: (compiled):
+_test1.cs dll will be compiled.
+
+7) invokeScript: (up-to-date):
+_test1.cs dll is up-to-date.
+
+8) invokeScript: (compiled):
+_test1.cs dll will be compiled.
+
+9) invokeScript: (up-to-date):
+_test1.cs dll is up-to-date.
+
+10) invokeScript: (compiled):
+_test1.cs dll will be compiled.
+
+11) invokeScript: (up-to-date):
+_test1.cs dll is up-to-date.
+
+No solution or project defined. Use project() or solution() functions in script
+0 files updated

@@ -29,8 +29,9 @@ public class CsScript
     /// <param name="bAllowThrow">true if allow to throw exceptions</param>
     /// <param name="errors">Errors if any</param>
     /// <param name="args">Main argument parameters</param>
+    /// <param name="bCompileOnly">true if only to compile</param>
     /// <returns>true if execution was successful.</returns>
-    static public bool RunScript( String _path, bool bAllowThrow, out String errors, params String[] args )
+    static public bool RunScript( String _path, bool bCompileOnly, bool bAllowThrow, out String errors, params String[] args )
     {
         errors = "";
 
@@ -56,6 +57,8 @@ public class CsScript
 
         String dllBaseName = Path.GetFileNameWithoutExtension(_path);
         String tempDll;
+        String dllInfoFile = "";
+        DateTime dllInfoRealDate = DateTime.MinValue;
 
         for (int i = 1; ; i++)
         {
@@ -63,15 +66,18 @@ public class CsScript
             if (i != 1)
                 tempDll += i;
 
-            String dllInfoFile = tempDll + "_script.txt";       // We keep here C# script full path just not to get collisions.
+            dllInfoFile = tempDll + "_script.txt";       // We keep here C# script full path just not to get collisions.
             if (!File.Exists(dllInfoFile))
             {
                 File.WriteAllText(dllInfoFile, path);
                 break;
             }
 
-            if ( File.ReadAllText(dllInfoFile) == path)
+            if (File.ReadAllText(dllInfoFile) == path)
+            {
+                dllInfoRealDate = File.GetLastWriteTime(dllInfoFile);
                 break;
+            }
         }
 
         String pdb = tempDll + ".pdb";
@@ -80,7 +86,10 @@ public class CsScript
         List<String> filesToCompile = new List<string>();
         filesToCompile.Add(path);
 
-        CsScriptInfo csInfo = getCsFileInfo(path, true);
+        //---------------------------------------------------------------------------------------------------
+        //  Get referenced .cs script file list, and from referenced files further other referenced files.
+        //---------------------------------------------------------------------------------------------------
+        CsScriptInfo csInfo = getCsFileInfo(filesToCompile[0], true);
         filesToCompile.AddRange(csInfo.csFiles);
 
 
@@ -92,26 +101,49 @@ public class CsScript
         if (!File.Exists(tempDll))
             bCompileDll = true;
 
+        DateTime dllInfoTargetDate = DateTime.MinValue;
+
+        //---------------------------------------------------------------------------------------------------
+        // Calculate target date anyway, so we can set it to file.
+        // I have made such logic that scripts will be compiled if date / time of main script or any sub-script is changed.
+        //---------------------------------------------------------------------------------------------------
+        List<long> times = filesToCompile.Select(x => File.GetLastWriteTime(x).Ticks).ToList();
+        times.Sort();
+
+        //---------------------------------------------------------------------------------------------------
+        //  Basically we have multiple files, each with it's own modification date, we need to detect if any of files
+        //  has changed  - either updated forth (svn update) or back (svn revert with set file dates to last commit time)
+        //  We try to calculate date / time from multiple date times 
+        //---------------------------------------------------------------------------------------------------
+
+        long time = times[0];                               // smallest date/time
+        for (int i = 1; i < times.Count; i += 2)
+        {
+            if (i + 1 == times.Count)
+                time = (time + times[i]) / 2;               // medium between current date/time and highest
+            else
+                time += (times[i + 1] - times[i]) / 2;      // just take different between dates / times and get medium from there.
+        }
+
+        dllInfoTargetDate = new DateTime(time);
+        if (times.Count != 1)
+            dllInfoTargetDate.AddSeconds(-times.Count);     // Just some checksum on how many files we actually have.
+
         if (!bCompileDll)
         {
-            DateTime tempDllDate = File.GetLastWriteTime(tempDll);
 
-            foreach (String file in filesToCompile)
-            {
-                if (File.GetLastWriteTime(file) > tempDllDate)
-                {
-                    bCompileDll = true;
-
-                    if (csInfo.bCsDebug)
-                        Console.WriteLine("Compiling '" + tempDll + " because following file changed: " + file);
-
-                    break;
-                }
-            }
+            if (dllInfoRealDate != dllInfoTargetDate)
+                bCompileDll = true;
         }
-        if (csInfo.bCsDebug && !bCompileDll)
-            Console.WriteLine(tempDll + " is up-to-date.");
 
+        if (csInfo.DebugEnabled())
+        {
+            if( !bCompileDll )
+                Console.WriteLine(Exception2.getPath(path) + " dll is up-to-date.");
+            else
+                Console.WriteLine(Exception2.getPath(path) + " dll will be compiled.");
+            //+ ": Date found: " + dllInfoRealDate.ToString("o") + " Date expected: " + dllInfoTargetDate.ToString("o") 
+        }
 
         if (bCompileDll)
         {
@@ -176,6 +208,11 @@ public class CsScript
                 return false;
             }
         } //if
+
+        File.SetLastWriteTime(dllInfoFile, dllInfoTargetDate);
+
+        if (bCompileOnly)
+            return true;
 
         //------------------------------------------------------------------------------------------------------
         //
@@ -326,11 +363,17 @@ public class CsScript
     /// </summary>
     /// <param name="csPath">C# script to load and scan</param>
     /// <param name="bUseAbsolutePaths">true if to use absolute paths, false if not</param>
+    /// <param name="exceptFiles">Don't include path'es specified in here</param>
     /// <returns>C# script info</returns>
-    static public CsScriptInfo getCsFileInfo( String csPath, bool bUseAbsolutePaths )
+    static public CsScriptInfo getCsFileInfo( String csPath, bool bUseAbsolutePaths, List<String> exceptFiles = null )
     {
         CsScriptInfo csInfo = new CsScriptInfo();
+        if (exceptFiles == null)
+            exceptFiles = new List<string>();
 
+        if(!exceptFiles.Contains(csPath) )
+            exceptFiles.Add(csPath);
+        
         // ----------------------------------------------------------------
         //  Using C# kind of syntax - like this:
         //      //css_include <file.cs>;
@@ -367,10 +410,35 @@ public class CsScript
                     if (!File.Exists(fileFullPath))
                         throw new FileSpecificException("Include file specified in '" + fileFullPath + "' was not found (Included from '" + csPath + "')", csPath, iLine);
 
-                    if( bUseAbsolutePaths )
-                        csInfo.csFiles.Add(fileFullPath);
+                    bool bContains = false;
+                    String fPath;
+
+                    if (bUseAbsolutePaths)
+                        fPath = fileFullPath;
                     else
-                        csInfo.csFiles.Add(file);
+                        fPath = file;
+
+                    // Prevent cyclic references.
+                    bContains = csInfo.csFiles.Contains(fPath);
+                    if (!bContains) bContains = exceptFiles.Contains(fileFullPath);
+
+                    if (!bContains)
+                    {
+                        csInfo.csFiles.Add(fPath);
+                        exceptFiles.Add(fileFullPath);
+                    }
+
+                    if (!bContains)
+                    {
+                        CsScriptInfo subCsInfo = getCsFileInfo(fileFullPath, bUseAbsolutePaths, exceptFiles);
+                        if (subCsInfo.bCsDebug)             // Flag turned on from any dependent .cs file will enable debug also for main file.
+                            csInfo.bCsDebug = true;
+
+                        foreach (String subFile in subCsInfo.csFiles)
+                            if (!csInfo.csFiles.Contains(subFile))
+                                csInfo.csFiles.Add(subFile);
+                    } //if
+
                 } //if
 
                 if (reDebug.Match(line).Success)
@@ -397,6 +465,26 @@ public class CsScriptInfo
     /// Just additional //css_debug for compile troubleshooting in this code
     /// </summary>
     public bool bCsDebug;
+
+    /// <summary>
+    /// checks if debug enabled.
+    /// </summary>
+    /// <returns>true - enabled</returns>
+    public bool DebugEnabled()
+    {
+        if (bCsDebug)
+            return true;
+
+        if( g_bCsDebug )
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Global flag to enable C# script compilation debugging
+    /// </summary>
+    public static bool g_bCsDebug = false;
 }
 
 

@@ -569,7 +569,7 @@ public class Project
         {
             String nodeName = nodes[i].Name.LocalName;
             // Nodes can be exploded into same scan loop as long as key do not overlap (e.g. compile options versus link options).
-            if (nodeName == "ClCompile" || nodeName == "Link" || nodeName == "AntPackage")    // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
+            if (nodeName == "ClCompile" || nodeName == "Link" || nodeName == "AntPackage" || nodeName == "Lib")    // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
             {
                 foreach (XElement compLinkNode in nodes[i].Elements())
                 {
@@ -590,6 +590,11 @@ public class Project
 
             if (fieldName == "LibraryDependencies")
                 fieldName = "AdditionalDependencies";
+
+            //
+            // Visual studio project keeps Lib options in separate xml tag <Lib> <AdditionalOptions>... - but for us it's the same as LinkOptions.
+            //
+            if (fieldName == "Lib_AdditionalOptions") fieldName = "Link_AdditionalOptions";
 
             FieldInfo fi = typeof(Configuration).GetField(fieldName);
             if (fi == null)
@@ -814,7 +819,10 @@ public class Project
             o.AppendLine("      <PreprocessorDefinitions" + sCond + ">" + defines + "</PreprocessorDefinitions>");
         }
 
-        if (conf.DebugInformationFormat != EDebugInformationFormat.ProgramDatabase)
+        if (conf.DebugInformationFormat == EDebugInformationFormat.Invalid)
+            conf.DebugInformationFormat = conf.getDebugInformationFormatDefault(confName);
+
+        if (conf.DebugInformationFormat != conf.getDebugInformationFormatDefault(confName))
         {
             o.AppendLine("      <DebugInformationFormat" + sCond + ">" + conf.DebugInformationFormat.ToString() + "</DebugInformationFormat>");
 
@@ -1250,10 +1258,6 @@ public class Project
                 o.AppendLine("      <FunctionLevelLinking>true</FunctionLevelLinking>");
             if (conf.IntrinsicFunctions && Keyword != EKeyword.Android)
                 o.AppendLine("      <IntrinsicFunctions>true</IntrinsicFunctions>");
-            if (conf.EnableCOMDATFolding)
-                o.AppendLine("      <EnableCOMDATFolding>true</EnableCOMDATFolding>");
-            if (conf.OptimizeReferences)
-                o.AppendLine("      <OptimizeReferences>true</OptimizeReferences>");
 
             DumpConfiguration(conf);
 
@@ -1303,10 +1307,15 @@ public class Project
                 }
             }
 
+            if (conf.EnableCOMDATFolding)
+                o.AppendLine("      <EnableCOMDATFolding>true</EnableCOMDATFolding>");
+            if (conf.OptimizeReferences)
+                o.AppendLine("      <OptimizeReferences>true</OptimizeReferences>");
+
             if (conf.AdditionalLibraryDirectories.Length != 0)
                 o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + "</AdditionalLibraryDirectories>");
 
-            if (conf.Link_AdditionalOptions.Length != 0)
+            if (conf.ConfigurationType != EConfigurationType.StaticLibrary && conf.Link_AdditionalOptions.Length != 0)
                 o.AppendLine("      <AdditionalOptions>" + conf.Link_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
 
             // OutputFile ?
@@ -1324,6 +1333,16 @@ public class Project
                     o.AppendLine("    </" + step + "Event>");
                 }
             } //foreach
+
+            if (conf.ConfigurationType == EConfigurationType.StaticLibrary && conf.Link_AdditionalOptions.Length != 0)
+            { 
+                o.AppendLine("    <Lib>");
+
+                if (conf.Link_AdditionalOptions.Length != 0)
+                    o.AppendLine("      <AdditionalOptions>" + conf.Link_AdditionalOptions + "</AdditionalOptions>");
+
+                o.AppendLine("    </Lib>");
+            }
 
             o.AppendLine("  </ItemDefinitionGroup>");
         } //for

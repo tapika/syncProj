@@ -1,0 +1,3 @@
+syncProj exited with no error
+TestStaticLib.cs :
+2 files updated

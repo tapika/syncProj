@@ -1,0 +1,24 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            solution("out_test_sln");
+                vsver(2015);
+                configurations(  "Debug","Release" );
+                platforms( "Win32","x64" );
+                solutionScript("out_test_sln.cs");
+
+                invokeScript("out_testLib.cs");
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+

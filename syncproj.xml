@@ -9,7 +9,7 @@
             class for executing c# script.
             </summary>
         </member>
-        <member name="M:CsScript.RunScript(System.String,System.Boolean,System.String@,System.String[])">
+        <member name="M:CsScript.RunScript(System.String,System.Boolean,System.Boolean,System.String@,System.String[])">
             <summary>
             Compiles .cs script into dll/pdb, loads as assembly, and executes Main function.
             Temporary dll/pdb gets deleted. If .cs throws exception - it will be converted to
@@ -19,15 +19,17 @@
             <param name="bAllowThrow">true if allow to throw exceptions</param>
             <param name="errors">Errors if any</param>
             <param name="args">Main argument parameters</param>
+            <param name="bCompileOnly">true if only to compile</param>
             <returns>true if execution was successful.</returns>
         </member>
-        <member name="M:CsScript.getCsFileInfo(System.String,System.Boolean)">
+        <member name="M:CsScript.getCsFileInfo(System.String,System.Boolean,System.Collections.Generic.List{System.String})">
             <summary>
             Scans through C# script and gets additional information about C# script itself, 
             like dependent .cs files, and so on.
             </summary>
             <param name="csPath">C# script to load and scan</param>
             <param name="bUseAbsolutePaths">true if to use absolute paths, false if not</param>
+            <param name="exceptFiles">Don't include path'es specified in here</param>
             <returns>C# script info</returns>
         </member>
         <member name="T:CsScriptInfo">
@@ -43,6 +45,17 @@
         <member name="F:CsScriptInfo.bCsDebug">
             <summary>
             Just additional //css_debug for compile troubleshooting in this code
+            </summary>
+        </member>
+        <member name="M:CsScriptInfo.DebugEnabled">
+            <summary>
+            checks if debug enabled.
+            </summary>
+            <returns>true - enabled</returns>
+        </member>
+        <member name="F:CsScriptInfo.g_bCsDebug">
+            <summary>
+            Global flag to enable C# script compilation debugging
             </summary>
         </member>
         <member name="T:Project">
@@ -431,7 +444,7 @@
         </member>
         <member name="F:EDebugInformationFormat.EditAndContinue">
             <summary>
-            Applicable for windows projects only
+            Applicable for windows projects only. /ZI compiler flag.
             </summary>
         </member>
         <member name="F:EDebugInformationFormat.None">
@@ -446,7 +459,7 @@
         </member>
         <member name="F:EDebugInformationFormat.ProgramDatabase">
             <summary>
-            Applicable for windows projects only
+            Applicable for windows projects only. /Zi compiler flag.
             </summary>
         </member>
         <member name="F:EDebugInformationFormat.LineNumber">
@@ -457,6 +470,11 @@
         <member name="F:EDebugInformationFormat.FullDebug">
             <summary>
             Applicable for android projects only.
+            </summary>
+        </member>
+        <member name="F:EDebugInformationFormat.Invalid">
+            <summary>
+            Just some value, just to indicate that enumeration value is invalid.
             </summary>
         </member>
         <member name="T:FileConfigurationInfo">
@@ -557,8 +575,15 @@
         </member>
         <member name="F:FileConfigurationInfo.DebugInformationFormat">
             <summary>
-            Format of debug information
+            Format of debug information.
             </summary>
+        </member>
+        <member name="M:FileConfigurationInfo.getDebugInformationFormatDefault(System.String)">
+            <summary>
+            Gets visual studio default format for specific configuration.
+            </summary>
+            <param name="confName">configuration name (E.g. Debug|Win32) for which to query, null if use this configuration</param>
+            <returns>Default value</returns>
         </member>
         <member name="F:FileConfigurationInfo.customBuildRule">
             <summary>
@@ -693,9 +718,19 @@
             Ansi
             </summary>
         </member>
+        <member name="T:EWholeProgramOptimization">
+            <summary>
+            Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
+            </summary>
+        </member>
         <member name="F:EWholeProgramOptimization.NoWholeProgramOptimization">
             <summary>
             Visual studio default.
+            </summary>
+        </member>
+        <member name="F:EWholeProgramOptimization.UseLinkTimeCodeGeneration">
+            <summary>
+            Yes / /GL compiler option.
             </summary>
         </member>
         <member name="T:ESubSystem">
@@ -957,6 +992,11 @@
         <member name="F:Configuration.UseOfMfc">
             <summary>
             Defines how MFC is linked in
+            </summary>
+        </member>
+        <member name="F:Configuration.WholeProgramOptimization">
+            <summary>
+            Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
             </summary>
         </member>
         <member name="F:Configuration.OutDir">
@@ -1425,11 +1465,12 @@
             </summary>
             <param name="groupPath"></param>
         </member>
-        <member name="M:SolutionProjectBuilder.invokeScript(System.String)">
+        <member name="M:SolutionProjectBuilder.invokeScript(System.String,System.Boolean)">
             <summary>
             Invokes C# Script by source code path. If any error, exception will be thrown.
             </summary>
             <param name="path">c# script path</param>
+            <param name="bCompileOnly">true if only to compile</param>
         </member>
         <member name="F:SolutionProjectBuilder.selectedFileConfigurations">
             <summary>
@@ -1704,6 +1745,30 @@
             Specifies optimization level to be used.
             </summary>
             <param name="optLevel">Optimization level to enable - one of following: off, size, speed, on(or full)</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.Linker_Optimizations_References(System.Boolean)">
+            <summary>
+            Eliminates functions and data that are never referenced (/OPT:REF option)
+            </summary>
+            <param name="bOptimizeReferences">true to enable, false to disable</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.CCpp_CodeGeneration_EnableFunctionLevelLinking(System.Boolean)">
+            <summary>
+            Enable function level linking.
+            </summary>
+            <param name="b">true to enable, false to disable</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.Ccpp_Optimization_WholeProgramGeneration(EWholeProgramOptimization)">
+            <summary>
+            Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
+            </summary>
+            <param name="wpgen"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.Ccpp_Optimization_Optimization(EOptimization)">
+            <summary>
+            Select specific optimization method.
+            </summary>
+            <param name="opt">Optimization level</param>
         </member>
         <member name="M:SolutionProjectBuilder.buildoptions(System.String[])">
             <summary>

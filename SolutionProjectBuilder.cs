@@ -649,7 +649,8 @@ public class SolutionProjectBuilder
     /// Invokes C# Script by source code path. If any error, exception will be thrown.
     /// </summary>
     /// <param name="path">c# script path</param>
-    static public void invokeScript(String path)
+    /// <param name="bCompileOnly">true if only to compile</param>
+    static public void invokeScript(String path, bool bCompileOnly = false)
     {
         String errors = "";
         String dir;
@@ -664,7 +665,7 @@ public class SolutionProjectBuilder
             fullPath = Path.Combine(dir, path);
         }
 
-        CsScript.RunScript(fullPath, true, out errors, "no_exception_handling");
+        CsScript.RunScript(fullPath, bCompileOnly, true, out errors, "no_exception_handling");
     }
 
 
@@ -1791,8 +1792,12 @@ public class SolutionProjectBuilder
             }
             else
             {
+                //
+                // cl : Command line error D8016: '/ZI' and '/GL' command-line options are incompatible =>
+                // If WholeProgramOptimization == UseLinkTimeCodeGeneration is in use - cannot use EditAndContinue
+
                 // Windows
-                if (conf.Optimization == EOptimization.Full)
+                if (conf.Optimization == EOptimization.Full || conf.WholeProgramOptimization == EWholeProgramOptimization.UseLinkTimeCodeGeneration)
                 {
                     debugFormat = EDebugInformationFormat.ProgramDatabase;
                 }
@@ -1859,6 +1864,50 @@ public class SolutionProjectBuilder
             optimize_symbols_recheck(conf);
         }
     } //optimize
+
+    /// <summary>
+    /// Eliminates functions and data that are never referenced (/OPT:REF option)
+    /// </summary>
+    /// <param name="bOptimizeReferences">true to enable, false to disable</param>
+    static public void Linker_Optimizations_References(bool bOptimizeReferences = true)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.OptimizeReferences = bOptimizeReferences;
+    }
+
+    /// <summary>
+    /// Enable function level linking.
+    /// </summary>
+    /// <param name="b">true to enable, false to disable</param>
+    static public void CCpp_CodeGeneration_EnableFunctionLevelLinking(bool b = true)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.FunctionLevelLinking = b;
+    }
+
+    /// <summary>
+    /// Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
+    /// </summary>
+    /// <param name="wpgen"></param>
+    static public void Ccpp_Optimization_WholeProgramGeneration(EWholeProgramOptimization wpgen = EWholeProgramOptimization.UseLinkTimeCodeGeneration)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+        {
+            conf.WholeProgramOptimization = wpgen;
+            optimize_symbols_recheck(conf);
+        }
+    }
+
+    /// <summary>
+    /// Select specific optimization method.
+    /// </summary>
+    /// <param name="opt">Optimization level</param>
+    static public void Ccpp_Optimization_Optimization(EOptimization opt = EOptimization.Custom)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+            conf.Optimization = opt;
+    }
+
 
     /// <summary>
     /// Passes arguments directly to the compiler command line without translation.
