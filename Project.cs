@@ -728,7 +728,7 @@ public class Configuration: FileConfigurationInfo
     /// <summary>
     /// Android specific.
     /// </summary>
-    public ECompileAs CompileAs;
+    public ECompileAs CompileAs = ECompileAs.CompileAsCpp;
 }
 
 /// <summary>
@@ -915,6 +915,7 @@ public class Project
         {
             switch (language)
             {
+                case "C": return path + ".vcxproj";
                 case "C++": return path + ".vcxproj";
                 case "C#": return path + ".csproj";
             }
@@ -1707,7 +1708,7 @@ public class Project
                 o.AppendLine("      <PrecompiledHeaderFile>" + conf.PrecompiledHeaderFile + "</PrecompiledHeaderFile>");
 
             if (Keyword == EKeyword.Android)
-                o.AppendLine("      <CompileAs>CompileAsCpp</CompileAs>");
+                o.AppendLine("      <CompileAs>" + conf.CompileAs.ToString() + "</CompileAs>");
 
             // No need to specify as it's Visual studio default.
             if (conf.WarningLevel != EWarningLevel.Level1)

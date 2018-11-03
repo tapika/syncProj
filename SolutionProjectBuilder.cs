@@ -359,14 +359,28 @@ public class SolutionProjectBuilder
     static public void language(String lang)
     {
         requireProjectSelected();
+        ECompileAs compileAs = ECompileAs.Default;
 
         switch (lang)
         {
-            case "C++": m_project.language = lang; break;
-            case "C#": m_project.language = lang; break;
+            case "C":  
+                m_project.language = lang; 
+                compileAs = ECompileAs.CompileAsC;
+                break;
+            case "C++": 
+                m_project.language = lang;
+                compileAs = ECompileAs.CompileAsCpp;
+                break;
+            case "C#": 
+                m_project.language = lang; 
+                break;
             default:
                 throw new Exception2("Language '" + lang + "' is not supported");
         } //switch
+
+        // Set up default compilation language
+        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+            conf.CompileAs = compileAs;
     }
 
     static Regex guidMatcher = new Regex("^[{(]?([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})[)}]?$");
