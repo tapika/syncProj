@@ -1537,6 +1537,12 @@
                 or by file name, for example: "files:my.cpp"
             </param>
         </member>
+        <member name="M:SolutionProjectBuilder.removefiles(System.String[])">
+            <summary>
+            Removes files from project or disables them from particular build configuration (If selected via filter)
+            </summary>
+            <param name="filesToRemove">List of files to remove / disable</param>
+        </member>
         <member name="M:SolutionProjectBuilder.kind(System.String,System.String)">
             <summary>
             Specifies application type, one of following: 

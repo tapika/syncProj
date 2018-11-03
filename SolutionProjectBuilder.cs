@@ -874,6 +874,35 @@ public class SolutionProjectBuilder
     } //filter
 
     /// <summary>
+    /// Removes files from project or disables them from particular build configuration (If selected via filter)
+    /// </summary>
+    /// <param name="filesToRemove">List of files to remove / disable</param>
+    static public void removefiles( params String[] filesToRemove )
+    { 
+        requireProjectSelected();
+
+        foreach( String file in filesToRemove )
+        {
+            foreach( FileInfo fi in matchExistingFiles( file ) )
+            {
+                if( !bLastSetFilterWasFileSpecific )
+                {
+                    m_project.files.Remove( fi );
+                }
+                else
+                {
+                    foreach( FileConfigurationInfo fci in fi.fileConfig )
+                    {
+                        if( selectedFileConfigurations.Contains( fci ) )
+                            fci.ExcludedFromBuild = true;    
+                    }    
+                }
+            }
+        }
+    } //removefiles
+
+
+    /// <summary>
     /// Specifies application type, one of following: 
     /// </summary>
     /// <param name="_kind">
