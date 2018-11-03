@@ -8,6 +8,24 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+/// <summary>
+/// Just a helper class so Visual studio would be able to see our test system and
+/// launch code coverage.
+/// </summary>
+[TestClass]
+public class TestStarter
+{
+    /// <summary>
+    /// Runs all tests
+    /// </summary>
+    [TestMethod]
+    public void RunSyncProjectTests()
+    {
+        syncProj.Main("-t");
+    }
+}
 
 partial class syncProj
 {

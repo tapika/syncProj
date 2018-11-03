@@ -1026,6 +1026,17 @@
             Use Standard Windows Libraries (No MFC), can be serialized for Utility project type.
             </summary>
         </member>
+        <member name="T:TestStarter">
+            <summary>
+            Just a helper class so Visual studio would be able to see our test system and
+            launch code coverage.
+            </summary>
+        </member>
+        <member name="M:TestStarter.RunSyncProjectTests">
+            <summary>
+            Runs all tests
+            </summary>
+        </member>
         <!-- Badly formed XML comment ignored for member "M:syncProj.StartSelfTests(System.String[],System.Int32)" -->
         <!-- Badly formed XML comment ignored for member "M:syncProj.ExecCmd(System.String,System.String@)" -->
         <member name="T:Solution">

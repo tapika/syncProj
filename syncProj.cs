@@ -1489,10 +1489,10 @@ public class Path2
 };
 
 
-partial class syncProj
+public partial class syncProj
 {
 
-    static int Main(String[] args)
+    public static int Main(params String[] args)
     {
         try
         {
