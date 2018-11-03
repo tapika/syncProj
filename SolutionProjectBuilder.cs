@@ -760,7 +760,7 @@ public class SolutionProjectBuilder
     {
         requireProjectSelected();
 
-        Dictionary2<String, String> dFilt = new Dictionary2<string, string>();
+        Dictionary<String, String> dFilt = new Dictionary<string, string>();
 
         foreach (String filter in filters)
         {
@@ -780,22 +780,20 @@ public class SolutionProjectBuilder
             } //if-else
         } //for
 
-        IList configItems = m_project.projectConfig;
-        Type type = typeof(Configuration);
+        IList[] confs2scan;
+        Type type;
 
-        if (dFilt.ContainsKey("files"))
+        if( dFilt.ContainsKey("files"))
         {
-            String fName = dFilt["files"];
-            FileInfo fileInfo = m_project.files.Where(x => x.relativePath == fName.Replace("/", "\\")).FirstOrDefault();
-
-            if (fileInfo == null)
-                throw new Exception2("File not found: '" + fName + "' - please specify correct filename. Should be registered via 'files' function.");
-            configItems = fileInfo.fileConfig;
-            type = typeof(FileConfigurationInfo);
+            confs2scan = matchExistingFiles( dFilt["files"] ).Select( x => x.fileConfig ).Cast<IList>().ToArray();
+            type = typeof( FileConfigurationInfo );
             bLastSetFilterWasFileSpecific = true;
         }
-        else {
+        else
+        {
             bLastSetFilterWasFileSpecific = false;
+            type = typeof( Configuration );
+            confs2scan = new IList[] { (IList) m_project.projectConfig };
         }
 
         String confMatchPatten;
@@ -821,50 +819,57 @@ public class SolutionProjectBuilder
         if (m_project.configurations.Count == 0)
             throw new Exception2("You must specify configurations() and platforms() before using this function.");
 
-        for ( int i = 0; i < m_project.configurations.Count; i++ )
-        {
-            //
-            // Add into list same amount of configurations as in m_project.configuration list.
-            //
-            while (i >= configItems.Count)
-            {
-                // new Configuration or new FileConfigurationInfo depending whether it's project configuration or file configuration.
-                FileConfigurationInfo fci = (FileConfigurationInfo)Activator.CreateInstance(type);
-                fci.confName = m_project.configurations[i];
-                if( type == typeof( FileConfigurationInfo ) )
-                    fci.Optimization = EOptimization.ProjectDefault;
-                configItems.Add(fci);
-            }
 
-            if (reConfMatch.Match(m_project.configurations[i]).Success)
+        List<int> confIndexes = new List<int>();
+
+
+        for( int i = 0; i < m_project.configurations.Count; i++ )
+            if( reConfMatch.Match( m_project.configurations[i] ).Success )
+                confIndexes.Add( i );
+
+        bool bFilterResultsAreEmpty = confIndexes.Count == 0;
+        if( bFilterResultsAreEmpty )
+        {
+            String s = "Filtering was done:\r\n";
+
+            if( dFilt.ContainsKey( "configurations" ) )
+                s += "* by configuration pattern '" + dFilt["configurations"] + "', project has only following configurations: " + String.Join( ",", m_project.getConfigurationNames() ) + "\r\n";
+
+            if( dFilt.ContainsKey( "platforms" ) )
+                s += "* by platform pattern '" + dFilt["platforms"] + "', project has only following platforms: " + String.Join( ",", m_project.getPlatforms() );
+
+            throw new Exception2( "Specified filter did not select any of configurations, please check the filter.\r\n" + s );
+        }
+
+        foreach ( IList configItems in confs2scan )
+        {
+            for( int i = 0; i < m_project.configurations.Count; i++ )
             {
+                //
+                // Add into list same amount of configurations as in m_project.configuration list.
+                //
+                while (i >= configItems.Count)
+                {
+                    // new Configuration or new FileConfigurationInfo depending whether it's project configuration or file configuration.
+                    FileConfigurationInfo fci = (FileConfigurationInfo)Activator.CreateInstance(type);
+                    fci.confName = m_project.configurations[i];
+                    if( type == typeof( FileConfigurationInfo ) )
+                        fci.Optimization = EOptimization.ProjectDefault;
+                    configItems.Add(fci);
+                }
+
+                // We re-create configurations anyway, but will not include into our list if not selected.
+                if( !confIndexes.Contains( i ) )
+                    continue;
+
                 if(bLastSetFilterWasFileSpecific)
                     selectedFileConfigurations.Add((FileConfigurationInfo)configItems[i]);
                 else
                     selectedConfigurations.Add((FileConfigurationInfo)configItems[i]);
-            }
+            } //for
         } //for
 
-        bool bFilterResultsAreEmpty = false;
-        if (bLastSetFilterWasFileSpecific)
-            bFilterResultsAreEmpty = selectedFileConfigurations.Count == 0;
-        else
-            bFilterResultsAreEmpty = selectedConfigurations.Count == 0;
-
-        if (bFilterResultsAreEmpty)
-        {
-            String s = "Filtering was done:\r\n";
-
-            if (dFilt.ContainsKey("configurations"))
-                s += "* by configuration pattern '" + dFilt["configurations"] + "', project has only following configurations: " + String.Join(",", m_project.getConfigurationNames()) + "\r\n";
-
-            if (dFilt.ContainsKey("platforms"))
-                s += "* by platform pattern '" + dFilt["platforms"] + "', project has only following platforms: " + String.Join(",", m_project.getPlatforms());
-
-            throw new Exception2("Specified filter did not select any of configurations, please check the filter.\r\n" + s);
-        }
-
-        if (!bLastSetFilterWasFileSpecific)
+        if( !bLastSetFilterWasFileSpecific)
             selectedFilters = filters;
     } //filter
 
@@ -1334,6 +1339,46 @@ public class SolutionProjectBuilder
 
 
     /// <summary>
+    /// Matches existing filename using filepattern.
+    /// </summary>
+    /// <param name="_filePattern">Either file path or glob file pattern</param>
+    /// <returns>List of files matching given pattern</returns>
+    static public FileInfo[] matchExistingFiles( String _filePattern )
+    {
+        requireProjectSelected();
+        FileInfo[] selectedFiles = null;
+
+        String filePattern = _filePattern.Replace( "/", "\\" );
+
+        if( filePattern.IndexOfAny( new char[] { '*', '?' } ) == -1 )      // Speed up matching, if no asterisk / widlcard, then it can be simply file path.
+        {
+            FileInfo fileInfo = m_project.files.Where( x => x.relativePath == filePattern ).FirstOrDefault();
+            if( fileInfo != null )
+                selectedFiles = new FileInfo[] { fileInfo };
+        }
+        else 
+        {
+            String regex1 = Regex.Escape( filePattern );         // Escape special regex control characters ("*" => "\*", "." => "\.")
+            String pattern = Regex.Replace( regex1, @"\\\*(\\\*)?", delegate ( Match m )
+            {
+                if( m.ToString().Length == 4 )   // "**" => "\*\*" (escaped) - we need to recurse into sub-folders.
+                    return ".*";
+                else
+                    return @"[^\\]*";
+            } ).Replace( @"\?", "." );
+            Regex re = new Regex( "^" + pattern + "$" , RegexOptions.Compiled | RegexOptions.IgnoreCase );
+            selectedFiles = m_project.files.Where( x => re.Match( x.relativePath ).Success ).ToArray();
+        }
+
+        if( selectedFiles == null || selectedFiles.Length == 0 )
+            throw new Exception2( "File not found: '" + _filePattern + "' - please specify correct filename. Should be registered via 'files' function.", 1 );
+
+        return selectedFiles;
+    }
+
+
+
+    /// <summary>
     /// Adds one or more file into project.
     /// </summary>
     /// <param name="filePatterns">File patterns to be added</param>
@@ -1379,7 +1424,7 @@ public class SolutionProjectBuilder
                 else
                 {
                     // Add only file itself
-                    fileList = new String[] { filePattern };
+                    fileList = new String[] { filePattern.Replace("/", "\\") };
                 }
             }
 

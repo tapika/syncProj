@@ -1668,6 +1668,13 @@
             </summary>
             <returns>List of files matches your selection</returns>
         </member>
+        <member name="M:SolutionProjectBuilder.matchExistingFiles(System.String)">
+            <summary>
+            Matches existing filename using filepattern.
+            </summary>
+            <param name="_filePattern">Either file path or glob file pattern</param>
+            <returns>List of files matching given pattern</returns>
+        </member>
         <member name="M:SolutionProjectBuilder.files(System.String[])">
             <summary>
             Adds one or more file into project.

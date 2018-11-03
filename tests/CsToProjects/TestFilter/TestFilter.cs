@@ -16,6 +16,23 @@ partial class Builder : SolutionProjectBuilder
                 buildrule( new CustomBuildRule() { Command = "echo 1", Outputs = "test.log", Message = "", AdditionalInputs = "in.txt", LinkObjects = false } );
             filter();
 
+            files( "?indir1/alpha.c" );
+            files( "?indir1/beta.c" );
+            files( "?indir1/subdir/gamma.c" );
+            files( "?indir2/delta.c" );
+
+            filter( "files:indir1/*.c", "platforms:Win32" );
+                defines( "ALPHA_OR_BETA" );
+            filter();
+
+            filter( "files:indir1/**.c", "platforms:Win32" );
+                defines( "ALPHA_OR_BETA_OR_GAMMA" );
+            filter();
+            
+            filter( "files:**delta.c", "platforms:Win32" );
+                defines( "DELTA" );
+            filter();
+
         }
         catch (Exception ex)
         {
