@@ -137,6 +137,14 @@ public class Project
     public string ProjectName;
     public string RelativePath;
 
+    public bool IsSubFolder()
+    {
+        // Currently made it like this - is there any other way to detect this ?
+        bool b = ProjectName == RelativePath;
+        return b;
+    }
+
+
     /// <summary>
     /// Same amount of configurations as in solution, this however lists project configurations, which correspond to solution configuration
     /// using same index.
@@ -273,6 +281,9 @@ public class Project
         if (project == null)
             project = new Project();
 
+        if (!File.Exists(path))
+            return null;
+
         XDocument p = XDocument.Load(path);
 
         foreach (XElement node in p.Root.Elements())
@@ -343,7 +354,7 @@ public class Project
         } //foreach
 
         return project;
-    }
+    } //LoadProject
 }
 
 /// <summary>
@@ -512,11 +523,12 @@ public class Solution
 public class SolutionOrProject
 {
     public object solutionOrProject;
+    public String path;
 
-    public SolutionOrProject(String path)
+    public SolutionOrProject(String _path)
     {
         String header = "";
-        using (StreamReader sr = new StreamReader(path, true))
+        using (StreamReader sr = new StreamReader(_path, true))
         {
             header += sr.ReadLine();
             header += sr.ReadLine();
@@ -524,11 +536,13 @@ public class SolutionOrProject
         }
 
         if (header.Contains("Microsoft Visual Studio Solution File"))
-            solutionOrProject = Solution.LoadSolution(path);
+            solutionOrProject = Solution.LoadSolution(_path);
         else if (header.Contains("<SolutionOrProject"))
-            LoadCache(path);
+            LoadCache(_path);
         else
-            solutionOrProject = Project.LoadProject(null, path);
+            solutionOrProject = Project.LoadProject(null, _path);
+        
+        path = _path;
     }
 
     public SolutionOrProject()
@@ -560,17 +574,229 @@ public class SolutionOrProject
         }
     }
 
+    /// <summary>
+    /// Builds solution or project .lua script.
+    /// </summary>
+    /// <param name="format">lua or cs</param>
+    public void UpdateProjectScript(String format)
+    {
+        String fileName = Path.GetFileNameWithoutExtension(path);
+        String outPath = Path.Combine(Path.GetDirectoryName(path), fileName + "." + format);
+        StringBuilder o = new StringBuilder();
+        o.AppendLine("");
+        o.AppendLine("solution \"test_" + fileName + "\"");
+
+        Solution sln = solutionOrProject as Solution;
+        o.AppendLine("    configurations { " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + " }");
+        o.AppendLine("    platforms { " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + " }");
+
+        String wasInSubGroup = "";
+        List<String> groupParts = new List<string>();
+
+        foreach (Project p in sln.projects)
+        {
+            if (p.IsSubFolder())
+                continue;
+
+            // Defines group / in which sub-folder we are.
+            groupParts.Clear();
+            Project pScan = p.parent;
+            for( ; pScan != null; pScan = pScan.parent )
+                groupParts.Insert(0, pScan.ProjectName);
+
+            String newGroup = String.Join("/", groupParts);
+            if (wasInSubGroup != newGroup)
+            {
+                o.AppendLine();
+                o.AppendLine("    group \"" + newGroup + "\"");
+            }
+            wasInSubGroup = newGroup;
+
+            // Define project
+            String name = Path.GetFileNameWithoutExtension(p.RelativePath);
+            String dir = Path.GetDirectoryName(p.RelativePath);
+            o.AppendLine();
+            o.AppendLine("    externalproject \"" + name + "\"");
+            o.AppendLine("        location \"" + dir.Replace("\\", "/") + "\"");
+            o.AppendLine("        uuid \"" + p.ProjectGuid.Substring(1, p.ProjectGuid.Length-2) + "\"");
+            o.AppendLine("        language \"C++\"");
+            o.AppendLine("        kind \"SharedLib\"");
+
+            //
+            // Define dependencies of project.
+            //
+            if (p.ProjectDependencies != null)
+            {
+                o.AppendLine();
+
+                foreach (String projDepGuid in p.ProjectDependencies)
+                {
+                    Project depp = sln.projects.Where(x => x.ProjectGuid == projDepGuid).FirstOrDefault();
+                    if (depp == null)
+                        continue;
+
+                    o.AppendLine("        dependson \"" + depp.ProjectName + "\"");
+                } //foreach
+            } //if
+        } //foreach
+        o.AppendLine();
+
+        File.WriteAllText(outPath, o.ToString());
+    } //UpdateProjectScript
 }
+
+/// <summary>
+/// Helper class for generating solution or projects.
+/// </summary>
+public class SolutionProjectBuilder
+{
+    static Solution m_solution = null;
+    static Project  m_project = null;
+    static String   m_solutionDir;         // Path where we are building solution / project at. By default same as script is started from.
+    static String[] m_platforms;
+    static String[] m_configurations;
+    private static readonly Destructor Finalise = new Destructor();
+
+    static SolutionProjectBuilder()
+    {
+        m_solutionDir = Path.GetDirectoryName(GetScriptPath(3));
+        //Console.WriteLine(buildDir);
+    }
+
+    private sealed class Destructor
+    {
+        ~Destructor()
+        {
+            //Console.WriteLine("shutdown");
+            externalproject(null);
+        }
+    }
+
+    /// <summary>
+    /// Creates new solution.
+    /// </summary>
+    /// <param name="name">Solution name</param>
+    static public void solution(String name)
+    {
+        m_solution = new Solution();
+        m_solution.path = Path.Combine(m_solutionDir, name);
+        if (!m_solution.path.EndsWith(".sln") )
+            m_solution.path += ".sln";
+    }
+
+    /// <summary>
+    /// Specify platform list to be used for your solution or project.
+    ///     For example: platforms("x32", "x64");
+    /// </summary>
+    /// <param name="platformList">List of platforms to support</param>
+    static public void platforms( params String[] platformList )
+    {
+        m_platforms = platformList;
+    }
+
+    /// <summary>
+    /// Specify which configurations to support. Typically "Debug" and "Release".
+    /// </summary>
+    /// <param name="configurationList">Configuration list to support</param>
+    static public void configurations(params String[] configurationList )
+    {
+        m_configurations = configurationList;
+    }
+
+    /// <summary>
+    /// Add to solution reference to external project
+    /// </summary>
+    /// <param name="name">Project name</param>
+    static public void externalproject(String name)
+    {
+        if (m_project != null)
+            m_solution.projects.Add(m_project);
+
+        if (name == null)       // Will be used to "flush" last filled project.
+            return;
+
+        m_project = new Project();
+        m_project.ProjectName = name;
+    }
+
+    /// <summary>
+    /// The location function sets the destination directory for a generated solution or project file.
+    /// </summary>
+    /// <param name="path"></param>
+    static public void location(String path)
+    {
+        if (m_project == null)
+        {
+            m_solutionDir = path;
+        }
+        else {
+            m_project.RelativePath = Path.Combine(path, m_project.ProjectName);
+        }
+    }
+
+    static public void kind(String _kind)
+    { 
+    }
+
+    static public void uuid(String uuid)
+    {
+    }
+
+
+
+    static String GetScriptPath(int iFrame = 0)
+    {
+        string fileName = new System.Diagnostics.StackTrace(true).GetFrame(iFrame).GetFileName();
+        //
+        // http://www.csscript.net/help/Environment.html
+        //
+        if (fileName == null)
+            fileName = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyDescriptionAttribute), true)
+                     .Cast<AssemblyDescriptionAttribute>()
+                     .First()
+                     .Description;
+
+        return fileName;
+    }
+
+};
+
 
 
 class Script
 {
     static int Main(String[] args)
     {
-        String slnFile = args[0];
-
         try
         {
+            String slnFile = null;
+            String format = null;
+
+            foreach (String arg in args)
+            {
+                if (!(arg.StartsWith("-") || arg.StartsWith("/")))
+                {
+                    slnFile = arg;
+                    continue;
+                }
+
+                switch (arg.Substring(1).ToLower())
+                {
+                    case "lua": format = "lua"; break;
+                    case "cs": format = "cs"; break;
+                }
+            } //foreach
+
+            if (slnFile == null || format == null)
+            {
+                Console.WriteLine("Usage: syncProj <.sln or .vcxproj file> (-lua|-cs)");
+                Console.WriteLine("");
+                Console.WriteLine(" -cs     - C# script output");
+                Console.WriteLine(" -lua    - premake5's lua script output");
+                Console.WriteLine("");
+                return -2;
+            }
+
             SolutionOrProject proj = new SolutionOrProject(slnFile);
             String projCacheFile = slnFile + ".cache";
             SolutionOrProject projCache;
@@ -583,7 +809,7 @@ class Script
             {
                 foreach (Project p in s.projects)
                 {
-                    if (p.RelativePath == p.ProjectName)
+                    if (p.IsSubFolder())
                         continue;
                     
                     Project.LoadProject(s, null, p);
@@ -591,6 +817,7 @@ class Script
             }
 
             proj.SaveCache(projCacheFile);
+            proj.UpdateProjectScript(format);
         }
         catch (Exception ex)
         {
