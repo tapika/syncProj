@@ -8,6 +8,7 @@ using System.CodeDom.Compiler;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// class for executing c# script.
@@ -130,6 +131,48 @@ public class CsScript
                 return false;
             }
         } //if
+
+        //------------------------------------------------------------------------------------------------------
+        //
+        // Let's check that script contains correct css_ref (Might be copied from another project).
+        // We allow here also multiple copies of syncProj, as long as path to syncProj.exe is valid in .cs header
+        // (Can be edited by C# script)
+        //
+        //------------------------------------------------------------------------------------------------------
+        Regex reCssRef = new Regex("^ *//css_ref  *(.*);?([\r\n]+|$)", RegexOptions.Multiline);
+        bool bUpdateScriptPath = false;
+        String targetCsPath = "";
+
+        using (StreamReader reader = new StreamReader(path))
+        {
+            for (int i = 0; i < 10; i++)
+            { 
+                String line = reader.ReadLine() ?? "";
+                var re = reCssRef.Match(line);
+                if (re.Success)
+                {
+                    // Current path, referred from C# script
+                    String currentCsPath = re.Groups[1].Value;
+                    String dir = Path.GetDirectoryName(path);
+                    String exePath = SolutionOrProject.getSyncProjExeLocation(dir, currentCsPath);
+                    targetCsPath = Path2.makeRelative(exePath, dir);
+                    String referredExe = currentCsPath;
+                    
+                    if( !Path.IsPathRooted(referredExe) )       // Uses relative path, let's make it absolute.
+                        referredExe = Path.Combine(dir, currentCsPath);
+
+                    if (currentCsPath != targetCsPath && !File.Exists(referredExe))
+                        bUpdateScriptPath = true;               // Path is not the same as ours, and .exe referred by C# script does not exists.
+                } //if
+            } //for
+        } //using
+
+        if (bUpdateScriptPath)
+        {
+            String file = File.ReadAllText(path);
+            String newFile = reCssRef.Replace(file, new MatchEvaluator( m => { return "//css_ref " + targetCsPath + "\r\n"; } ) );
+            File.WriteAllText(path, newFile);
+        }
 
         // ----------------------------------------------------------------
         //  Preload compiled .dll and it's debug information into ram.
