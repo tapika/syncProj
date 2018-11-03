@@ -1445,8 +1445,11 @@ public class Project
                 String objFilename = "$(IntDir)\\" + fileBase + objFileNames[fileBase] + ".obj";
                 // Add file specific configurations if list is empty.
                 while (configurations.Count > fi.fileConfig.Count) fi.fileConfig.Add(new FileConfigurationInfo());
-                fi.fileConfig.ForEach(x => x.ObjectFileName = objFilename);
-                objFileNames[fileBase]++;
+                foreach ( var c in fi.fileConfig )
+                    if( String.IsNullOrEmpty(c.ObjectFileName) )    // User can override, then can result in compilation errors.
+                        c.ObjectFileName = objFilename;
+                
+                 objFileNames[fileBase]++;
             } else
             {
                 objFileNames[fileBase] = 1;

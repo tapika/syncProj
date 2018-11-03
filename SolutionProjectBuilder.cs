@@ -1084,6 +1084,56 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Sets current object filename (output of compilation result).
+    /// Windows: Can be file or directory name.
+    /// Android: Typically: "$(IntDir)%(filename).o"
+    /// </summary>
+    /// <param name="objFilename"></param>
+    static public void objectfilename(String objFilename)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.ObjectFileName = objFilename;   
+    }
+
+    /// <summary>
+    /// Advanced feature - forces particular file to preprocess only file (to be compiled).
+    /// This can be used for checking define expansion.
+    /// </summary>
+    /// <param name="file">File to preprocess</param>
+    /// <param name="outExtension">Output file extension</param>
+    /// <param name="bDoPreprocess">true if you want to preprocess file, false if compile normally, but include only preprocessed output</param>
+    static public void preprocessFile( String file, bool bDoPreprocess = true, String outExtension = ".preprocessed")
+    {
+        requireProjectSelected();
+
+        if (!File.Exists(file))
+            throw new Exception2("File '" + file + "' does not exist." );
+
+        files(file);
+
+        if (bDoPreprocess)
+        {
+            filter("files:" + file);
+
+            if (m_project.Keyword == EKeyword.Win32Proj)
+            {
+                // MS C++ compiler
+                buildoptions("/P /Fi\"%(FullPath)" + outExtension + "\"");
+            }
+            else
+            {
+                // clang or gcc
+                buildoptions("-E");
+                objectfilename("%(FullPath)" + outExtension);
+            }
+            filter();
+        }
+
+        files("?" + file + outExtension);
+    } //preprocessFiles
+
+
+    /// <summary>
     /// Prints more details about given exception. In visual studio format for errors.
     /// </summary>
     /// <param name="ex">Exception occurred.</param>

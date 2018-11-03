@@ -1128,6 +1128,23 @@
             Passes arguments directly to the linker command line without translation.
             </summary>
         </member>
+        <member name="M:SolutionProjectBuilder.objectfilename(System.String)">
+            <summary>
+            Sets current object filename (output of compilation result).
+            Windows: Can be file or directory name.
+            Android: Typically: "$(IntDir)%(filename).o"
+            </summary>
+            <param name="objFilename"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.preprocessFile(System.String,System.Boolean,System.String)">
+            <summary>
+            Advanced feature - forces particular file to preprocess only file (to be compiled).
+            This can be used for checking define expansion.
+            </summary>
+            <param name="file">File to preprocess</param>
+            <param name="outExtension">Output file extension</param>
+            <param name="bDoPreprocess">true if you want to preprocess file, false if compile normally, but include only preprocessed output</param>
+        </member>
         <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception,System.String[])">
             <summary>
             Prints more details about given exception. In visual studio format for errors.
