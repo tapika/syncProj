@@ -1,0 +1,3 @@
+syncProj exited with no error
+TestDisableWarning.cs :
+3 files updated

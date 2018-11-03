@@ -667,7 +667,11 @@ public class SolutionProjectBuilder
     static List<FileConfigurationInfo> selectedFileConfigurations = new List<FileConfigurationInfo>();
     static List<FileConfigurationInfo> selectedConfigurations = new List<FileConfigurationInfo>();
     static String[] selectedFilters = null;     // null if not set
-    static bool bLastSetFilterWasFileSpecific = false;
+
+    /// <summary>
+    /// true if file specific filtering is active, false if not.
+    /// </summary>
+    public static bool bLastSetFilterWasFileSpecific = false;
 
     /// <summary>
     /// Resets static variables to be able to start next testing round.
@@ -769,7 +773,7 @@ public class SolutionProjectBuilder
         if (dFilt.ContainsKey("files"))
         {
             String fName = dFilt["files"];
-            FileInfo fileInfo = m_project.files.Where(x => x.relativePath == fName).FirstOrDefault();
+            FileInfo fileInfo = m_project.files.Where(x => x.relativePath == fName.Replace("/", "\\")).FirstOrDefault();
 
             if (fileInfo == null)
                 throw new Exception2("File not found: '" + fName + "' - please specify correct filename. Should be registered via 'files' function.");
@@ -855,6 +859,9 @@ public class SolutionProjectBuilder
     /// <param name="_kind">
     /// WindowedApp, Application    - Window application<para />
     /// DynamicLibrary, SharedLib   - .dll<para />
+    /// StaticLibrary, StaticLib    - Static library (.lib or .a)<para />
+    /// Utility                     - Utility project<para />
+    /// ConsoleApp                  - Console application<para />
     /// </param>
     /// <param name="os">"windows" (default), "android" or "package"</param>
     static public void kind(String _kind, String os = null)
@@ -880,6 +887,7 @@ public class SolutionProjectBuilder
 
         switch (_kind)
         {
+            case "ConsoleApplication":
             case "ConsoleApp":          type = EConfigurationType.Application; subsystem = ESubSystem.Console; break;
             case "WindowedApp":         type = EConfigurationType.Application; break;
             case "Application":         type = EConfigurationType.Application; break;
@@ -1151,6 +1159,21 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Disables specific compilation warnings.
+    /// </summary>
+    /// <param name="warnings">Warnings to disable</param>
+    static public void disablewarnings(params String[] warnings)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+        {
+            if (conf.DisableSpecificWarnings.Length != 0)
+                conf.DisableSpecificWarnings += ";";
+
+            conf.DisableSpecificWarnings += String.Join(";", warnings);
+        }
+    }
+
+    /// <summary>
     /// Specifies system include directories.
     /// </summary>
     /// <param name="dirs">List of include directories.</param>
@@ -1204,13 +1227,25 @@ public class SolutionProjectBuilder
     /// but it was dragging a lot of dependencies, I've decided to survive without it.
     /// </summary>
     /// <returns>List of files matches your selection</returns>
-    static public String[] matchFiles( String _dir, String filePattern )
+    static public String[] matchFiles( String _dir, String _filePattern )
     {
+        String filePattern = _filePattern.Replace("/", "\\");
+
         if (filePattern.IndexOfAny(new char[] { '*', '?' }) == -1)      // Speed up matching, if no asterisk / widlcard, then it can be simply file path.
         {
             String path = Path.Combine(_dir.Replace("/", "\\"), filePattern);
             if (File.Exists(path))
                 return new String[] { filePattern };
+
+            if (m_solution != null)
+            {
+                // Referencing project which is not yet generated, but will be.
+                foreach (Project p in m_solution.projects)
+                { 
+                    if( p.getFullPath() == path )
+                        return new String[] { filePattern };
+                }
+            }    
             return new String[] { };
         }
 

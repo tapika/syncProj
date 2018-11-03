@@ -9,8 +9,8 @@ class Builder: SolutionProjectBuilder
 
             solution("out_testsol_sln");
                 vsver(2015);
-                configurations(   );
-                platforms(  );
+                configurations(  "Debug","Release" );
+                platforms( "x64","x86" );
                 solutionScript("out_testsol_sln.cs");
 
                 invokeScript("out_testproj.cs");

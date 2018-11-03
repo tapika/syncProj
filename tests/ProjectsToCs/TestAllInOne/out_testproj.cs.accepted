@@ -27,6 +27,9 @@ class Builder: SolutionProjectBuilder
                 filter ( "Debug", "files:test.c" );
                     flags( "ExcludeFromBuild" );
 
+                filter ( "Debug", "platforms:Win32", "files:test.c" );
+                    disablewarnings( "4018", "4389", "4146" );
+
 
         } catch( Exception ex )
         {

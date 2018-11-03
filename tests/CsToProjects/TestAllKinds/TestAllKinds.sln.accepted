@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectStaticLib", "out
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectUtility", "out_ProjectUtility.vcxproj", "{8E944A0A-B61E-9D35-837A-E41D490BB001}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectConsoleApplication", "out_ProjectConsoleApplication.vcxproj", "{C4041233-5443-EF60-2F3C-6909EAFC127C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 	EndGlobalSection

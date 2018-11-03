@@ -9,7 +9,7 @@ partial class Builder : SolutionProjectBuilder
         {
             solution("TestAllKinds");
 
-                foreach (String _kind in new String[] { "ConsoleApp", "WindowedApp", "Application", "SharedLib", "DynamicLibrary", "StaticLibrary", "StaticLib", "Utility" })
+                foreach (String _kind in new String[] { "ConsoleApp", "WindowedApp", "Application", "SharedLib", "DynamicLibrary", "StaticLibrary", "StaticLib", "Utility", "ConsoleApplication" })
                 {
                     String script = "out_Project" + _kind;
                     project(script);

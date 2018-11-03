@@ -108,9 +108,19 @@
             Target Platform Version, e.g. "8.1" or "10.0.14393.0"
             </summary>
         </member>
+        <member name="F:Project.ProjectName">
+            <summary>
+            Project name and it's relative path in form: "subdir\\name"
+            </summary>
+        </member>
         <member name="F:Project.RelativePath">
             <summary>
             Sub-folder and filename of project to save. language defines project file extension
+            </summary>
+        </member>
+        <member name="F:Project.language">
+            <summary>
+            if null - RelativePath includes file extension, if non-null - "C++" or "C#" - defines project file extension.
             </summary>
         </member>
         <member name="M:Project.getRelativePath">
@@ -119,10 +129,28 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:Project.getProjectExtension">
+            <summary>
+            Gets project extension.
+            </summary>
+            <returns>Project extension</returns>
+        </member>
         <member name="M:Project.getProjectFolder">
             <summary>
             Gets folder where project will be saved in.
             </summary>
+        </member>
+        <member name="M:Project.getFullPath">
+            <summary>
+            Gets project full path
+            </summary>
+            <returns>Project full path</returns>
+        </member>
+        <member name="M:Project.IsSubFolder">
+            <summary>
+            Returns true if this is not a project, but solution folder instead.
+            </summary>
+            <returns>false - project, true - folder in solution</returns>
         </member>
         <member name="F:Project.slnConfigurations">
             <summary>
@@ -461,6 +489,11 @@
             Additional Include Directories, ';' separated list.
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.DisableSpecificWarnings">
+            <summary>
+            List of warning to disable, ';' separated list.
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.ShowIncludes">
             <summary>
             In windows projects only: Set to true if includes needs to be shown. Used for debug purposes, not loaded by script as configuration parameter.
@@ -638,6 +671,11 @@
         <member name="F:EConfigurationType.Utility">
             <summary>
             Utility project
+            </summary>
+        </member>
+        <member name="F:EConfigurationType.ConsoleApplication">
+            <summary>
+            This value does not physically exists in serialized form in .vcxproj, used only for generation of C# script.
             </summary>
         </member>
         <member name="T:ECharacterSet">
@@ -1399,6 +1437,11 @@
             selectedFileConfigurations is file specific, selectedConfigurations is project wide.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.bLastSetFilterWasFileSpecific">
+            <summary>
+            true if file specific filtering is active, false if not.
+            </summary>
+        </member>
         <member name="M:SolutionProjectBuilder.resetStatics">
             <summary>
             Resets static variables to be able to start next testing round.
@@ -1434,6 +1477,9 @@
             <param name="_kind">
             WindowedApp, Application    - Window application<para />
             DynamicLibrary, SharedLib   - .dll<para />
+            StaticLibrary, StaticLib    - Static library (.lib or .a)<para />
+            Utility                     - Utility project<para />
+            ConsoleApp                  - Console application<para />
             </param>
             <param name="os">"windows" (default), "android" or "package"</param>
         </member>
@@ -1519,6 +1565,12 @@
             Specifies additional include directories.
             </summary>
             <param name="dirs">List of additional include directories.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.disablewarnings(System.String[])">
+            <summary>
+            Disables specific compilation warnings.
+            </summary>
+            <param name="warnings">Warnings to disable</param>
         </member>
         <member name="M:SolutionProjectBuilder.sysincludedirs(System.String[])">
             <summary>
@@ -1888,6 +1940,13 @@
             <param name="_fromPath">Full file path (absolute)</param>
             <param name="_baseDir">Full base directory path (absolute)</param>
             <returns>Relative path to file in respect of baseDir</returns>
+        </member>
+        <member name="T:MakeLogToSolutionBuilder">
+            <summary>
+            This is rather experimental class, which tries to reverse engineere make log file and construct solution / project 
+            out of it - there can be quite many different issues / problems related to make log file parsing - usage
+            of 3-rd party executables, etc etc. This class is not main purpose of syncProj, that's why I'm excluding it from code coverage.
+            </summary>
         </member>
     </members>
 </doc>

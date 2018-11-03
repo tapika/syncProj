@@ -161,13 +161,20 @@ public class Project
     [XmlIgnore]
     public Project parent;                              // Points to folder which contains given project
 
+    /// <summary>
+    /// Project name and it's relative path in form: "subdir\\name"
+    /// </summary>
     public string ProjectName;
     
     /// <summary>
     /// Sub-folder and filename of project to save. language defines project file extension
     /// </summary>
     public string RelativePath;
-    public string language;                             // if null - RelativePath includes file extension, if non-null - "C++" or "C#" - defines project file extension.
+
+    /// <summary>
+    /// if null - RelativePath includes file extension, if non-null - "C++" or "C#" - defines project file extension.
+    /// </summary>
+    public string language;
 
     /// <summary>
     /// gets relative path based on programming language
@@ -203,6 +210,26 @@ public class Project
 
 
     /// <summary>
+    /// Gets project extension.
+    /// </summary>
+    /// <returns>Project extension</returns>
+    public String getProjectExtension()
+    {
+        if (language != null)
+        {
+            switch (language)
+            {
+                case "C": return ".vcxproj";
+                case "C++": return ".vcxproj";
+                case "C#": return ".csproj";
+            }
+        }
+
+        return "";
+    }
+
+
+    /// <summary>
     /// Gets folder where project will be saved in.
     /// </summary>
     public String getProjectFolder()
@@ -216,7 +243,25 @@ public class Project
         return dir;
     }
 
+    /// <summary>
+    /// Gets project full path
+    /// </summary>
+    /// <returns>Project full path</returns>
+    public String getFullPath()
+    {
+        String dir;
+        if (solution == null)
+            dir = SolutionProjectBuilder.m_workPath;
+        else
+            dir = Path.GetDirectoryName(solution.path);
 
+        return Path.Combine(dir, RelativePath + getProjectExtension());
+    }
+
+    /// <summary>
+    /// Returns true if this is not a project, but solution folder instead.
+    /// </summary>
+    /// <returns>false - project, true - folder in solution</returns>
     public bool IsSubFolder()
     {
         return bIsFolder;
@@ -389,7 +434,7 @@ public class Project
 
             //
             // FileConfigurationInfo: PrecompiledHeader, PreprocessorDefinitions, AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
-            // CustomBuildRule: Command, Message, Outputs, AdditionalInputs
+            // CustomBuildRule: Command, Message, Outputs, AdditionalInputs, DisableSpecificWarnings
             //
             while (file2compile.fileConfig.Count < configurations.Count)
             {
@@ -769,11 +814,25 @@ public class Project
             o.AppendLine("      <PreprocessorDefinitions" + sCond + ">" + defines + "</PreprocessorDefinitions>");
         }
 
-        if( conf.DebugInformationFormat != EDebugInformationFormat.ProgramDatabase )
+        if (conf.DebugInformationFormat != EDebugInformationFormat.ProgramDatabase)
+        {
             o.AppendLine("      <DebugInformationFormat" + sCond + ">" + conf.DebugInformationFormat.ToString() + "</DebugInformationFormat>");
+
+            //
+            //  http://stackoverflow.com/questions/2762930/vs2010-always-thinks-project-is-out-of-date-but-nothing-has-changed
+            //  See "Forcing recompile of all source files due to missing PDB".
+            //
+            //  ProgramDataBaseFileName must be set to empty if DebugInformationFormat is None.
+            //
+            if ( conf.DebugInformationFormat == EDebugInformationFormat.None )
+                o.AppendLine("      <ProgramDataBaseFileName />");
+        }
 
         if (conf.AdditionalIncludeDirectories.Length != 0 )
             o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>");
+
+        if (conf.DisableSpecificWarnings.Length != 0)
+            o.AppendLine("      <DisableSpecificWarnings" + sCond + ">" + conf.DisableSpecificWarnings + ";%(DisableSpecificWarnings)</DisableSpecificWarnings>");
 
         if ( conf.ClCompile_AdditionalOptions.Length != 0)
             o.AppendLine("      <AdditionalOptions" + sCond + ">" + conf.ClCompile_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
@@ -976,12 +1035,11 @@ public class Project
 
         o.AppendLine("    <RootNamespace>" + rootNamespace + "</RootNamespace>");
 
+        if (!String.IsNullOrEmpty(WindowsTargetPlatformVersion))
+            o.AppendLine("    <WindowsTargetPlatformVersion>" + WindowsTargetPlatformVersion + "</WindowsTargetPlatformVersion>");
+
         if (Keyword == EKeyword.MFCProj )
-        {
-            if(!String.IsNullOrEmpty(WindowsTargetPlatformVersion))
-                o.AppendLine("    <WindowsTargetPlatformVersion>" + WindowsTargetPlatformVersion + "</WindowsTargetPlatformVersion>");
             o.AppendLine("    <Keyword>" + Keyword + "</Keyword>");
-        }
 
 
         bool bIsAndroidProject = Keyword == EKeyword.Android;
@@ -1388,7 +1446,8 @@ public class Project
 
         o.AppendLine("<Project ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
 
-        List<String> folderList = files.Select(x => Path.GetDirectoryName(x.relativePath.Replace("/", "\\"))).Where(x => x != "").Distinct().ToList();
+        List<String> folderList = files.Where( x => x.includeType != IncludeType.ProjectReference).
+            Select(x => Path.GetDirectoryName(x.relativePath.Replace("/", "\\"))).Where(x => x != "").Distinct().ToList();
         int nCharsToSkip = 0;
 
         //
@@ -1452,6 +1511,10 @@ public class Project
         foreach (String enumName in typeof(IncludeType).GetEnumNames())
         {
             IncludeType elemType = (IncludeType)Enum.Parse(typeof(IncludeType), enumName);
+
+            // Should not reflect to filter file.
+            if (elemType == IncludeType.ProjectReference)
+                continue;
 
             List<String> fileList = files.Where(x => x.includeType == elemType).Select(x => x.relativePath.Replace("/", "\\")).ToList();
 

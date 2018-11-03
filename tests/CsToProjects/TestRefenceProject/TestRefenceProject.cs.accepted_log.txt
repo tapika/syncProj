@@ -1,0 +1,3 @@
+syncProj exited with no error
+TestRefenceProject.cs :
+5 files updated

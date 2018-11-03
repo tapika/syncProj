@@ -231,6 +231,11 @@ public class FileConfigurationInfo
     public String AdditionalIncludeDirectories = "";
 
     /// <summary>
+    /// List of warning to disable, ';' separated list.
+    /// </summary>
+    public String DisableSpecificWarnings = "";
+
+    /// <summary>
     /// In windows projects only: Set to true if includes needs to be shown. Used for debug purposes, not loaded by script as configuration parameter.
     /// </summary>
     public bool ShowIncludes = false;
@@ -431,7 +436,13 @@ public enum EConfigurationType
     /// Utility project
     /// </summary>
     [FunctionName("Utility")]
-    Utility
+    Utility,
+
+    /// <summary>
+    /// This value does not physically exists in serialized form in .vcxproj, used only for generation of C# script.
+    /// </summary>
+    [FunctionName("ConsoleApp")]
+    ConsoleApplication
 };
 
 /// <summary>
