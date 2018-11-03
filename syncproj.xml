@@ -1567,6 +1567,21 @@
             http://stackoverflow.com/questions/12301055/double-click-to-go-to-source-in-output-window
             </summary>
         </member>
+        <member name="T:FileSpecificException">
+            <summary>
+            Exception which references specific file, specific line.
+            </summary>
+        </member>
+        <member name="M:FileSpecificException.#ctor(System.String,System.String,System.Int32)">
+            <summary>
+            new exception which references specific file / line of source code position
+            </summary>
+        </member>
+        <member name="M:FileSpecificException.getThrowLocation">
+            <summary>
+            Gets source code location from where error came from
+            </summary>
+        </member>
         <member name="M:Path2.GetScriptPath(System.Int32)">
             <summary>
             Gets source code full path of script, executing given function.

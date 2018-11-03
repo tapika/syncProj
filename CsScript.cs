@@ -1,6 +1,5 @@
 ﻿//#define NODEBUGTRACE
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CSharp;
@@ -9,13 +8,14 @@ using System.IO;
 using System.Reflection;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 /// <summary>
 /// class for executing c# script.
 /// </summary>
 public class CsScript
 {
-    static Microsoft.CSharp.CSharpCodeProvider provider;
+    static CSharpCodeProvider provider;
     static ICodeCompiler compiler;
     static String[] refAssemblies;
 
@@ -111,9 +111,51 @@ public class CsScript
             compilerparams.ReferencedAssemblies.AddRange(refAssemblies);
 
             // ----------------------------------------------------------------
+            //  Scan through C# header at begging of file, and include more
+            //  sources if needed.
+            //
+            //  Using C# kind of syntax - like this:
+            //      //css_import <file.cs>;
+            // ----------------------------------------------------------------
+            Regex reIsCommentUsingEmptyLine = new Regex("^ *(//|using|$)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex reCssImport = new Regex("^ *//css_import +(.*?);?$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            List<String> filesToCompile = new List<string>();
+
+            filesToCompile.Add(path);
+            int iLine = 1;
+
+            using (StreamReader reader = new StreamReader(path))
+            {
+                for ( ; ; iLine++ )
+                {
+                    String line = reader.ReadLine();
+                    if (line == null)
+                        break;
+
+                    // If we have any comments, or using namespace or empty line, we continue scanning, otherwise aborting (class, etc...)
+                    if (!reIsCommentUsingEmptyLine.Match(line).Success)
+                        break;
+
+                    var rem = reCssImport.Match(line);
+                    if (rem.Success)
+                    {
+                        String file = rem.Groups[1].Value;
+
+                        if (!Path.IsPathRooted(file))
+                            file = Path.Combine(Path.GetDirectoryName(path), file);
+
+                        if (!File.Exists(file))
+                            throw new FileSpecificException("Include file '" + file + "' was not found", path, iLine);
+                            
+                        filesToCompile.Add(file);
+                    } //if
+                } //for
+            } //using
+
+            // ----------------------------------------------------------------
             //  If compile errors - report and exit.
             // ----------------------------------------------------------------
-            CompilerResults results = compiler.CompileAssemblyFromFile(compilerparams, path);
+            CompilerResults results = compiler.CompileAssemblyFromFileBatch(compilerparams, filesToCompile.ToArray());
             if (results.Errors.HasErrors)
             {
                 // Mimic visual studio error handling.

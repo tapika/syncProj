@@ -1206,7 +1206,7 @@ public class Exception2 : Exception
     /// Tries to determine from which script position exception was thrown. Returns empty line if cannot be detected.
     /// </summary>
     /// <returns>Throw source code line</returns>
-    public String getThrowLocation()
+    virtual public String getThrowLocation()
     {
         if (strace.FrameCount < nCallerFrame + 2)
             return "";
@@ -1257,6 +1257,34 @@ public class Exception2 : Exception
     }
 
 };
+
+/// <summary>
+/// Exception which references specific file, specific line.
+/// </summary>
+public class FileSpecificException : Exception2
+{
+    String file;
+    int line;
+
+    /// <summary>
+    /// new exception which references specific file / line of source code position
+    /// </summary>
+    public FileSpecificException(String _msg, String _file, int _line) :
+        base(_msg)
+    {
+        file = _file;
+        line = _line;
+    }
+
+    /// <summary>
+    /// Gets source code location from where error came from
+    /// </summary>
+    override public String getThrowLocation()
+    {
+        return file + "(" + line + "): ";
+    }
+};
+
 
 
 
