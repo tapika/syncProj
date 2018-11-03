@@ -585,7 +585,7 @@ public class SolutionProjectBuilder
     } //uuid
 
     /// <summary>
-    /// Sets project programming language (reflects to used project extension)
+    /// Sets project programming language (reflects to used project extension if used for non-file specific configuration)
     /// </summary>
     /// <param name="lang">C, C++, C#, if no parameter is specified (null), sets project to autodetect programming language</param>
     static public void language(String lang = null)
@@ -596,28 +596,27 @@ public class SolutionProjectBuilder
         switch (lang)
         {
             case null:
-                m_project.language = null;
                 compileAs = ECompileAs.Default;
                 break;
             case "C":  
-                m_project.language = lang; 
                 compileAs = ECompileAs.CompileAsC;
                 break;
             case "C++": 
-                m_project.language = lang;
                 compileAs = ECompileAs.CompileAsCpp;
                 break;
             case "C#": 
-                m_project.language = lang; 
                 break;
             default:
                 throw new Exception2("Language '" + lang + "' is not supported");
         } //switch
 
         // Set up default compilation language
-        foreach (var conf in getSelectedProjectConfigurations())
+        foreach (var conf in getSelectedConfigurations(false))
             conf.CompileAs = compileAs;
-    }
+
+        if (!bLastSetFilterWasFileSpecific)
+            m_project.language = lang;
+    } //language
 
     static Regex guidMatcher = new Regex("^[{(]?([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})[)}]?$");
 
@@ -950,15 +949,7 @@ public class SolutionProjectBuilder
     static public void selectConfigurations( FileInfo fi )
     {
         bLastSetFilterWasFileSpecific = true;
-        
-        while( fi.fileConfig.Count < m_project.configurations.Count )
-            fi.fileConfig.Add( new FileConfigurationInfo() 
-                { 
-                    confName = m_project.configurations[fi.fileConfig.Count],
-                    Optimization = EOptimization.ProjectDefault
-                } 
-            );
-        
+        m_project.updateFileConfigurations(fi);
         selectedFileConfigurations = fi.fileConfig.ToList();
     }
 
@@ -995,11 +986,11 @@ public class SolutionProjectBuilder
     /// Specifies application type, one of following: 
     /// </summary>
     /// <param name="_kind">
-    /// WindowedApp, Application    - Window application<para />
-    /// DynamicLibrary, SharedLib   - .dll<para />
-    /// StaticLibrary, StaticLib    - Static library (.lib or .a)<para />
-    /// Utility                     - Utility project<para />
-    /// ConsoleApp                  - Console application<para />
+    /// "WindowedApp", "Application"        - Window application,
+    /// "DynamicLibrary", "SharedLib"       - .dll,
+    /// "StaticLibrary", "StaticLib"        - Static library (.lib or .a),
+    /// "Utility"                           - Utility project,
+    /// "ConsoleApp", "ConsoleApplication"  - Console application.
     /// </param>
     /// <param name="os">"windows" (default), "android" or "package"</param>
     static public void kind(String _kind, String os = null)

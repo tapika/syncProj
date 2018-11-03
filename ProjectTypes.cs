@@ -353,6 +353,11 @@ public class FileConfigurationInfo
     public String PrecompiledHeaderFile = "stdafx.h";
 
     /// <summary>
+    /// Android specific.
+    /// </summary>
+    public ECompileAs CompileAs = ECompileAs.Default;
+
+    /// <summary>
     /// Optimization level. (MaxSpeed is default value for each project configuration, for each file configuration - it's ProjectDefault)
     /// </summary>
     public EOptimization Optimization = EOptimization.MaxSpeed;
@@ -1217,11 +1222,6 @@ public class Configuration : FileConfigurationInfo
     /// Android specific.
     /// </summary>
     public String AndroidAppLibName;
-
-    /// <summary>
-    /// Android specific.
-    /// </summary>
-    public ECompileAs CompileAs = ECompileAs.CompileAsCpp;
 
     //-------------------------------------------------------------
     // Pre-build / pre-link / post build events

@@ -181,6 +181,12 @@
             List of supported configuration|platform permutations, like "Debug|Win32", "Debug|x64" and so on.
             </summary>
         </member>
+        <member name="M:Project.updateFileConfigurations(FileInfo)">
+            <summary>
+            Updates file configuration array from project configurations
+            </summary>
+            <param name="fi">File to which to add configurations</param>
+        </member>
         <member name="M:Project.getConfigurationNames">
             <summary>
             Gets list of supported configurations like 'Debug' / 'Release'
@@ -617,6 +623,11 @@
         <member name="F:FileConfigurationInfo.PrecompiledHeaderFile">
             <summary>
             Precompiled header file
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.CompileAs">
+            <summary>
+            Android specific.
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.Optimization">
@@ -1252,11 +1263,6 @@
             Android specific.
             </summary>
         </member>
-        <member name="F:Configuration.CompileAs">
-            <summary>
-            Android specific.
-            </summary>
-        </member>
         <member name="F:Configuration.PreBuildEventUseInBuild">
             <summary>
             When disabled - pre build event is not used.
@@ -1637,7 +1643,7 @@
         </member>
         <member name="M:SolutionProjectBuilder.language(System.String)">
             <summary>
-            Sets project programming language (reflects to used project extension)
+            Sets project programming language (reflects to used project extension if used for non-file specific configuration)
             </summary>
             <param name="lang">C, C++, C#, if no parameter is specified (null), sets project to autodetect programming language</param>
         </member>
@@ -1723,11 +1729,11 @@
             Specifies application type, one of following: 
             </summary>
             <param name="_kind">
-            WindowedApp, Application    - Window application<para />
-            DynamicLibrary, SharedLib   - .dll<para />
-            StaticLibrary, StaticLib    - Static library (.lib or .a)<para />
-            Utility                     - Utility project<para />
-            ConsoleApp                  - Console application<para />
+            "WindowedApp", "Application"        - Window application,
+            "DynamicLibrary", "SharedLib"       - .dll,
+            "StaticLibrary", "StaticLib"        - Static library (.lib or .a),
+            "Utility"                           - Utility project,
+            "ConsoleApp", "ConsoleApplication"  - Console application.
             </param>
             <param name="os">"windows" (default), "android" or "package"</param>
         </member>

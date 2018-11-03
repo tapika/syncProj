@@ -267,6 +267,21 @@ public class Project
     public List<String> configurations = new List<string>();
 
     /// <summary>
+    /// Updates file configuration array from project configurations
+    /// </summary>
+    /// <param name="fi">File to which to add configurations</param>
+    public void updateFileConfigurations(FileInfo fi)
+    {
+        while (fi.fileConfig.Count < configurations.Count)
+            fi.fileConfig.Add(new FileConfigurationInfo()
+                {
+                    confName = configurations[fi.fileConfig.Count],
+                    Optimization = EOptimization.ProjectDefault
+                }
+            );
+    }
+
+    /// <summary>
     /// Gets list of supported configurations like 'Debug' / 'Release'
     /// </summary>
     public List<String> getConfigurationNames()
@@ -919,14 +934,21 @@ public class Project
         if ( conf.ClCompile_AdditionalOptions.Length != 0)
             o.AppendLine("      <AdditionalOptions" + sCond + ">" + conf.ClCompile_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
 
-        if (projectConf != null && conf.PrecompiledHeader != EPrecompiledHeaderUse.ProjectDefault && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
-            o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
+        if (projectConf != null)
+        {
+            // File specific flags only
+            if (conf.PrecompiledHeader != EPrecompiledHeaderUse.ProjectDefault && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
+                o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
 
-        if (projectConf != null && conf.Optimization != EOptimization.ProjectDefault && conf.Optimization != projectConf.Optimization)
-            o.AppendLine( "      <Optimization" + sCond + ">" + conf.getOptimization(this) + "</Optimization>" );
+            if (Keyword == EKeyword.Android && conf.CompileAs != ECompileAs.Default)
+                o.AppendLine("      <CompileAs" + sCond + ">" + conf.CompileAs.ToString() + "</CompileAs>");
+
+            if (conf.Optimization != EOptimization.ProjectDefault && conf.Optimization != projectConf.Optimization)
+                o.AppendLine("      <Optimization" + sCond + ">" + conf.getOptimization(this) + "</Optimization>");
+        }
 
         // Not applicable for Android platform
-        if( Keyword != EKeyword.Android && projectConf != null)
+        if ( Keyword != EKeyword.Android && projectConf != null)
         {
             if (conf.IntrinsicFunctions && conf.IntrinsicFunctions != projectConf.IntrinsicFunctions)
                 o.AppendLine("      <IntrinsicFunctions" + sCond + ">true</IntrinsicFunctions>");
@@ -1509,6 +1531,35 @@ public class Project
                 o.AppendLine("    </CustomBuild>");
                 continue;
             }
+
+            //------------------------------------------------------------
+            // If compileAs is not specified for Android, we set it 
+            // according to file extension.
+            //------------------------------------------------------------
+            if (Keyword == EKeyword.Android)
+            {
+                String ext = Path.GetExtension(fi.relativePath).ToLower();
+                ECompileAs? compAs = null;
+
+                for (int iConf = 0; iConf < configurations.Count; iConf++)
+                {
+                    Configuration conf = projectConfig[iConf];
+                    if (conf.CompileAs != ECompileAs.CompileAsC && ext == ".c")
+                        compAs = ECompileAs.CompileAsC;
+
+                    if (conf.CompileAs == ECompileAs.CompileAsC && ext == ".cpp")
+                        compAs = ECompileAs.CompileAsCpp;
+                }
+
+                if (compAs.HasValue)
+                { 
+                    updateFileConfigurations(fi);
+                    foreach (var fconf in fi.fileConfig)
+                        if( fconf.CompileAs == ECompileAs.Default)      // Can be overridden by end-user
+                            fconf.CompileAs = compAs.Value;
+                }
+            }
+
 
             if (fi.fileConfig.Count == 0)
             {
