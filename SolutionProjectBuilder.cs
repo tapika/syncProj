@@ -1142,12 +1142,32 @@ public class SolutionProjectBuilder
             String scriptDir = Path.Combine(m_workPath, m_scriptRelativeDir);
             String tempLogFile = "$(IntermediateOutputPath)" + Path.GetFileName(script2compile).Replace('.', '_') + "_log.txt";
 
+            //
+            //  We collect all C# script dependencies and add them as additional inputs.
+            //
+            CsScriptInfo csInfo = CsScript.getCsFileInfo( Path.Combine(scriptDir, script2include), false);
+            String additionalInputs = "";
+
+            foreach (String _file in csInfo.csFiles)
+            {
+                String file = _file;
+
+                if (!Path.IsPathRooted(file))
+                    file = "$(ProjectDir)" + _file;
+
+                if (additionalInputs.Length != 0)
+                    additionalInputs += ";";
+
+                additionalInputs += file;
+            }
+
             buildrule(
                 new CustomBuildRule()
                 {
                     Command = "\"" + pathToSyncProjExe + "\" $(ProjectDir)" + script2compile + "\r\n" + "echo 1>" + tempLogFile,
                     Outputs = tempLogFile,
-                    Message = ""
+                    Message = "",
+                    AdditionalInputs = additionalInputs
                 }
             );
             filter();

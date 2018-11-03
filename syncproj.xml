@@ -25,6 +25,22 @@
             <param name="args">Main argument parameters</param>
             <returns>true if execution was successful.</returns>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:CsScript.getCsFileInfo(System.String,System.Boolean)" -->
+        <member name="T:CsScriptInfo">
+            <summary>
+            Additional info about c# script.
+            </summary>
+        </member>
+        <member name="F:CsScriptInfo.csFiles">
+            <summary>
+            Referred .cs files to include into compilation
+            </summary>
+        </member>
+        <member name="F:CsScriptInfo.bCsDebug">
+            <summary>
+            Just additional //css_debug for compile troubleshooting in this code
+            </summary>
+        </member>
         <member name="T:Project">
             <summary>
             Represents Visual studio project .xml model
