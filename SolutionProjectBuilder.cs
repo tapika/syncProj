@@ -634,6 +634,10 @@ public class SolutionProjectBuilder
     /// </summary>
     static public void targetdir(String directory)
     {
+        directory = directory.Replace("/", "\\");
+        if (!directory.EndsWith("\\"))
+            directory += "\\";
+
         foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
             conf.OutDir = directory;
     }
@@ -644,6 +648,10 @@ public class SolutionProjectBuilder
     /// <param name="directory">For example "$(Configuration)\" or "obj\$(Platform)\$(Configuration)\"</param>
     static public void objdir(String directory)
     {
+        directory = directory.Replace("/", "\\");
+        if (!directory.EndsWith("\\"))
+            directory += "\\";
+
         foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
             conf.IntDir = directory;
     }
