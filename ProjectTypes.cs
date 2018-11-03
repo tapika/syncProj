@@ -293,7 +293,7 @@ public class FileConfigurationInfo
     public EDebugInformationFormat DebugInformationFormat = EDebugInformationFormat.ProgramDatabase;
 
     /// <summary>
-    /// Custom build step for includeType.CustomBuild specification.
+    /// Custom build step for includeType.CustomBuild specification. Can be null if not defined.
     /// </summary>
     public CustomBuildRule customBuildRule;
 

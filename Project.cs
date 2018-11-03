@@ -1328,8 +1328,8 @@ public class Project
                 {
                     int iConf = configurations.IndexOf(confName);
                     CustomBuildRule cbr = fi.fileConfig[iConf].customBuildRule;
-
-                    if (!cbr.LinkObjects)
+                    
+                    if (cbr != null && !cbr.LinkObjects)
                         o.AppendLine("      <LinkObjects " + condition(confName) + ">false</LinkObjects>");
                 } //foreach
 

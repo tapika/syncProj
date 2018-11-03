@@ -1,0 +1,3 @@
+syncProj exited with no error
+TestFilter.cs :
+2 files updated
