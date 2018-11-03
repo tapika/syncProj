@@ -606,7 +606,7 @@ public class Project
         if ( conf.ClCompile_AdditionalOptions.Length != 0)
             o.AppendLine("      <AdditionalOptions" + sCond + ">" + conf.ClCompile_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
 
-        if (projectConf != null && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
+        if (projectConf != null && conf.PrecompiledHeader != EPrecompiledHeaderUse.ProjectDefault && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
             o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
 
         if(conf.ShowIncludes)

@@ -1076,6 +1076,11 @@ public class SolutionProjectBuilder
                         conf.UseOfMfc = EUseOfMfc.Static;
                     break;
 
+                case "nopch":
+                    foreach (var conf in getSelectedConfigurations(false))
+                        conf.PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
+                    break;
+
                 default:
                     throw new Exception2("Flag '" + flag + "' is not supported");
             } //switch 

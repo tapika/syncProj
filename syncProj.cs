@@ -710,7 +710,21 @@ public class SolutionOrProject
         IncludeType includeType = IncludeType.ClCompile, String fileName = "")
     {
         List<FileConfigurationInfo> configList = config.ToList();
-        
+
+        if (proj.projectConfig == config)
+        {
+            // project defaults, by default not using precompiled headers.
+            foreach (var conf in config)
+                if (conf.PrecompiledHeader == EPrecompiledHeaderUse.ProjectDefault)
+                    conf.PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
+        }
+        else {
+            // Inherit from project configuration
+            for (int i = 0; i < configList.Count; i++)
+                if (configList[i].PrecompiledHeader == EPrecompiledHeaderUse.ProjectDefault)
+                    configList[i].PrecompiledHeader = proj.projectConfig[i].PrecompiledHeader;
+        }
+
         TagPchEntries(config, fileName, true);
 
         // For custom build type we dont have pchheader info

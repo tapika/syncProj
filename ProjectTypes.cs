@@ -36,16 +36,21 @@ public enum EPrecompiledHeaderUse
     /// <summary>
     /// Create precompiled headers
     /// </summary>
-    Create = 2,
+    Create,
     /// <summary>
     /// Use precompiled headers
     /// </summary>
-    Use = 1,
+    Use,
 
     /// <summary>
     /// Default value (not initialized)
     /// </summary>
-    NotUsing = 0 //enum default is 0.
+    NotUsing,
+
+    /// <summary>
+    /// Not available in project file, but this is something we indicate that we haven't set value for precompiled headers.
+    /// </summary>
+    ProjectDefault
 }
 
 /// <summary>
@@ -198,7 +203,7 @@ public class FileConfigurationInfo
     /// <summary>
     /// Precompile header - use or create.
     /// </summary>
-    public EPrecompiledHeaderUse PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
+    public EPrecompiledHeaderUse PrecompiledHeader = EPrecompiledHeaderUse.ProjectDefault;
 
     /// <summary>
     /// Defines, ';' separated list.
