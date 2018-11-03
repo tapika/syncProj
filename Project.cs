@@ -620,6 +620,10 @@ public class Project
                         if (fi.Name == "PrecompiledHeader" && v == "")
                             v = "ProjectDefault";
 
+                        // cmake produces file like this.
+                        if (fi.Name == "DebugInformationFormat" && v == "")
+                            v = "Invalid";
+
                         fi.SetValue(cfg, Enum.Parse(fi.FieldType, v));
                     }
                 }
