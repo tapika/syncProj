@@ -74,7 +74,7 @@ public class SolutionOrProject
 
     public void SaveCache(String path)
     {
-        XmlSerializer ser = new XmlSerializer(typeof(SolutionOrProject));
+        XmlSerializer ser = new XmlSerializer(typeof(SolutionOrProject), typeof(SolutionOrProject).GetNestedTypes());
 
         using (var ms = new MemoryStream())
         {
@@ -87,7 +87,7 @@ public class SolutionOrProject
 
     static public SolutionOrProject LoadCache(String path)
     {
-        XmlSerializer ser = new XmlSerializer(typeof(SolutionOrProject));
+        XmlSerializer ser = new XmlSerializer(typeof(SolutionOrProject), typeof(SolutionOrProject).GetNestedTypes());
 
         using (var s = File.OpenRead(path))
         {
@@ -238,6 +238,14 @@ public class SolutionOrProject
     } //ConfigationSpecificValue
 
 
+    //
+    //  Parameters used in script generation functions
+    //
+    static String brO = " ", brC = "";
+    static String arO = " { ", arC = " }";
+    static String head = "";
+    static String comment = "-- ";
+
 
     /// <summary>
     /// Builds solution or project .lua/.cs scripts
@@ -250,10 +258,6 @@ public class SolutionOrProject
     static public void UpdateProjectScript( String path, object solutionOrProject, String outFile, String format, bool bProcessProjects, String outPrefix)
     {
         bool bCsScript = (format == "cs");
-        String brO = " ", brC = "";
-        String arO = " { ", arC = " }";
-        String head = "";
-        String comment = "-- ";
         if (bCsScript)
         {
             brO = "("; brC = ");";
@@ -434,7 +438,10 @@ public class SolutionOrProject
             });
 
             ConfigationSpecificValue(proj, proj.projectConfig, "OutDir", lines2dump, (s) => { return "targetdir" + brO + "\"" + s.Replace("\\", "\\\\") + "\"" + brC; });
-            ConfigationSpecificValue(proj, proj.projectConfig, "IntDir", lines2dump, (s) => { return "objdir" + brO + "\"" + s.Replace("\\", "\\\\") + "\"" + brC; });
+            ConfigationSpecificValue(proj, proj.projectConfig, "IntDir", lines2dump, (s) => { 
+                // '!' is needed for premake to disallow to invent folder structure by itself.
+                return "objdir" + brO + "\"" + s.Replace("\\", "\\\\")  + ((bCsScript) ? "": "!") + "\"" + brC;
+            });
             ConfigationSpecificValue(proj, proj.projectConfig, "TargetName", lines2dump, (s) => { return "targetname" + brO + "\"" + s + "\"" + brC; });
             ConfigationSpecificValue(proj, proj.projectConfig, "TargetExt", lines2dump, (s) => { return "targetextension" + brO + "\"" + s + "\"" + brC; });
             
@@ -445,153 +452,265 @@ public class SolutionOrProject
                 return "";
             });
 
-            foreach (var cfg in proj.projectConfig)
-            {
-                if (cfg.PrecompiledHeader == EPrecompiledHeaderUse.NotUsing)
-                    cfg.PrecompiledHeaderFile = "";
-            }
+            UpdateConfigurationEntries(proj, proj.projectConfig, lines2dump);
 
-            ConfigationSpecificValue(proj, proj.projectConfig, "PrecompiledHeaderFile", lines2dump, (s) => {
-                if (s != "")
-                    return "pchheader" + brO + "\"" + s + "\"" + brC;
-                return "flags" + arO + "\"NoPch\"" + arC;
-            });
-
-            //---------------------------------------------------------------------------------
-            // Semicolon (';') separated lists.
-            //  Like defines, additional include directories.
-            //---------------------------------------------------------------------------------
-            String[] fieldNames = new String[] { "PreprocessorDefinitions", "AdditionalIncludeDirectories" };
-            String[] funcNames = new String[] { "defines", "includedirs" };
-
-            for( int iListIndex = 0; iListIndex < fieldNames.Length; iListIndex++ )
-            {
-                String commaField = fieldNames[iListIndex];
-
-                FieldInfo fi = typeof(Configuration).GetField(commaField);
-                List<List<String>> items = new List<List<string>>();
-
-                // Collect all values from semicolon separated string.
-                foreach (var cfg in proj.projectConfig)
-                {
-                    String value = (String)fi.GetValue(cfg);
-                    // Sometimes defines can contain linefeeds but from configuration perspective they are useless.
-                    value = value.Replace("\n", "");
-                    items.Add(value.Split( new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList());
-                }
-
-                while (true)
-                {
-                    // Until we still have values.
-                    String oneValue = null;
-                    for (int i = 0; i < items.Count; i++)
-                        if (items[i].Count != 0)
-                        {
-                            oneValue = items[i][0];
-                            break;
-                        }
-
-                    if (oneValue == null)
-                        break;
-
-                    for (int i = 0; i < items.Count; i++)
-                        if (items[i].Remove(oneValue))
-                            fi.SetValue(proj.projectConfig[i], oneValue);
-                        else
-                            fi.SetValue(proj.projectConfig[i], "");
-
-                    ConfigationSpecificValue(proj, proj.projectConfig, commaField, lines2dump, (s) => { return funcNames[iListIndex] + s; });
-                } //for
-            } //for
-
-            foreach (String funcName in funcNames)
-            {
-                foreach (var kv in lines2dump)
-                {
-                    String line = funcName + arO;
-                    bool bAddLine = false;
-                    bool first = true;
-                    for (int i = 0; i < kv.Value.Count; i++)
-                    {
-                        String s = kv.Value[i];
-                        if (s.StartsWith(funcName))
-                        {
-                            kv.Value.RemoveAt(i);
-                            i--;
-
-                            String oneEntryValue = s.Substring(funcName.Length);
-
-                            if (oneEntryValue == "" || 
-                                // Special kind of define which simply tells to inherit from project settings.
-                                (funcName == "defines" && oneEntryValue == "%(PreprocessorDefinitions)") )
-                                continue;
-
-                            oneEntryValue = oneEntryValue.Replace("\"", "\\\"");    // Escape " mark.
-                            if (!first) line += ", ";
-                            first = false;
-                            line += "\"" + oneEntryValue + "\"";
-                            bAddLine = true;
-                        }
-                    }
-                    line += arC;
-                    if(bAddLine)
-                        kv.Value.Add(line);
-                } //foreach
-            } //foreach
 
             //ConfigationSpecificValue(proj, proj.projectConfig, "GenerateDebugInformation", lines2dump, (s) => {
             //    String r = typeof(EGenerateDebugInformation).GetMember(s)[0].GetCustomAttribute<PremakeTagAttribute>().tag;
             //    return "symbols" + brO + "\"" + r + "\"" + brC;
             //});
-
-
-            if (lines2dump.ContainsKey(""))
-            {
-                foreach ( String line in lines2dump[""])
-                    o.AppendLine(head + "    " + line);
-                lines2dump.Remove("");
-            }
-
-            foreach (var kv in lines2dump)
-            {
-                char c = kv.Key.Substring(0, 1)[0];
-                String s = kv.Key.Substring(1);
-                switch (c)
-                {
-                    case 'c': o.AppendLine( head + "    filter " + arO + "\"" + s + "\"" + arC); break;
-                    case 'p': o.AppendLine( head + "    filter " + arO + "\"platforms:" + s + "\"" + arC); break;
-                    case 'm': o.AppendLine( head + "    filter " + arO + "\"" + s.Replace("|", "\", \"platforms:") + "\"" + arC); break;
-                }
-
-                foreach (String line in kv.Value)
-                {
-                    if (line.Length == 0) continue;
-                    o.AppendLine(head + "        " + line);
-                }
-
-                o.AppendLine("");
-            } //foreach
-
-            if (lines2dump.Count != 0)      // Close any filter if we have ones.
-            {
-                o.AppendLine(head + "    filter " + arO + arC);
-                o.AppendLine("");
-            }
+            ///...................
+            bool bFiltersActive = false;
+            WriteLinesToDump(o, lines2dump, ref bFiltersActive, null);
 
             if (proj.files.Count != 0)
             {
-                o.AppendLine(head + "    files" + arO );
+                o.AppendLine(head + "    files" + arO);
                 foreach (FileInfo fi in proj.files)
                 {
                     o.AppendLine(head + "        \"" + fi.relativePath.Replace("\\", "/") + "\",");
                 }
-                o.AppendLine(head + "    " + arC );
+                o.AppendLine(head + "    " + arC);
             } //if
+
+            foreach (FileInfo fi in proj.files)
+            { 
+                lines2dump.Clear();
+                UpdateConfigurationEntries(proj, fi.fileConfig, lines2dump, fi.relativePath);
+                WriteLinesToDump(o, lines2dump, ref bFiltersActive, fi.relativePath );
+            }
 
         } //if-else
 
         File.WriteAllText(outPath, o.ToString());
     } //UpdateProjectScript
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="proj"></param>
+    /// <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
+    /// <param name="fileName">name of file of which configuration is being parsed.</param>
+    static void UpdateConfigurationEntries(Project proj, IEnumerable<FileConfigurationInfo> config, Dictionary2<String, List<String>> lines2dump, String fileName = "")
+    {
+        List<FileConfigurationInfo> configList = config.ToList();
+
+        foreach (var cfg in config)
+        {
+            switch (cfg.PrecompiledHeader)
+            {
+                case EPrecompiledHeaderUse.NotUsing: cfg.PrecompiledHeaderFile = ""; break;
+                case EPrecompiledHeaderUse.Create: 
+                    cfg.PrecompiledHeaderFile = "C" + fileName; 
+                    break;
+                case EPrecompiledHeaderUse.Use: 
+                    cfg.PrecompiledHeaderFile = "U" + cfg.PrecompiledHeaderFile; 
+                    break;
+            }
+        }
+
+        ConfigationSpecificValue(proj, configList, "PrecompiledHeaderFile", lines2dump, (s) => {
+            if( s == "" )
+                return "flags" + arO + "\"NoPch\"" + arC;
+
+            char cl = s[0];
+            s = s.Substring(1);
+            switch (cl)
+            {
+                case 'C': 
+                    return "pchsource" + brO + "\"" + s + "\"" + brC;
+                default:
+                case 'U': 
+                    return "pchheader" + brO + "\"" + s + "\"" + brC;
+            }
+        });
+
+        //---------------------------------------------------------------------------------
+        // Semicolon (';') separated lists.
+        //  Like defines, additional include directories.
+        //---------------------------------------------------------------------------------
+        String[] fieldNames = new String[] { "PreprocessorDefinitions", "AdditionalIncludeDirectories", "AdditionalDependencies" };
+        String[] funcNames = new String[] { "defines", "includedirs", "links" };
+
+        for (int iListIndex = 0; iListIndex < fieldNames.Length; iListIndex++)
+        {
+            String commaField = fieldNames[iListIndex];
+
+            FieldInfo fi = typeof(FileConfigurationInfo).GetField(commaField);
+            List<List<String>> items = new List<List<string>>();
+
+            // Collect all values from semicolon separated string.
+            foreach (var cfg in configList)
+            {
+                String value = (String)fi.GetValue(cfg);
+                // Sometimes defines can contain linefeeds but from configuration perspective they are useless.
+                value = value.Replace("\n", "");
+                items.Add(value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList());
+            }
+
+            while (true)
+            {
+                // Until we still have values.
+                String oneValue = null;
+                for (int i = 0; i < items.Count; i++)
+                    if (items[i].Count != 0)
+                    {
+                        oneValue = items[i][0];
+                        break;
+                    }
+
+                if (oneValue == null)
+                    break;
+
+                for (int i = 0; i < items.Count; i++)
+                    if (items[i].Remove(oneValue))
+                        fi.SetValue(configList[i], oneValue);
+                    else
+                        fi.SetValue(configList[i], "");
+
+                ConfigationSpecificValue(proj, configList, commaField, lines2dump, (s) => { return funcNames[iListIndex] + s; });
+            } //for
+        } //for
+
+        foreach (String funcName in funcNames)
+        {
+            foreach (var kv in lines2dump)
+            {
+                String line = funcName + arO;
+                bool bAddLine = false;
+                bool first = true;
+                List<String> lines2add = new List<string>();
+
+                for (int i = 0; i < kv.Value.Count; i++)
+                {
+                    String s = kv.Value[i];
+                    if (!s.StartsWith(funcName))
+                        continue;
+
+                    kv.Value.RemoveAt(i);
+                    i--;
+
+                    String oneEntryValue = s.Substring(funcName.Length);
+
+                    if (oneEntryValue == "" ||
+                        // Special kind of define which simply tells to inherit from project settings.
+                        (funcName == "defines" && oneEntryValue == "%(PreprocessorDefinitions)") ||
+                        (funcName == "links" && oneEntryValue == "%(AdditionalDependencies)")
+                        )
+                        continue;
+
+                    oneEntryValue = oneEntryValue.Replace("\"", "\\\"");    // Escape " mark.
+                    if (!first) line += ", ";
+                    first = false;
+                    line += "\"" + oneEntryValue + "\"";
+                    bAddLine = true;
+
+                    // Chop off into multiple lines, if too many entries.
+                    if (line.Length > 120)
+                    { 
+                        line += arC;
+                        lines2add.Add(line);
+                        line = funcName + arO;
+                        bAddLine = false;
+                        first = true;
+                    }
+                } //for
+                line += arC;
+                
+                if(bAddLine)
+                    lines2add.Add(line);
+                
+                if(lines2add.Count != 0)
+                    kv.Value.AddRange(lines2add);
+            } //foreach
+        } //foreach
+
+    } //UpdateConfigurationEntries
+
+
+    /// <summary>
+    /// Writes lines to dump into built string.
+    /// </summary>
+    static void WriteLinesToDump(StringBuilder o, Dictionary2<String, List<String>> lines2dump, ref bool bFiltersActive, String file = null )
+    {
+        if (lines2dump.Count == 0)
+            return;
+
+        String lhead = head;
+
+        if (file != null)
+        {
+            file = file.Replace("\\", "/");
+            lhead += "    ";
+        }
+
+        if (lines2dump.ContainsKey("") && lines2dump[""].Count != 0 )
+        {
+            if (file != null)
+            {
+                //
+                // Dump "pchsource" line as special kind of line (without applying filters).
+                //
+                String pchSourceLine = lines2dump[""].Where(x => x.StartsWith("pchsource")).FirstOrDefault();
+                if (pchSourceLine != null)
+                {
+                    if (bFiltersActive)
+                        o.AppendLine(head + "    filter " + arO + arC);
+
+                    o.AppendLine(head + "    " + pchSourceLine);
+                    lines2dump[""].Remove(pchSourceLine);
+                }
+
+                if (lines2dump[""].Count != 0)
+                    o.AppendLine(head + "    filter " + arO + "\"files:" + file + "\" " + arC);
+            } //if
+        
+            foreach (String line in lines2dump[""])
+                o.AppendLine(lhead + "    " + line);
+            lines2dump.Remove("");
+        }
+
+        foreach (var kv in lines2dump)
+        {
+            if ( kv.Value.Count == 0)
+                continue;
+                
+            char c = kv.Key.Substring(0, 1)[0];
+            String s = kv.Key.Substring(1);
+            switch (c)
+            {
+                case 'c': o.Append(SolutionOrProject.head + "    filter " + arO + "\"" + s + "\""); break;
+                case 'p': o.Append(SolutionOrProject.head + "    filter " + arO + "\"platforms:" + s + "\""); break;
+                case 'm': o.Append(SolutionOrProject.head + "    filter " + arO + "\"" + s.Replace("|", "\", \"platforms:") + "\""); break;
+                default: 
+                    throw new Exception2("Internal code check");
+            }
+
+            bFiltersActive = true;
+
+            if (file != null)
+                o.Append(", \"files:" + file + "\"");
+            o.AppendLine(arC);
+
+            foreach (String line in kv.Value)
+            {
+                if (line.Length == 0) continue;
+                o.AppendLine(head + "        " + line);
+            }
+
+            o.AppendLine("");
+        } //foreach
+
+        if (lines2dump.Count != 0 && file == null )      // Close any filter if we have ones.
+        {
+            o.AppendLine(head + "    filter " + arO + arC);
+            o.AppendLine("");
+        }
+    } //UpdateLinesToDump
+
+
+
 }
 
 /// <summary>

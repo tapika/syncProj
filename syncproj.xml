@@ -44,29 +44,29 @@
             .ico files.
             </summary>
         </member>
-        <member name="F:FileInfo.phUse">
+        <member name="T:FileConfigurationInfo">
             <summary>
-            Pre-configuration list.
+            Configuration class which configures project as well as individual file entries.
             </summary>
         </member>
-        <member name="F:FileInfo.PreprocessorDefinitions">
+        <member name="F:FileConfigurationInfo.PreprocessorDefinitions">
             <summary>
-            Pre-configuration list of defines. ';' separated strings. null if not used.
+            Defines, ';' separated list.
             </summary>
         </member>
-        <member name="F:FileInfo.AdditionalIncludeDirectories">
+        <member name="F:FileConfigurationInfo.AdditionalIncludeDirectories">
             <summary>
-            Pre-configuration list of include directories;
+            Additional Include Directories, ';' separated list.
             </summary>
         </member>
-        <member name="F:FileInfo.ShowIncludes">
+        <member name="F:FileConfigurationInfo.AdditionalDependencies">
             <summary>
-            Pre-configuration list of show .h includes
+            obj / lib files, ';' separated list.
             </summary>
         </member>
-        <member name="F:FileInfo.ObjectFileName">
+        <member name="F:FileConfigurationInfo.ObjectFileName">
             <summary>
-            Pre-configuration list of output filename
+            Output filename
             </summary>
         </member>
         <member name="F:FileInfo.customBuildTool">
@@ -164,16 +164,6 @@
         <member name="F:Configuration.TargetExt">
             <summary>
             Target Extension (.exe, .dll, ...)
-            </summary>
-        </member>
-        <member name="F:Configuration.PreprocessorDefinitions">
-            <summary>
-            Defines, ';' separated list.
-            </summary>
-        </member>
-        <member name="F:Configuration.AdditionalIncludeDirectories">
-            <summary>
-            Additional Include Directories, ';' separated list.
             </summary>
         </member>
         <member name="F:Configuration.SubSystem">
@@ -389,6 +379,19 @@
             <param name="bProcessProjects">true to process sub-project, false not</param>
             <param name="format">lua or cs</param>
             <param name="outFile">Output filename without extension</param>
+        </member>
+        <member name="M:SolutionOrProject.UpdateConfigurationEntries(Project,System.Collections.Generic.IEnumerable{FileConfigurationInfo},Dictionary2{System.String,System.Collections.Generic.List{System.String}},System.String)">
+            <summary>
+            
+            </summary>
+            <param name="proj"></param>
+            <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
+            <param name="fileName">name of file of which configuration is being parsed.</param>
+        </member>
+        <member name="M:SolutionOrProject.WriteLinesToDump(System.Text.StringBuilder,Dictionary2{System.String,System.Collections.Generic.List{System.String}},System.Boolean@,System.String)">
+            <summary>
+            Writes lines to dump into built string.
+            </summary>
         </member>
         <member name="T:Exception2">
             <summary>

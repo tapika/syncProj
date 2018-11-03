@@ -25,8 +25,8 @@ public class PremakeTagAttribute : Attribute
 
 public enum EPrecompiledHeaderUse
 {
-    Create,
-    Use,
+    Create = 2,
+    Use = 1,
     NotUsing = 0 //enum default is 0.
 }
 
@@ -87,6 +87,49 @@ public enum IncludeType
 }
 
 
+/// <summary>
+/// Configuration class which configures project as well as individual file entries.
+/// </summary>
+public class FileConfigurationInfo
+{
+    //--------------------------------------------------------------------------------------------
+    // Following fields are located under following XML nodes
+    // ItemDefinitionGroup\
+    //                     ClCompile
+    //                     Link
+    // ItemGroup\
+    //                     ClCompile
+    //--------------------------------------------------------------------------------------------
+    public EPrecompiledHeaderUse PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
+
+    /// <summary>
+    /// Defines, ';' separated list.
+    /// </summary>
+    public String PreprocessorDefinitions = "";
+
+    /// <summary>
+    /// Additional Include Directories, ';' separated list.
+    /// </summary>
+    public String AdditionalIncludeDirectories = "";
+    public String ShowIncludes;
+
+    /// <summary>
+    /// obj / lib files, ';' separated list.
+    /// </summary>
+    public String AdditionalDependencies = "";
+
+    /// <summary>
+    /// Output filename
+    /// </summary>
+    public String ObjectFileName;
+    public String XMLDocumentationFileName;
+
+    public String PrecompiledHeaderFile = "stdafx.h";
+}
+
+
+
+
 [DebuggerDisplay("{relativePath} ({includeType})")]
 public class FileInfo
 {
@@ -94,31 +137,7 @@ public class FileInfo
 
     public String relativePath;
 
-    /// <summary>
-    /// Pre-configuration list.
-    /// </summary>
-    public List<EPrecompiledHeaderUse> phUse = new List<EPrecompiledHeaderUse>();
-
-    /// <summary>
-    /// Pre-configuration list of defines. ';' separated strings. null if not used.
-    /// </summary>
-    public List<String> PreprocessorDefinitions;
-
-    /// <summary>
-    /// Pre-configuration list of include directories;
-    /// </summary>
-    public List<String> AdditionalIncludeDirectories;
-    
-    /// <summary>
-    /// Pre-configuration list of show .h includes
-    /// </summary>
-    public List<String> ShowIncludes;
-
-    /// <summary>
-    /// Pre-configuration list of output filename
-    /// </summary>
-    public List<String> ObjectFileName;
-    public List<String> XMLDocumentationFileName;
+    public List<FileConfigurationInfo> fileConfig = new List<FileConfigurationInfo>();
 
     /// <summary>
     /// null if not in use, non-null if custom build tool is in use.
@@ -251,7 +270,7 @@ public enum EGenerateDebugInformation
 
 
 
-public class Configuration
+public class Configuration: FileConfigurationInfo
 {
     public EConfigurationType ConfigurationType = EConfigurationType.Application;
 
@@ -302,26 +321,7 @@ public class Configuration
     /// </summary>
     public String TargetExt;
 
-    //--------------------------------------------------------------------------------------------
-    // Following fields are located under following XML nodes
-    // ItemDefinitionGroup\
-    //                     ClCompile
-    //                     Link
-    //--------------------------------------------------------------------------------------------
-    public EPrecompiledHeaderUse PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
-    public String PrecompiledHeaderFile = "stdafx.h";
-
     public EWarningLevel WarningLevel = EWarningLevel.Level1;
-
-    /// <summary>
-    /// Defines, ';' separated list.
-    /// </summary>
-    public String PreprocessorDefinitions = "";
-
-    /// <summary>
-    /// Additional Include Directories, ';' separated list.
-    /// </summary>
-    public String AdditionalIncludeDirectories = "";
 
     /// <summary>
     /// Typically Windows or Console.
@@ -496,10 +496,16 @@ public class Project
 
     void confListInit<T>(ref List<T> list, T defT = default(T))
     {
-        list = new List<T>(configurations.Count);
+        if( list == null )
+            list = new List<T>(configurations.Count);
 
         while (list.Count < configurations.Count)
-            list.Add(defT);
+        {
+            T t = defT;
+            if (t == null)
+                t = (T)Activator.CreateInstance(typeof(T));
+            list.Add(t);
+        }
     }
 
 
@@ -520,31 +526,32 @@ public class Project
 
 
             String localName = fileProps.Name.LocalName;
-
-            if (localName == "PrecompiledHeader")
-            {
-                confListInit(ref file2compile.phUse);
-                file2compile.phUse[iCfg] = (EPrecompiledHeaderUse)Enum.Parse(typeof(EPrecompiledHeaderUse), fileProps.Value);
-                continue;
-            }
-
-            //
-            // PreprocessorDefinitions, AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
-            //
-            FieldInfo fi = typeof(FileInfo).GetField(fileProps.Name.LocalName);
+            FieldInfo fi = typeof(FileConfigurationInfo).GetField(fileProps.Name.LocalName);
             if (fi == null)
             {
                 if (Debugger.IsAttached) Debugger.Break();
                 continue;
             }
 
-            List<String> list = (List<String>)fi.GetValue(file2compile);
-            bool bSet = list == null;
-            confListInit(ref list, "");
-            list[iCfg] = fileProps.Value;
+            //
+            // PrecompiledHeader, PreprocessorDefinitions, AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
+            //
+            while (file2compile.fileConfig.Count < configurations.Count)
+            {
+                int i = file2compile.fileConfig.Count;
+                // Add new configurations, use same precompiled header setting as project uses for given configuration.
+                file2compile.fileConfig.Add(new FileConfigurationInfo() { PrecompiledHeader = projectConfig[i].PrecompiledHeader });
+            }
 
-            if (bSet)
-                fi.SetValue(file2compile, list);
+            FileConfigurationInfo fci = file2compile.fileConfig[iCfg];
+            object oValue;
+
+            if (fi.FieldType.IsEnum)
+                oValue = Enum.Parse(fi.FieldType, fileProps.Value);
+            else
+                oValue = Convert.ChangeType(fileProps.Value, fi.FieldType);
+
+            fi.SetValue(fci, oValue);
         } //foreach
     } //ExtractCompileOptions
 
