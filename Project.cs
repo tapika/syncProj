@@ -610,10 +610,18 @@ public class Project
             {
                 if (fi.FieldType.GetCustomAttribute<DescriptionAttribute>() == null )
                 {
-                    if (fi.FieldType == typeof(EUseOfMfc) && cfgNode.Value == "false" )
+                    if (fi.FieldType == typeof(EUseOfMfc) && cfgNode.Value == "false")
+                    {
                         fi.SetValue(cfg, EUseOfMfc._false);
+                    }
                     else
-                        fi.SetValue(cfg, Enum.Parse(fi.FieldType, cfgNode.Value));
+                    {
+                        String v = cfgNode.Value;
+                        if (fi.Name == "PrecompiledHeader" && v == "")
+                            v = "ProjectDefault";
+
+                        fi.SetValue(cfg, Enum.Parse(fi.FieldType, v));
+                    }
                 }
                 else
                 {

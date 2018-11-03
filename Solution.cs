@@ -87,7 +87,7 @@ public class Solution
         String slnTxt = File.ReadAllText(path);
         s.slnVer = Double.Parse(Regex.Match(slnTxt, "[\r\n]+Microsoft Visual Studio Solution File, Format Version ([0-9.]+)", RegexOptions.Multiline).Groups[1].Value, CultureInfo.InvariantCulture);
 
-        int vsNumber = Int32.Parse(Regex.Match(slnTxt, "^\\# Visual Studio ([0-9]+)[\r\n]+", RegexOptions.Multiline).Groups[1].Value);
+        int vsNumber = Int32.Parse(Regex.Match(slnTxt, "^\\# Visual Studio (Express )?([0-9]+)", RegexOptions.Multiline).Groups[2].Value);
         if (vsNumber > 2000)
             s.fileFormatVersion = vsNumber;
         else
