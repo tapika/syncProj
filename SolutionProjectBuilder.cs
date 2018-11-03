@@ -245,20 +245,25 @@ public class SolutionProjectBuilder
         Project parent = m_solutionRoot;
         String pathSoFar = "";
 
-        foreach (String pathPart in m_groupPath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries))
-        {
-            Project p = parent.nodes.Where(x => x.ProjectName == pathPart && x.RelativePath == pathPart).FirstOrDefault();
-            pathSoFar = pathSoFar + ((pathSoFar.Length != 0) ? "/" : "") + pathPart;
-            if (p == null)
-            {
-                p = new Project() { solution = m_solution, ProjectName = pathPart, RelativePath = pathPart, ProjectGuid = GenerateGuid(pathSoFar), bIsFolder = true };
-                m_solution.projects.Add(p);
-                parent.nodes.Add(p);
-                p.parent = parent;
-            }
+        // Result of group() expansion - try to create correspondent "virtual projects / folders"
 
-            parent = p;
-        }
+        if (m_solution != null)
+        {
+            foreach (String pathPart in m_groupPath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                Project p = parent.nodes.Where(x => x.ProjectName == pathPart && x.RelativePath == pathPart).FirstOrDefault();
+                pathSoFar = pathSoFar + ((pathSoFar.Length != 0) ? "/" : "") + pathPart;
+                if (p == null)
+                {
+                    p = new Project() { solution = m_solution, ProjectName = pathPart, RelativePath = pathPart, ProjectGuid = GenerateGuid(pathSoFar), bIsFolder = true };
+                    m_solution.projects.Add(p);
+                    parent.nodes.Add(p);
+                    p.parent = parent;
+                }
+
+                parent = p;
+            }
+        } //if
 
         parent.nodes.Add(m_project);
         m_project.parent = parent;
