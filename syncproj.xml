@@ -1080,6 +1080,7 @@
             <summary>
             Matches files from folder _dir using glob file pattern.
             In glob file pattern matching * reflects to any file or folder name, ** refers to any path (including sub-folders).
+            ? refers to any character.
             
             There exists also 3-rd party library for performing similar matching - 'Microsoft.Extensions.FileSystemGlobbing'
             but it was dragging a lot of dependencies, I've decided to survive without it.

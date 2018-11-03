@@ -800,6 +800,7 @@ public class SolutionProjectBuilder
     /// <summary>
     /// Matches files from folder _dir using glob file pattern.
     /// In glob file pattern matching * reflects to any file or folder name, ** refers to any path (including sub-folders).
+    /// ? refers to any character.
     /// 
     /// There exists also 3-rd party library for performing similar matching - 'Microsoft.Extensions.FileSystemGlobbing'
     /// but it was dragging a lot of dependencies, I've decided to survive without it.
@@ -807,7 +808,7 @@ public class SolutionProjectBuilder
     /// <returns>List of files matches your selection</returns>
     static public String[] matchFiles( String _dir, String filePattern )
     {
-        if (filePattern.IndexOf('*') == -1)     // Speed up matching, if no asterisk, then it can be simply file path.
+        if (filePattern.IndexOfAny(new char[] { '*', '?' }) == -1)      // Speed up matching, if no asterisk / widlcard, then it can be simply file path.
         {
             String path = Path.Combine(_dir, filePattern);
             if (File.Exists(path))
@@ -889,13 +890,22 @@ public class SolutionProjectBuilder
             bool bMandatory = true;
             
             String filePattern;
-            if (_filePattern.StartsWith("?"))
+            if (_filePattern.StartsWith("??"))              // Escape questionmark for pattern matching.
             {
                 filePattern = _filePattern.Substring(1);
-                bMandatory = false;
             }
             else
-                filePattern = _filePattern;
+            {
+                if (_filePattern.StartsWith("?"))
+                {
+                    filePattern = _filePattern.Substring(1);
+                    bMandatory = false;
+                }
+                else
+                {
+                    filePattern = _filePattern;
+                }
+            }
 
             String[] fileList = matchFiles(m_project.getProjectFolder(), filePattern);
 
