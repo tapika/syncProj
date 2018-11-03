@@ -3,3 +3,4 @@ FilterMiss2.cs :
 FilterMiss2.cs(13,13): error: Specified filter did not select any of configurations, please check the filter.
 Filtering was done:
 * by configuration pattern 'ReleaseDebug', project has only following configurations: Debug,Release
+

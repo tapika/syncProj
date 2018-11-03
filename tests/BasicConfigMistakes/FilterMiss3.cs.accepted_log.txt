@@ -1,0 +1,6 @@
+syncProj exited with ERROR: -2
+FilterMiss3.cs :
+FilterMiss3.cs(13,13): error: Specified filter did not select any of configurations, please check the filter.
+Filtering was done:
+* by configuration pattern 'Debug', project has only following configurations: Debug,Release
+* by platform pattern 'Win32', project has only following platforms: ARM

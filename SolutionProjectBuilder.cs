@@ -772,7 +772,7 @@ public class SolutionProjectBuilder
             String s = "Filtering was done:\r\n";
 
             if (dFilt.ContainsKey("configurations"))
-                s += "* by configuration pattern '" + dFilt["configurations"] + "', project has only following configurations: " + String.Join(",", m_project.getConfigurationNames());
+                s += "* by configuration pattern '" + dFilt["configurations"] + "', project has only following configurations: " + String.Join(",", m_project.getConfigurationNames()) + "\r\n";
 
             if (dFilt.ContainsKey("platforms"))
                 s += "* by platform pattern '" + dFilt["platforms"] + "', project has only following platforms: " + String.Join(",", m_project.getPlatforms());
