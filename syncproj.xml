@@ -879,6 +879,7 @@
         <member name="M:SolutionProjectBuilder.osbase(System.String)">
             <summary>
             Specifies IDE / OS where project is targetted upon.
+            This function also sets default toolset, so if you want to override default toolset, specify it manually after this function call.
             </summary>
             <param name="osBase">One of following: vs2010, vs2012, vs2015, android, package</param>
         </member>
@@ -929,11 +930,12 @@
             selectedFileConfigurations is file specific, selectedConfigurations is project wide.
             </summary>
         </member>
-        <member name="M:SolutionProjectBuilder.getSelectedConfigurations(System.Boolean)">
+        <member name="M:SolutionProjectBuilder.getSelectedConfigurations(System.Boolean,System.Int32)">
             <summary>
             Gets currently selected configurations by filter.
             </summary>
             <param name="bForceNonFileSpecific">true to force project specific configuration set.</param>
+            <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
         </member>
         <member name="M:SolutionProjectBuilder.filter(System.String[])">
             <summary>
@@ -955,7 +957,7 @@
             DynamicLibrary, SharedLib   - .dll<para />
             </param>
         </member>
-        <member name="M:SolutionProjectBuilder.toolset(System.String)">
+        <member name="M:SolutionProjectBuilder.toolset(System.String,System.Int32)">
             <summary>
             Selects the compiler, linker, etc. which are used to build a project or configuration.
             </summary>
@@ -964,6 +966,7 @@
                 'v140' - for Visual Studio 2015.<para />
                 'v120' - for Visual Studio 2013.<para />
             </param>
+            <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
         </member>
         <member name="M:SolutionProjectBuilder.androidapilevel(System.String)">
             <summary>
@@ -1141,11 +1144,12 @@
             Same as Exception, only we save call stack in here (to be able to report error line later on).
             </summary>
         </member>
-        <member name="M:Exception2.#ctor(System.String)">
+        <member name="M:Exception2.#ctor(System.String,System.Int32)">
             <summary>
             Creates new exception with stack trace from where exception was thrown.
             </summary>
             <param name="_msg"></param>
+            <param name="callerFrame">Frame count which called this function</param>
         </member>
         <member name="M:Exception2.getThrowLocation">
             <summary>

@@ -276,6 +276,7 @@ public class SolutionProjectBuilder
 
     /// <summary>
     /// Specifies IDE / OS where project is targetted upon.
+    /// This function also sets default toolset, so if you want to override default toolset, specify it manually after this function call.
     /// </summary>
     /// <param name="osBase">One of following: vs2010, vs2012, vs2015, android, package</param>
     static public void osbase(String osBase)
@@ -284,6 +285,13 @@ public class SolutionProjectBuilder
 
         if( !m_project.setOsBase(osBase) )
             throw new Exception2("osbase not supported '" + osBase + "' - supported bases are: vs2010, vs2012, vs2015, android, package");
+
+        // Let's try to specify toolset to use automatically.
+        switch (osBase)
+        {
+            case "vs2013": toolset("v120", 1); break;
+            case "vs2012": toolset("v110", 1); break;
+        }
     }
 
     /// <summary>
@@ -443,7 +451,8 @@ public class SolutionProjectBuilder
     /// Gets currently selected configurations by filter.
     /// </summary>
     /// <param name="bForceNonFileSpecific">true to force project specific configuration set.</param>
-    static List<FileConfigurationInfo> getSelectedConfigurations( bool bForceNonFileSpecific )
+    /// <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
+    static List<FileConfigurationInfo> getSelectedConfigurations( bool bForceNonFileSpecific, int callerFrame = 0)
     {
         List<FileConfigurationInfo> list;
 
@@ -455,6 +464,9 @@ public class SolutionProjectBuilder
         if (list.Count == 0)
             filter();
 
+        if (list.Count == 0)
+            throw new Exception2("Please specify configurations() and platforms() before using this function. Amount of configurations and platforms must be non-zero.", callerFrame + 1);
+            
         return list;
     }
 
@@ -590,9 +602,10 @@ public class SolutionProjectBuilder
     ///     'v140' - for Visual Studio 2015.<para />
     ///     'v120' - for Visual Studio 2013.<para />
     /// </param>
-    static public void toolset(String toolset)
+    /// <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
+    static public void toolset(String toolset, int callerFrame = 0)
     {
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedConfigurations(true, callerFrame).Cast<Configuration>().Where(x => x != null))
             conf.PlatformToolset = toolset;
     }
 

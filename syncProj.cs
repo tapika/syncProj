@@ -424,9 +424,9 @@ public class SolutionOrProject
             if (format == "lua")
                 o.AppendLine(head + "    location \".\"");
 
-            o.AppendLine(head + "    " + ((format == "lua") ? comment: "") + "osbase" + brO + "\"" + proj.getOsBase() + "\"" + brC);
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
+            o.AppendLine(head + "    " + ((format == "lua") ? comment : "") + "osbase" + brO + "\"" + proj.getOsBase() + "\"" + brC);
             o.AppendLine(head + "    uuid" + brO + "\"" + proj.ProjectGuid.Substring(1, proj.ProjectGuid.Length - 2) + "\"" + brC);
             
             // Packaging projects cannot have custom build step.
@@ -890,15 +890,18 @@ public class Exception2 : Exception
 {
     StackTrace strace;
     String msg;
+    int nCallerFrame = 0;
 
     /// <summary>
     /// Creates new exception with stack trace from where exception was thrown.
     /// </summary>
     /// <param name="_msg"></param>
-    public Exception2( String _msg )
+    /// <param name="callerFrame">Frame count which called this function</param>
+    public Exception2( String _msg, int callerFrame = 0 )
     {
         msg = _msg;
         strace = new StackTrace(true);
+        nCallerFrame = callerFrame;
     }
 
     /// <summary>
@@ -907,10 +910,10 @@ public class Exception2 : Exception
     /// <returns>Throw source code line</returns>
     public String getThrowLocation()
     {
-        if (strace.FrameCount < 2)
+        if (strace.FrameCount < nCallerFrame + 2)
             return "";
 
-        StackFrame f = strace.GetFrame(2);
+        StackFrame f = strace.GetFrame(nCallerFrame + 2);
         if (f.GetFileName() != null)
             return f.GetFileName() + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
         

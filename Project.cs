@@ -1486,6 +1486,9 @@ public class Project
                 String pts = conf.PlatformToolset;
                 if (pts == null) pts = conf.getPlatformToolsetDefault(this);
                 o.AppendLine("    <PlatformToolset>" + pts + "</PlatformToolset>");
+
+                if (Keyword == EKeyword.Android && conf.AndroidAPILevel != "android-19")
+                    o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
             }
 
             if (conf.WholeProgramOptimization != EWholeProgramOptimization.NoWholeProgramOptimization)
