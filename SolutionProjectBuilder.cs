@@ -881,6 +881,7 @@ public class SolutionProjectBuilder
                 Message = ""
             }
         );
+        filter();
     }
 
 
