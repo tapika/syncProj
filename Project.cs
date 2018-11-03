@@ -966,7 +966,10 @@ public class Project
             if (conf.PrecompiledHeader == EPrecompiledHeaderUse.Use && conf.PrecompiledHeaderFile != "stdafx.h")
                 o.AppendLine("      <PrecompiledHeaderFile>" + conf.PrecompiledHeaderFile + "</PrecompiledHeaderFile>");
 
-            o.AppendLine("      <WarningLevel>" + conf.WarningLevel + "</WarningLevel>");
+            // No need to specify as it's Visual studio default.
+            if(conf.WarningLevel != EWarningLevel.Level1 )
+                o.AppendLine("      <WarningLevel>" + conf.WarningLevel + "</WarningLevel>");
+            
             o.AppendLine("      <Optimization>" + conf.Optimization + "</Optimization>");
             
             if(conf.FunctionLevelLinking)   //premake5 is not generating those, I guess disabled if it's value is false.
