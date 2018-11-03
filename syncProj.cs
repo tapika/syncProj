@@ -289,12 +289,15 @@ public class SolutionOrProject
         Solution sln = solutionOrProject as Solution;
         Project proj = solutionOrProject as Project;
 
+        String pathToSyncProj = "";
+
         //
         // C# script header
         //
         if (bCsScript)
         {
-            o.AppendLine("//css_ref " + Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(path)));
+            pathToSyncProj = Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(path));
+            o.AppendLine("//css_ref " + pathToSyncProj);
             
             o.AppendLine("using System;         //Exception");
             o.AppendLine();
@@ -499,14 +502,38 @@ public class SolutionOrProject
         }
 
         String text2save = o.ToString();
+        bool bSaveFile = true;
+
         if (File.Exists(outPath) && File.ReadAllText(outPath) == text2save)
         {
             uinfo.nUpToDate++;
-            return;
+            bSaveFile = false;
         }
 
-        File.WriteAllText(outPath, text2save);
-        uinfo.filesUpdated.Add(outPath);
+        if (bSaveFile)
+        {
+            File.WriteAllText(outPath, text2save);
+            uinfo.filesUpdated.Add(outPath);
+        }
+
+        //
+        // Let's generate now .bat files just to simplify testing.
+        //
+        if (bCsScript)
+        {
+            String bat = "@echo off\r\n" + pathToSyncProj + " " + Path.GetFileName(outPath);
+            String outBat = Path.Combine(Path.GetDirectoryName(outPath), Path.GetFileNameWithoutExtension(outPath) + ".bat");
+
+            if (File.Exists(outBat) && File.ReadAllText(outBat) == bat)
+            {
+                uinfo.nUpToDate++;
+                return;
+            }
+
+            File.WriteAllText(outBat, bat);
+            uinfo.filesUpdated.Add(outBat);
+        } //if
+
     } //UpdateProjectScript
 
 
