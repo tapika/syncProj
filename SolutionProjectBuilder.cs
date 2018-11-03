@@ -1684,5 +1684,15 @@ public class SolutionProjectBuilder
         Console.WriteLine();
         bEverythingIsOk = false;
     }
+
+    /// <summary>
+    /// Returns true if it's developer of syncProj.
+    /// </summary>
+    static public bool isDeveloper()
+    { 
+        bool isDeveloper = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software\\syncProj")?.GetValue("IsDeveloper")?.ToString() == "1";
+        return isDeveloper;
+    }
+
 };
 

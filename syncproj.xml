@@ -1482,6 +1482,11 @@
             </summary>
             <param name="ex">Exception occurred.</param>
         </member>
+        <member name="M:SolutionProjectBuilder.isDeveloper">
+            <summary>
+            Returns true if it's developer of syncProj.
+            </summary>
+        </member>
         <member name="T:SolutionOrProject">
             <summary>
             Let's make system flexible enough that we can load projects and solutions independently of file format.

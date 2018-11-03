@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -277,7 +278,7 @@ public class Solution
         o.AppendLine("# Visual Studio " + verTag.ToString());
 
         // For some reason must be specified, otherwise Visual studio will try to save project after load.
-        if (verTag >= 2015)
+        if (fileFormatVersion >= 2015)
         {
             String ver = MinimumVisualStudioVersion;
             if( ver == null ) ver = "10.0.40219.1";
@@ -343,6 +344,13 @@ public class Solution
                 int iConf = configurations.IndexOf(conf);
                 String mappedConf = conf;
 
+                bool bPeformBuild = true;
+                bool? bPerformDeploy = null;
+
+                if (p.Keyword == EKeyword.Package)
+                    bPerformDeploy = true;
+
+
                 if (p.slnConfigurations != null && iConf < p.slnConfigurations.Count)
                 {
                     // Mapped configuration item is specified.
@@ -356,21 +364,23 @@ public class Solution
                     {
                         String[] confPlat = conf.Split('|');
 
-                        if (!projConfs.Contains(confPlat[0]))
-                            continue;
-
-                        if (confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
+                        if (projConfs.Contains(confPlat[0]) && confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
+                        {
                             mappedConf = confPlat[0] + '|' + "Win32";
-                        else
                             continue;
+                        }
+
+                        // Configuration cannot be mapped (E.g. Solution has "Debug|Arm", project supports only "Debug|Win32".
+                        // We disable project build, but try to map configuration anyway - otherwise Visual Studio will 
+                        // try to save solution by itself.
+                        bPeformBuild = false;
+                        bPerformDeploy = null;
+                            
+                        mappedConf = p.configurations.Where(x => x.StartsWith(confPlat[0])).FirstOrDefault();
+                        if (mappedConf == null)
+                            mappedConf = p.configurations[0];
                     } //if
                 }
-
-                bool bPeformBuild = true;
-                bool? bPerformDeploy = null;
-
-                if (p.Keyword == EKeyword.Package)
-                    bPerformDeploy = true;
 
                 if (p.slnBuildProject != null && iConf < p.slnBuildProject.Count)
                     bPeformBuild = p.slnBuildProject[iConf];
@@ -431,10 +441,7 @@ public class Solution
         String currentSln = "";
         if (File.Exists(slnPath)) currentSln = File.ReadAllText(slnPath);
 
-        //
-        // Android project uses windows linefeeds (No replace is needed), but Visual studio seems to work both ways.
-        //
-        String newSln = o.ToString().Replace("\r\n", "\n");
+        String newSln = o.ToString();
         //
         // Save only if needed.
         //
@@ -444,6 +451,7 @@ public class Solution
         }
         else
         {
+            if(SolutionProjectBuilder.isDeveloper()) File.Copy(slnPath, slnPath + ".bkp", true);
             File.WriteAllText(slnPath, newSln, Encoding.UTF8);
             Console.WriteLine("ok.");
         } //if-else
