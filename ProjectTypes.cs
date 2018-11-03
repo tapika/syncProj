@@ -389,7 +389,13 @@ public enum EConfigurationType
     /// .dll
     /// </summary>
     [FunctionName("SharedLib")]
-    DynamicLibrary
+    DynamicLibrary,
+
+    /// <summary>
+    /// .lib or .a
+    /// </summary>
+    [FunctionName("StaticLib")]
+    StaticLibrary
 };
 
 /// <summary>

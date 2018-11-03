@@ -617,6 +617,7 @@ public class SolutionProjectBuilder
             case "Application":         type = EConfigurationType.Application; break;
             case "SharedLib":           type = EConfigurationType.DynamicLibrary; break;
             case "DynamicLibrary":      type = EConfigurationType.DynamicLibrary; break;
+            case "StaticLib":           type = EConfigurationType.StaticLibrary; break;
             default:
                 throw new Exception2("kind value is not supported '" + _kind + "' - supported values are: " + String.Join(",", enums.Select(x => x.ToString()) ));
         }

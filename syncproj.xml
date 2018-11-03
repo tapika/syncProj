@@ -534,6 +534,11 @@
             .dll
             </summary>
         </member>
+        <member name="F:EConfigurationType.StaticLibrary">
+            <summary>
+            .lib or .a
+            </summary>
+        </member>
         <member name="T:ECharacterSet">
             <summary>
             Character set - unicode MBCS.
