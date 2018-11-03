@@ -851,7 +851,12 @@ public class Project
 
         if (conf.DebugInformationFormat != conf.getDebugInformationFormatDefault(confName))
         {
-            o.AppendLine("      <DebugInformationFormat" + sCond + ">" + conf.DebugInformationFormat.ToString() + "</DebugInformationFormat>");
+            //
+            // <DebugInformationFormat>None appered only from vs2013 version. Previous versions of vs did not mark "None" anyhow - whole
+            // xml tag was omitted, resulting in default value
+            //
+            if( fileFormatVersion >= 2013 || conf.DebugInformationFormat != EDebugInformationFormat.None )
+                o.AppendLine( "      <DebugInformationFormat" + sCond + ">" + conf.DebugInformationFormat.ToString() + "</DebugInformationFormat>" );
 
             //
             //  http://stackoverflow.com/questions/2762930/vs2010-always-thinks-project-is-out-of-date-but-nothing-has-changed
