@@ -907,7 +907,13 @@ public class Project
         if( conf.DisableSpecificWarnings.Length != 0)
             o.AppendLine("      <DisableSpecificWarnings" + sCond + ">" + conf.DisableSpecificWarnings + ";%(DisableSpecificWarnings)</DisableSpecificWarnings>");
 
-        if( conf.BasicRuntimeChecks != EBasicRuntimeChecks.ProjectDefault)
+        if (conf.ExceptionHandling != EExceptionHandling.ProjectDefault)
+        {
+            String v = typeof(EExceptionHandling).GetField(conf.ExceptionHandling.ToString()).GetCustomAttribute<DescriptionAttribute>().Description;
+            o.AppendLine("      <ExceptionHandling" + sCond + ">" + v + "</ExceptionHandling>");
+        }
+
+        if ( conf.BasicRuntimeChecks != EBasicRuntimeChecks.ProjectDefault)
             o.AppendLine("      <BasicRuntimeChecks" + sCond + ">" + conf.BasicRuntimeChecks + "</BasicRuntimeChecks>");
 
         if ( conf.ClCompile_AdditionalOptions.Length != 0)

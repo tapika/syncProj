@@ -311,6 +311,10 @@ partial class syncProj
                             return;
                         }
 
+                        // If first file (console output), save log file before performing move
+                        if (iFile == 0)
+                            File.WriteAllText(logActualFile, logActual);
+
                         if (dr == DialogResult.Yes)
                         {
                             File.Copy(logActualFile, logAcceptedFile, true);
@@ -334,9 +338,6 @@ partial class syncProj
                             if (!bAcceptedFileExists)   // Just a dummy file so comparison tool would not mind.
                                 File.WriteAllText(logAcceptedFile, "");
 
-                            if( iFile == 0 )
-                                File.WriteAllText(logActualFile, logActual);
-                            
                             Process.Start(diffExe, "\"" + logActualFile + "\" \"" + logAcceptedFile + "\"").WaitForExit();
                             logActual = File.ReadAllText(logActualFile);
                         } //if-else

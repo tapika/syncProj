@@ -2076,13 +2076,27 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
-    /// Sets specific run-time library
+    /// Sets specific run-time library.
+    /// 
+    /// When same application is being linked with multiple static libraries, application and static libraries
+    /// must all use same runtime library - otherwise you will get link errors.
     /// </summary>
     /// <param name="rtl">Run-time library to use</param>
     static public void CCpp_CodeGeneration_RuntimeLibrary( ERuntimeLibrary rtl )
     {
         foreach( var conf in getSelectedConfigurations( false ) )
             conf.RuntimeLibrary = rtl;
+    }
+
+    /// <summary>
+    /// Sets exception handling model.
+    /// Disabling exception handling reduces size of produced executable or dll approximately by 20%.
+    /// </summary>
+    /// <param name="eh">Exception level to set</param>
+    static public void CCpp_CodeGeneration_EnableCppExceptions(EExceptionHandling eh)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.ExceptionHandling = eh;
     }
 
     /// <summary>

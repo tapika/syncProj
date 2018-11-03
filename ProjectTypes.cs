@@ -53,6 +53,43 @@ public enum EPrecompiledHeaderUse
     ProjectDefault
 }
 
+
+/// <summary>
+/// Exception Handling Model
+/// </summary>
+public enum EExceptionHandling
+{
+    /// <summary>
+    /// The exception-handling model that catches both asynchronous (structured) and synchronous (C++) exceptions. (/EHa)
+    /// </summary>
+    [Description("Async")]
+    Async,
+
+    /// <summary>
+    /// Both C++ and C functions can throw exceptions (/EHs)
+    /// </summary>
+    [Description("SyncCThrow")]
+    SyncCThrow,
+
+    /// <summary>
+    /// C++ functions can throw exceptions, C functions don't throw exceptions (/EHsc)
+    /// </summary>
+    [Description("Sync")]
+    Sync,
+
+    /// <summary>
+    /// Functions assumed not to throw exceptions (/EH-)
+    /// </summary>
+    [Description("false")]
+    NoExceptionHandling,
+
+    /// <summary>
+    /// Default value, not saved in .vcxproj project file
+    /// </summary>
+    ProjectDefault
+}
+
+
 /// <summary>
 /// Run-Time Error Checks
 /// </summary>
@@ -272,6 +309,11 @@ public class FileConfigurationInfo
     /// List of warning to disable, ';' separated list.
     /// </summary>
     public String DisableSpecificWarnings = "";
+
+    /// <summary>
+    /// Exception Handling Model
+    /// </summary>
+    public EExceptionHandling ExceptionHandling = EExceptionHandling.ProjectDefault;
 
     /// <summary>
     /// Run-Time Error Checks

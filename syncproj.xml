@@ -346,6 +346,36 @@
             Not available in project file, but this is something we indicate that we haven't set value for precompiled headers.
             </summary>
         </member>
+        <member name="T:EExceptionHandling">
+            <summary>
+            Exception Handling Model
+            </summary>
+        </member>
+        <member name="F:EExceptionHandling.Async">
+            <summary>
+            The exception-handling model that catches both asynchronous (structured) and synchronous (C++) exceptions. (/EHa)
+            </summary>
+        </member>
+        <member name="F:EExceptionHandling.SyncCThrow">
+            <summary>
+            Both C++ and C functions can throw exceptions (/EHs)
+            </summary>
+        </member>
+        <member name="F:EExceptionHandling.Sync">
+            <summary>
+            C++ functions can throw exceptions, C functions don't throw exceptions (/EHsc)
+            </summary>
+        </member>
+        <member name="F:EExceptionHandling.NoExceptionHandling">
+            <summary>
+            Functions assumed not to throw exceptions (/EH-)
+            </summary>
+        </member>
+        <member name="F:EExceptionHandling.ProjectDefault">
+            <summary>
+            Default value, not saved in .vcxproj project file
+            </summary>
+        </member>
         <member name="T:EBasicRuntimeChecks">
             <summary>
             Run-Time Error Checks
@@ -546,6 +576,11 @@
         <member name="F:FileConfigurationInfo.DisableSpecificWarnings">
             <summary>
             List of warning to disable, ';' separated list.
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.ExceptionHandling">
+            <summary>
+            Exception Handling Model
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.BasicRuntimeChecks">
@@ -1942,9 +1977,19 @@
         </member>
         <member name="M:SolutionProjectBuilder.CCpp_CodeGeneration_RuntimeLibrary(ERuntimeLibrary)">
             <summary>
-            Sets specific run-time library
+            Sets specific run-time library.
+            
+            When same application is being linked with multiple static libraries, application and static libraries
+            must all use same runtime library - otherwise you will get link errors.
             </summary>
             <param name="rtl">Run-time library to use</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.CCpp_CodeGeneration_EnableCppExceptions(EExceptionHandling)">
+            <summary>
+            Sets exception handling model.
+            Disabling exception handling reduces size of produced executable or dll approximately by 20%.
+            </summary>
+            <param name="eh">Exception level to set</param>
         </member>
         <member name="M:SolutionProjectBuilder.CCpp_CodeGeneration_BasicRuntimeChecks(EBasicRuntimeChecks)">
             <summary>
