@@ -8,6 +8,7 @@ partial class Builder: SolutionProjectBuilder
     static void Main(String[] args)
     {
         try {
+            solution("out_dummy"); platforms("Win32"); project("out_dummy"); platforms("Win32"); projectScript("ScriptLocationTrace.cs");
             setLocationFromScriptPath();
             Console.WriteLine("1. I'm in folder '" + m_scriptRelativeDir + "'");
             invokeScript("subdir/_ScriptLocationTrace2.cs");

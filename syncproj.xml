@@ -1224,6 +1224,11 @@
             Path where we are building solution / project at. By default same as script is started from.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.m_currentlyExecutingScriptPath">
+            <summary>
+            Full path from where current execution proceeds (location of .cs script)
+            </summary>
+        </member>
         <member name="F:SolutionProjectBuilder.m_scriptRelativeDir">
             <summary>
             Relative directory from solution. Set by RunScript.
@@ -1544,7 +1549,7 @@
         </member>
         <member name="M:SolutionProjectBuilder.projectScript(System.String,System.String,System.String)">
             <summary>
-            Configures project rebuild step.
+            Configures project rebuild step. Sets also project generation location into same folder where script resides.
             </summary>
             <param name="script2include">Script to include into project</param>
             <param name="script2compile">Script which shall be compiled once script2include is changed</param>
@@ -1827,8 +1832,8 @@
             <summary>
             Rebases file with path fromPath to folder with baseDir.
             </summary>
-            <param name="fromPath">Full file path (absolute)</param>
-            <param name="baseDir">Full base directory path (absolute)</param>
+            <param name="_fromPath">Full file path (absolute)</param>
+            <param name="_baseDir">Full base directory path (absolute)</param>
             <returns>Relative path to file in respect of baseDir</returns>
         </member>
     </members>

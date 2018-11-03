@@ -89,7 +89,7 @@ public class UpdateInfo
             return;
 
         if( bWasSaved)
-            Console.WriteLine("File updated: " + path);
+            Console.WriteLine("File updated: " + Exception2.getPath(path));
     }
 
 
@@ -1462,6 +1462,9 @@ public class Path2
         StackTrace st = new System.Diagnostics.StackTrace(true);
         string fileName = null;
 
+        if (iFrame < 0)
+            iFrame = (st.FrameCount + iFrame) % st.FrameCount;
+
         if( iFrame < st.FrameCount )
             fileName = st.GetFrame(iFrame).GetFileName();                       // For C# script.
         else
@@ -1485,12 +1488,15 @@ public class Path2
     /// <summary>
     /// Rebases file with path fromPath to folder with baseDir.
     /// </summary>
-    /// <param name="fromPath">Full file path (absolute)</param>
-    /// <param name="baseDir">Full base directory path (absolute)</param>
+    /// <param name="_fromPath">Full file path (absolute)</param>
+    /// <param name="_baseDir">Full base directory path (absolute)</param>
     /// <returns>Relative path to file in respect of baseDir</returns>
-    static public String makeRelative(String fromPath, String baseDir)
+    static public String makeRelative(String _fromPath, String _baseDir)
     {
         String pathSep = "\\";
+        String fromPath = Path.GetFullPath(_fromPath);
+        String baseDir = Path.GetFullPath(_baseDir);            // If folder contains upper folder references, they gets lost here. "c:\test\..\test2" => "c:\test2"
+
         String[] p1 = Regex.Split(fromPath, "[\\\\/]").Where(x => x.Length != 0).ToArray();
         String[] p2 = Regex.Split(baseDir, "[\\\\/]").Where(x => x.Length != 0).ToArray();
         int i = 0;

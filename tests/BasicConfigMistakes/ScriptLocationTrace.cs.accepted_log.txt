@@ -9,5 +9,4 @@ ScriptLocationTrace.cs :
 3. I'm in folder 'subdir\subdir2'
 4. I'm in folder 'subdir'
 1. I'm in folder ''
-No solution or project defined. Use project() or solution() functions in script
-0 files updated
+7 files updated

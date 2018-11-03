@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectConsoleApp", "out_ProjectConsoleApp.vcxproj", "{A639650C-2E99-7E2D-0C9E-EE149E4F3E41}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectWindowedApp", "out_ProjectWindowedApp.vcxproj", "{B56E7AC8-5CA0-293B-551A-D5F873E64CFC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectApplication", "out_ProjectApplication.vcxproj", "{64DBF6BE-5666-8656-CFB5-4B285E3F4398}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectSharedLib", "out_ProjectSharedLib.vcxproj", "{BB26BEA3-AC28-ECBA-C9B7-8D8BC3B51DBD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectDynamicLibrary", "out_ProjectDynamicLibrary.vcxproj", "{CC44DF2F-8196-EDD8-1184-9FACE90E866C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectStaticLibrary", "out_ProjectStaticLibrary.vcxproj", "{B6633F5A-25FB-B32F-0F15-B5683E665BDF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectStaticLib", "out_ProjectStaticLib.vcxproj", "{F1500912-355D-8EB7-7599-CE0E98177680}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_ProjectUtility", "out_ProjectUtility.vcxproj", "{8E944A0A-B61E-9D35-837A-E41D490BB001}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal

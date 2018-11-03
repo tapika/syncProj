@@ -37,6 +37,11 @@ public class SolutionProjectBuilder
     /// Path where we are building solution / project at. By default same as script is started from.
     /// </summary>
     public static String m_workPath;
+
+    /// <summary>
+    /// Full path from where current execution proceeds (location of .cs script)
+    /// </summary>
+    public static String m_currentlyExecutingScriptPath = "";
     
     /// <summary>
     /// Relative directory from solution. Set by RunScript.
@@ -375,11 +380,17 @@ public class SolutionProjectBuilder
         }
         else
         {
-            m_project.RelativePath = Path.Combine(path, m_project.ProjectName);
-
             // Building only project, save current work path as well.
             if (m_project.solution == null)
                 m_workPath = path;
+
+            String dir = path;
+
+            if (Path.IsPathRooted(dir))
+                dir = Path2.makeRelative(path, m_workPath);
+
+            m_project.RelativePath = Path.Combine(dir, m_project.ProjectName);
+
         }
     }
 
@@ -565,7 +576,20 @@ public class SolutionProjectBuilder
     static public void invokeScript(String path)
     {
         String errors = "";
-        String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, SolutionProjectBuilder.m_scriptRelativeDir, path);
+        String dir;
+        String fullPath = path;
+
+        // Is not absolute path, then launch from currently executing .cs location
+        if (!Path.IsPathRooted(fullPath))
+        {
+            // By default search from same place where script is.
+            if (!String.IsNullOrEmpty(SolutionProjectBuilder.m_currentlyExecutingScriptPath))
+                dir = Path.GetDirectoryName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
+            else
+                dir = SolutionProjectBuilder.m_workPath;
+
+            fullPath = Path.Combine(dir, path);
+        }
 
         CsScript.RunScript(fullPath, true, out errors, "no_exception_handling");
     }
@@ -796,6 +820,7 @@ public class SolutionProjectBuilder
             case "Application":         type = EConfigurationType.Application; break;
             case "SharedLib":           type = EConfigurationType.DynamicLibrary; break;
             case "DynamicLibrary":      type = EConfigurationType.DynamicLibrary; break;
+            case "StaticLibrary":       type = EConfigurationType.StaticLibrary; break;
             case "StaticLib":           type = EConfigurationType.StaticLibrary; break;
             case "Utility":             type = EConfigurationType.Utility; m_project.Keyword = EKeyword.None; break;
             default:
@@ -1217,11 +1242,20 @@ public class SolutionProjectBuilder
 
             String[] fileList = matchFiles(m_project.getProjectFolder(), filePattern);
 
-            if (bMandatory && fileList.Length == 0)
+            if (fileList.Length == 0)
             {
-                throw new Exception2("No file found which is specified by pattern '" + filePattern + "'.\r\n" +
-                    "If file is generated during project build, please mark it as optional with '?' character in front of filename - for example files(\"?temp.txt\") "
-                );
+                if (bMandatory)
+                {
+                    throw new Exception2("No file found which is specified by pattern '" + filePattern + "'.\r\n" +
+                        "If file is generated during project build, please mark it as optional with '?' character in front of filename - for example files(\"?temp.txt\")\r\n" + 
+                        "Files were searched in folder: '" + Exception2.getPath(m_project.getProjectFolder()) + "'"
+                    );
+                }
+                else
+                {
+                    // Add only file itself
+                    fileList = new String[] { filePattern };
+                }
             }
 
             foreach (String file in fileList)
@@ -1234,7 +1268,7 @@ public class SolutionProjectBuilder
                 String fullFilePath = Path.Combine(m_project.getProjectFolder(), filePattern);
                 FileInfo fi = new FileInfo() { relativePath = file };
 
-                switch (Path.GetExtension(filePattern).ToLower())
+                switch (Path.GetExtension(file).ToLower())
                 {
                     case ".properties":
                         fi.includeType = IncludeType.AntProjectPropertiesFile; break;
@@ -1336,7 +1370,7 @@ public class SolutionProjectBuilder
             files(script2include);
             filter("files:" + script2include);
 
-            String scriptDir = Path.Combine(m_workPath, m_scriptRelativeDir);
+            String scriptDir = Path.GetDirectoryName(m_currentlyExecutingScriptPath);
             String tempLogFile = "$(IntermediateOutputPath)" + Path.GetFileName(script2compile).Replace('.', '_') + "_log.txt";
 
             //
@@ -1372,7 +1406,7 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
-    /// Configures project rebuild step.
+    /// Configures project rebuild step. Sets also project generation location into same folder where script resides.
     /// </summary>
     /// <param name="script2include">Script to include into project</param>
     /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
@@ -1380,6 +1414,10 @@ public class SolutionProjectBuilder
     static public void projectScript(String script2include, String script2compile = null, String pathToSyncProjExe = null )
     {
         requireProjectSelected();
+
+        String dir = Path.GetDirectoryName(m_currentlyExecutingScriptPath);
+        location(dir);
+
         selfCompileScript(script2include, script2compile, pathToSyncProjExe, m_project.getProjectFolder());
     }
 

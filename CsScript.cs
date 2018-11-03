@@ -268,9 +268,11 @@ public class CsScript
             
         }
 
-        String oldScriptPath = SolutionProjectBuilder.m_scriptRelativeDir;
+        String oldScriptRelativeDir = SolutionProjectBuilder.m_scriptRelativeDir;
         String scriptSubPath = Path2.makeRelative(Path.GetDirectoryName(_path), SolutionProjectBuilder.m_workPath);
         SolutionProjectBuilder.m_scriptRelativeDir = scriptSubPath;
+        String oldScriptPath = SolutionProjectBuilder.m_currentlyExecutingScriptPath;
+        SolutionProjectBuilder.m_currentlyExecutingScriptPath = _path;
 
         // ----------------------------------------------------------------
         //  Run script
@@ -278,11 +280,13 @@ public class CsScript
         try
         {
             entry.Invoke(null, new object[] { args });
-            SolutionProjectBuilder.m_scriptRelativeDir = oldScriptPath;
+            SolutionProjectBuilder.m_scriptRelativeDir = oldScriptRelativeDir;
+            SolutionProjectBuilder.m_currentlyExecutingScriptPath = oldScriptPath;
         }
         catch ( Exception ex )
         {
-            SolutionProjectBuilder.m_scriptRelativeDir = oldScriptPath;
+            SolutionProjectBuilder.m_scriptRelativeDir = oldScriptRelativeDir;
+            SolutionProjectBuilder.m_currentlyExecutingScriptPath = oldScriptPath;
             Exception2 ex2 = ex.InnerException as Exception2;
             if (ex2 != null && bAllowThrow)
                 throw ex2;
