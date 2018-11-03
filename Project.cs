@@ -303,7 +303,7 @@ public class Project
     /// </summary>
     static String getConfiguration(XElement node)
     {
-        String config = RegexExract("^'\\$\\(Configuration\\)\\|\\$\\(Platform\\)'=='(.*)'", node.Attribute("Condition").Value)[0];
+        String config = RegexExract("^ *'\\$\\(Configuration\\)\\|\\$\\(Platform\\)' *== *'(.*)'", node.Attribute("Condition").Value)[0];
         return config;
     }
 
@@ -549,6 +549,9 @@ public class Project
                             f.includeType = (IncludeType)Enum.Parse(typeof(IncludeType), igNode.Name.LocalName);
                             f.relativePath = igNode.Attribute("Include").Value;
 
+                            if (f.includeType == IncludeType.Reference)
+                                f.HintPath = igNode.Elements().Where( x => x.Name.LocalName == "HintPath").FirstOrDefault()?.Value;
+
                             if (f.includeType == IncludeType.ClCompile || f.includeType == IncludeType.CustomBuild)
                                 project.ExtractCompileOptions(igNode, f, (f.includeType == IncludeType.CustomBuild) ? "customBuildRule" : null );
 
@@ -579,10 +582,19 @@ public class Project
                                 break;
 
                             case null:                  // Non tagged node contains rest of configurations like 'LinkIncremental', 'OutDir', 'IntDir', 'TargetName', 'TargetExt'
-                                
+
                                 if (node.Attribute("Condition") == null)
+                                {
                                     // Android packaging project can contain such empty nodes. "<PropertyGroup />"
+                                    
+                                    // C# project
+                                    foreach (XElement subNode in node.Elements())
+                                    {
+                                        if (subNode.Name.LocalName == "ProjectGuid")
+                                            project.ProjectGuid = subNode.Value;
+                                    }
                                     continue;
+                                }
 
                                 project.extractGeneralCompileOptions(node);
                                 break;

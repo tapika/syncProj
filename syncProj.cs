@@ -316,6 +316,67 @@ public class SolutionOrProject
     static String comment = "-- ";
     static String lf = "\r\n";
 
+    /// <summary>
+    /// Tries to determine correct path of syncProj.exe
+    /// </summary>
+    /// <param name="inDir">Folder in which script is located</param>
+    /// <param name="pathToSyncProjExe">Initial proposal where it can be stored</param>
+    /// <returns>Path to syncProj.exe</returns>
+    static public String getSyncProjExeLocation( String inDir, String pathToSyncProjExe = null)
+    {
+        // Let's try to locate where syncProj.exe is located if not provided or does not exists.
+        String inPath = pathToSyncProjExe;
+
+        if (inPath != null)
+        {
+            if (!Path.IsPathRooted(inPath))
+                inPath = Path.Combine(inDir, pathToSyncProjExe);
+
+            if (!File.Exists(inPath))
+                inPath = null;
+        }
+
+        if (inPath == null)     // If path does not exists or not specified, try to autoprobe
+        {
+            String exePath = Assembly.GetExecutingAssembly().Location;  // If it was executed from syncProj.exe, then this is the path.
+
+            //
+            // With C# script it's bit much more complex. syncProj.exe was copied under temp folder because of
+            // copy local = true. 
+            //
+            // For example path could be:
+            //
+            // C:\Users\<user>\AppData\Local\Temp\CSSCRIPT\89105968.shell\Debug\bin\<script>.dll
+            //
+            // And it's not possible to determine where that exe was copied from, except locate
+            // script project, load it, and parse hint path out of there.
+            //
+            if (exePath.Contains("\\CSSCRIPT\\"))
+            {
+                String mainExe = Assembly.GetEntryAssembly().Location;
+                String csScriptName = Path.GetFileNameWithoutExtension(mainExe);
+                String csProject = Path.Combine(Path.GetDirectoryName(mainExe), "..\\..", csScriptName + " (script).csproj");
+                if (File.Exists(csProject))
+                    try
+                    {
+                        Project p = Project.LoadProject(null, csProject);
+                        exePath = p.files.Where(x => x.includeType == IncludeType.Reference && x.relativePath == "syncproj").Select(x => x.HintPath).FirstOrDefault();
+                        inPath = Path2.makeRelative(exePath, inDir);
+                    }
+                    catch { }
+            } //if-else
+
+            if (inPath == null)
+                inPath = Path2.makeRelative(exePath, inDir);
+
+            if (inPath != null)
+                pathToSyncProjExe = inPath;
+        } //if
+
+        return pathToSyncProjExe;
+    }
+
+
 
     /// <summary>
     /// Builds solution or project .lua/.cs scripts

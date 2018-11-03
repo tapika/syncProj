@@ -468,8 +468,7 @@ public class SolutionProjectBuilder
         String errors = "";
         String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, path);
 
-        if (!CsScript.RunScript(fullPath, true, false, out errors, "no_exception_handling"))
-            throw new Exception2(errors);
+        CsScript.RunScript(fullPath, true, true, out errors, "no_exception_handling");
     }
 
 
@@ -1108,18 +1107,19 @@ public class SolutionProjectBuilder
     } //buildrule
 
 
+    /// <summary>
+    /// Sets up custom build rule for project or solution configuration script.
+    /// </summary>
+    /// <param name="script2include">Script to include into project</param>
+    /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
+    /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
+    /// <param name="inDir">Where solution or project is located.</param>
     static void selfCompileScript(String script2include, String script2compile, String pathToSyncProjExe, String inDir)
     {
         if (script2compile == null)
             script2compile = script2include;
 
-        String inPath = pathToSyncProjExe;
-
-        if (!Path.IsPathRooted(inPath))
-            inPath = Path.Combine(inDir, pathToSyncProjExe);
-
-        if (!File.Exists(inPath))
-            throw new Exception2("Executable not found: '" + inPath + "'");
+        pathToSyncProjExe = SolutionOrProject.getSyncProjExeLocation(inDir, pathToSyncProjExe);
 
         using (new UsingSyncProj(2 /*called from projectScript & solutionScript - 2 frames in call stack */))
         {
@@ -1147,7 +1147,7 @@ public class SolutionProjectBuilder
     /// <param name="script2include">Script to include into project</param>
     /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
     /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
-    static public void projectScript(String script2include, String script2compile, String pathToSyncProjExe )
+    static public void projectScript(String script2include, String script2compile, String pathToSyncProjExe = null )
     {
         requireProjectSelected();
         selfCompileScript(script2include, script2compile, pathToSyncProjExe, m_project.getProjectFolder());
@@ -1159,7 +1159,7 @@ public class SolutionProjectBuilder
     /// <param name="script2include">Script to include into project</param>
     /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
     /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
-    static public void solutionScript(String script2include, String script2compile, String pathToSyncProjExe)
+    static public void solutionScript(String script2include, String script2compile, String pathToSyncProjExe = null )
     {
         if (script2compile == null)
             script2compile = script2include;

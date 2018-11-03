@@ -140,7 +140,17 @@ public enum IncludeType
     /// <summary>
     /// Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
     /// </summary>
-    Invalid
+    Invalid,
+
+    /// <summary>
+    /// C# references to .net assemblies
+    /// </summary>
+    Reference,
+
+    /// <summary>
+    /// C# - source codes to compile
+    /// </summary>
+    Compile
 }
 
 /// <summary>
@@ -320,6 +330,11 @@ public class FileInfo
     /// Android specific: when includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
     /// </summary>
     public String Project;
+
+    /// <summary>
+    /// C# - location of .dll assembly
+    /// </summary>
+    public String HintPath;
 
     /// <summary>
     /// Per configuration specific file configuration. It's acceptable for this list to have 0 entries if no file specific configuration

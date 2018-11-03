@@ -345,6 +345,16 @@
             Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
             </summary>
         </member>
+        <member name="F:IncludeType.Reference">
+            <summary>
+            C# references to .net assemblies
+            </summary>
+        </member>
+        <member name="F:IncludeType.Compile">
+            <summary>
+            C# - source codes to compile
+            </summary>
+        </member>
         <member name="T:EDebugInformationFormat">
             <summary>
             Defines debug information format.
@@ -504,6 +514,11 @@
         <member name="F:FileInfo.Project">
             <summary>
             Android specific: when includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
+            </summary>
+        </member>
+        <member name="F:FileInfo.HintPath">
+            <summary>
+            C# - location of .dll assembly
             </summary>
         </member>
         <member name="F:FileInfo.fileConfig">
@@ -1331,6 +1346,15 @@
             </summary>
             <param name="cbt">Custom build rule.</param>
         </member>
+        <member name="M:SolutionProjectBuilder.selfCompileScript(System.String,System.String,System.String,System.String)">
+            <summary>
+            Sets up custom build rule for project or solution configuration script.
+            </summary>
+            <param name="script2include">Script to include into project</param>
+            <param name="script2compile">Script which shall be compiled once script2include is changed</param>
+            <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
+            <param name="inDir">Where solution or project is located.</param>
+        </member>
         <member name="M:SolutionProjectBuilder.projectScript(System.String,System.String,System.String)">
             <summary>
             Configures project rebuild step.
@@ -1447,6 +1471,14 @@
             <param name="lines2dump">Lines which shall be created / updated.</param>
             <param name="valueToLine">value to config line translator function. Function can return null if no lines needs to be provided.</param>
             <param name="forceDefaultValue">If value cannot be configured in style - enabled/disable (one kind of flag only - enable) - specify here default value</param>
+        </member>
+        <member name="M:SolutionOrProject.getSyncProjExeLocation(System.String,System.String)">
+            <summary>
+            Tries to determine correct path of syncProj.exe
+            </summary>
+            <param name="inDir">Folder in which script is located</param>
+            <param name="pathToSyncProjExe">Initial proposal where it can be stored</param>
+            <returns>Path to syncProj.exe</returns>
         </member>
         <member name="M:SolutionOrProject.UpdateProjectScript(UpdateInfo,System.String,System.Object,System.String,System.String,System.Boolean,System.String)">
             <summary>

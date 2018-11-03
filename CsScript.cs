@@ -43,6 +43,8 @@ public class CsScript
         if( !File.Exists( path ) )
         {
             errors = "Error: Could not load file '" + path + "': File does not exists.";
+            if (bAllowThrow)
+                throw new Exception2(errors);
             return false;
         }
 
@@ -122,6 +124,9 @@ public class CsScript
                     );
                 }
                 errors = sb.ToString();
+                if (bAllowThrow)
+                    throw new Exception2(errors);
+
                 return false;
             }
         } //if
@@ -193,12 +198,16 @@ public class CsScript
         if( entry == null )
         {
             errors = String.Format( "{0}(1,1): error: Code does not have 'Main' function\r\n", path );
+            if (bAllowThrow)
+                throw new Exception2(errors);
             return false;
         }
 
         if ( entry.GetParameters().Length != 1 )
         {
             errors = String.Format("{0}(1,1): error: Function '{1}' is not expected to have {2} parameter(s)\r\n", path, funcName,entry.GetParameters().Length);
+            if (bAllowThrow)
+                throw new Exception2(errors);
             return false;
             
         }
@@ -234,6 +243,8 @@ public class CsScript
             {
                 errors = String.Format("{0}(1,1): error: Internal error - exception '{3}'\r\n", path, ex3.Message);
             }
+            if (bAllowThrow)
+                throw new Exception2(errors);
             return false;
         }
 
