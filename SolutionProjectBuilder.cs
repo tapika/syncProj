@@ -1018,12 +1018,14 @@ public class SolutionProjectBuilder
     /// <summary>
     /// Selects character set.
     /// </summary>
-    /// <param name="charset">One of following: "Unicode", "Multibyte", "MBCS"</param>
+    /// <param name="charset">One of following: "Unicode", "Multibyte", "MBCS", "None"</param>
     static public void characterset(String charset)
     {
         ECharacterSet cs;
         switch (charset.ToLower())
         {
+            case "notset":      cs = ECharacterSet.NotSet;    break;
+            case "none":        cs = ECharacterSet.NotSet;    break;
             case "unicode":     cs = ECharacterSet.Unicode;   break;
             case "mbcs":        cs = ECharacterSet.MultiByte; break;
             case "multibyte":   cs = ECharacterSet.MultiByte; break;

@@ -708,6 +708,11 @@
             Character set - unicode MBCS.
             </summary>
         </member>
+        <member name="F:ECharacterSet.NotSet">
+            <summary>
+            Character set is not specified
+            </summary>
+        </member>
         <member name="F:ECharacterSet.Unicode">
             <summary>
             Unicode
@@ -988,6 +993,11 @@
             </summary>
             <param name="p">Project against which to query</param>
             <returns>Default value</returns>
+        </member>
+        <member name="F:Configuration.CharacterSet">
+            <summary>
+            Specifies project character set
+            </summary>
         </member>
         <member name="F:Configuration.UseOfMfc">
             <summary>
@@ -1555,7 +1565,7 @@
             <summary>
             Selects character set.
             </summary>
-            <param name="charset">One of following: "Unicode", "Multibyte", "MBCS"</param>
+            <param name="charset">One of following: "Unicode", "Multibyte", "MBCS", "None"</param>
         </member>
         <member name="M:SolutionProjectBuilder.targetdir(System.String)">
             <summary>

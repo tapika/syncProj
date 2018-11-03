@@ -490,6 +490,12 @@ public enum EConfigurationType
 public enum ECharacterSet
 {
     /// <summary>
+    /// Character set is not specified
+    /// </summary>
+    [FunctionName("NotSet")]
+    NotSet = 0,
+
+    /// <summary>
     /// Unicode
     /// </summary>
     [FunctionName("Unicode")]
@@ -874,7 +880,9 @@ public class Configuration : FileConfigurationInfo
         }
     }
 
-
+    /// <summary>
+    /// Specifies project character set
+    /// </summary>
     public ECharacterSet CharacterSet = ECharacterSet.Unicode;
 
     /// <summary>
