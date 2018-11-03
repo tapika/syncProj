@@ -1040,6 +1040,34 @@ public class SolutionProjectBuilder
     } //optimize
 
     /// <summary>
+    /// Passes arguments directly to the compiler command line without translation.
+    /// </summary>
+    static public void buildoptions(params String[] options)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+        {
+            if (conf.ClCompile_AdditionalOptions.Length != 0)
+                conf.ClCompile_AdditionalOptions += " ";
+
+            conf.ClCompile_AdditionalOptions += String.Join(" ", options);
+        }
+    }
+
+    /// <summary>
+    /// Passes arguments directly to the linker command line without translation.
+    /// </summary>
+    static public void linkoptions(params String[] options)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+        {
+            if (conf.Link_AdditionalOptions.Length != 0)
+                conf.Link_AdditionalOptions += " ";
+
+            conf.Link_AdditionalOptions += String.Join(" ", options);
+        }
+    }
+
+    /// <summary>
     /// Prints more details about given exception. In visual studio format for errors.
     /// </summary>
     /// <param name="ex">Exception occurred.</param>

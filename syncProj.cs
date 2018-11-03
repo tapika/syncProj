@@ -645,6 +645,19 @@ public class SolutionOrProject
                         return "pchheader" + brO + "\"" + s + "\"" + brC;
                 }
             });
+
+            ConfigationSpecificValue(proj, configList, "ClCompile_AdditionalOptions", lines2dump, (s) =>
+            {
+                s = s.Replace(" %(AdditionalOptions)", "");     // Just a extra garbage we don't want.
+                return "buildoptions" + brO + "\"" + s + "\"" + brC;
+            });
+
+            ConfigationSpecificValue(proj, configList, "Link_AdditionalOptions", lines2dump, (s) =>
+            {
+                s = s.Replace(" %(AdditionalOptions)", "");     // Just a extra garbage we don't want.
+                return "linkoptions" + brO + "\"" + s + "\"" + brC;
+            });
+
         } //if
                 
         TagPchEntries(config, fileName, false);

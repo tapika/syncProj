@@ -268,6 +268,16 @@
             Custom build step for includeType.CustomBuild specification.
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.ClCompile_AdditionalOptions">
+            <summary>
+            Additional compiler options
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.Link_AdditionalOptions">
+            <summary>
+            Additional linker options
+            </summary>
+        </member>
         <member name="T:FileInfo">
             <summary>
             Information about that particular file.
@@ -1107,6 +1117,16 @@
             Specifies optimization level to be used.
             </summary>
             <param name="optLevel">Optimization level to enable - one of following: off, size, speed, on(or full)</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.buildoptions(System.String[])">
+            <summary>
+            Passes arguments directly to the compiler command line without translation.
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.linkoptions(System.String[])">
+            <summary>
+            Passes arguments directly to the linker command line without translation.
+            </summary>
         </member>
         <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception,System.String[])">
             <summary>

@@ -276,6 +276,17 @@ public class FileConfigurationInfo
     /// Custom build step for includeType.CustomBuild specification.
     /// </summary>
     public CustomBuildRule customBuildRule;
+
+    /// <summary>
+    /// Additional compiler options
+    /// </summary>
+    public String ClCompile_AdditionalOptions = "";
+
+    /// <summary>
+    /// Additional linker options
+    /// </summary>
+    public String Link_AdditionalOptions = "";
+
 }
 
 
@@ -1116,7 +1127,14 @@ public class Project
             // Nodes can be exploded into same scan loop as long as key do not overlap (e.g. compile options versus link options).
             if (nodeName == "ClCompile" || nodeName == "Link" || nodeName == "AntPackage")    // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
             {
-                nodes.AddRange(nodes[i].Elements());
+                foreach (XElement compLinkNode in nodes[i].Elements())
+                {
+                    // ClCompile & Link has same named options, we try to differentiate them here.
+                    if (compLinkNode.Name.LocalName == "AdditionalOptions")
+                        compLinkNode.Name = nodeName + "_AdditionalOptions";
+                    nodes.Add(compLinkNode);
+                }
+
                 nodes.RemoveAt(i);
                 i--;
             }
@@ -1299,6 +1317,9 @@ public class Project
 
         if (conf.AdditionalIncludeDirectories.Length != 0 )
             o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + "</AdditionalIncludeDirectories>");
+
+        if ( conf.ClCompile_AdditionalOptions.Length != 0)
+            o.AppendLine("      <AdditionalOptions" + sCond + ">" + conf.ClCompile_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
 
         if (projectConf != null && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
             o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
@@ -1718,6 +1739,9 @@ public class Project
 
             if (conf.AdditionalLibraryDirectories.Length != 0)
                 o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + "</AdditionalLibraryDirectories>");
+
+            if (conf.Link_AdditionalOptions.Length != 0)
+                o.AppendLine("      <AdditionalOptions>" + conf.Link_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
 
             // OutputFile ?
             o.AppendLine("    </Link>");
