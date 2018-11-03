@@ -765,11 +765,6 @@ public class SolutionProjectBuilder
         bool bIntrinsicFunctions = true;
         bool bEnableCOMDATFolding = false;
         bool bOptimizeReferences = false;
-        //
-        // premake5 notes:
-        // editandcontinue "Off"        => EDebugInformationFormat.ProgramDatabase.
-        // symbols "On" + optimize "On" =>  EDebugInformationFormat.ProgramDatabase.
-        //
 
         switch (optLevel.ToLower())
         {
