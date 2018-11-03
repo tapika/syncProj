@@ -64,6 +64,11 @@
             .ico files.
             </summary>
         </member>
+        <member name="F:IncludeType.Invalid">
+            <summary>
+            Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
+            </summary>
+        </member>
         <member name="T:FileConfigurationInfo">
             <summary>
             Configuration class which configures project as well as individual file entries.
@@ -82,6 +87,11 @@
         <member name="F:FileConfigurationInfo.AdditionalDependencies">
             <summary>
             obj / lib files, ';' separated list.
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.AdditionalLibraryDirectories">
+            <summary>
+            Additional directory from where to search obj / lib files, ';' separated list.
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.ObjectFileName">
@@ -292,6 +302,14 @@
             Loads project. If project exists in solution, it's loaded in same instance.
             </summary>
             <param name="solution">Solution if any exists, null if not available.</param>
+        </member>
+        <member name="M:Project.DumpConfiguration(FileConfigurationInfo,System.String,Configuration)">
+            <summary>
+            Dumps file or project specific configuration.
+            </summary>
+            <param name="conf">Configuration to dump</param>
+            <param name="confName">Configuration name, null if project wise</param>
+            <param name="projectConf">Project configuration, null if conf is file specific configuration</param>
         </member>
         <member name="M:Project.SaveProject">
             <summary>

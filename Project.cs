@@ -84,7 +84,12 @@ public enum IncludeType
     AntBuildXml,
     AndroidManifest,
     AntProjectPropertiesFile,
-    ProjectReference
+    ProjectReference,
+
+    /// <summary>
+    /// Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
+    /// </summary>
+    Invalid
 }
 
 
@@ -118,6 +123,11 @@ public class FileConfigurationInfo
     /// obj / lib files, ';' separated list.
     /// </summary>
     public String AdditionalDependencies = "";
+
+    /// <summary>
+    /// Additional directory from where to search obj / lib files, ';' separated list.
+    /// </summary>
+    public String AdditionalLibraryDirectories = "";
 
     /// <summary>
     /// Output filename
@@ -751,6 +761,41 @@ public class Project
         return "Condition=\"'$(Configuration)|$(Platform)'=='" + confName + "'\"";
     }
 
+    StringBuilder o;    // Stream where we serialize project.
+
+    void DumpField(Configuration conf, String field, Func<String, String> postAction )
+    { 
+        o.AppendLine("    <" + field + ">" + postAction(typeof(Configuration).GetField(field).GetValue(conf).ToString()) + "</" + field + ">");
+    }
+
+    /// <summary>
+    /// Dumps file or project specific configuration.
+    /// </summary>
+    /// <param name="conf">Configuration to dump</param>
+    /// <param name="confName">Configuration name, null if project wise</param>
+    /// <param name="projectConf">Project configuration, null if conf is file specific configuration</param>
+    void DumpConfiguration(FileConfigurationInfo conf, String confName = null, Configuration projectConf = null )
+    {
+        String sCond = "";
+        if (confName != null)
+            sCond = " " + condition(confName);
+
+        if (conf.PreprocessorDefinitions.Length != 0)
+        {
+            String defines = conf.PreprocessorDefinitions;
+            if (defines.Length != 0) defines += ";";
+            defines += "%(PreprocessorDefinitions)";
+
+            o.AppendLine("      <PreprocessorDefinitions" + sCond + ">" + defines + "</PreprocessorDefinitions>");
+        }
+
+        if(conf.AdditionalIncludeDirectories.Length != 0 )
+            o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + "</AdditionalIncludeDirectories>");
+
+        if (projectConf != null && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
+            o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
+    } //DumpConfiguration
+
     /// <summary>
     /// Saves project if necessary.
     /// </summary>
@@ -764,7 +809,7 @@ public class Project
             projectPath = Path.GetDirectoryName(solution.path);
         projectPath = Path.Combine(projectPath, getRelativePath());
 
-        StringBuilder o = new StringBuilder();
+        o = new StringBuilder();
         o.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         o.AppendLine("<Project DefaultTargets=\"Build\" ToolsVersion=\"12.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
         o.AppendLine("  <ItemGroup Label=\"ProjectConfigurations\">");
@@ -811,9 +856,110 @@ public class Project
             o.AppendLine("  </PropertyGroup>");
         } //for
 
+        o.AppendLine(
+@"  <Import Project=""$(VCTargetsPath)\Microsoft.Cpp.props"" />
+  <ImportGroup Label=""ExtensionSettings"">
+  </ImportGroup>
+  <ImportGroup Label=""PropertySheets"" Condition=""'$(Configuration)|$(Platform)'=='Debug|Win32'"">
+    <Import Project=""$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"" Condition=""exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"" Label=""LocalAppDataPlatform"" />
+  </ImportGroup>
+  <ImportGroup Label=""PropertySheets"" Condition=""'$(Configuration)|$(Platform)'=='Release|Win32'"">
+    <Import Project=""$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"" Condition=""exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"" Label=""LocalAppDataPlatform"" />
+  </ImportGroup>");
+
+        //
+        // Dump compiler and linker options.
+        //
+        o.AppendLine("  <PropertyGroup Label=\"UserMacros\" />");
+        for (int iConf = 0; iConf < configurations.Count; iConf++)
+        {
+            String confName = configurations[iConf];
+            Configuration conf = projectConfig[iConf];
+            o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
+            DumpField(conf, "LinkIncremental", x => x.ToLower() );
+            o.AppendLine("  </PropertyGroup>");
+        } //for
+
+        for (int iConf = 0; iConf < configurations.Count; iConf++)
+        {
+            String confName = configurations[iConf];
+            Configuration conf = projectConfig[iConf];
+            o.AppendLine("  <ItemDefinitionGroup " + condition(confName) + ">");
+            o.AppendLine("    <ClCompile>");
+            o.AppendLine("      <PrecompiledHeader>" + conf.PrecompiledHeader.ToString() + "</PrecompiledHeader>");
+            o.AppendLine("      <WarningLevel>" + conf.WarningLevel + "</WarningLevel>");
+            o.AppendLine("      <Optimization>" + conf.Optimization + "</Optimization>");
+
+            DumpConfiguration(conf);
+
+            o.AppendLine("    </ClCompile>");
+
+            o.AppendLine("    <Link>");
+            o.AppendLine("      <SubSystem>" + conf.SubSystem + "</SubSystem>");
+
+            String v = "";
+            switch (conf.GenerateDebugInformation)
+            {
+                default:
+                case EGenerateDebugInformation.No: v = "false"; break;
+                case EGenerateDebugInformation.OptimizeForDebugging: v = "true"; break;
+                case EGenerateDebugInformation.OptimizeForFasterLinking: v = "DebugFastLink"; break;
+            }
+            o.AppendLine("      <GenerateDebugInformation>" + v + "</GenerateDebugInformation>");
+            o.AppendLine("      <AdditionalDependencies>" + conf.AdditionalDependencies + "</AdditionalDependencies>");
+            o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + "</AdditionalLibraryDirectories>");
+            // OutputFile ?
+            o.AppendLine("    </Link>");
+            o.AppendLine("  </ItemDefinitionGroup>");
+        } //for
 
 
+        IncludeType inctype = IncludeType.Invalid;
+        bool bItemGroupOpened = false;
+        //
+        // Dump files array
+        //
+        foreach (FileInfo fi in files)
+        {
+            if (inctype != fi.includeType)
+            { 
+                if( bItemGroupOpened )
+                    o.AppendLine("  </ItemGroup>");
 
+                o.AppendLine("  <ItemGroup>");
+                bItemGroupOpened = true;
+                inctype = fi.includeType;
+            } //if
+
+            o.Append("    <" + fi.includeType + " Include=\"" + fi.relativePath.Replace("/", "\\") + "\"");
+
+            if (fi.fileConfig.Count == 0)
+            {
+                o.AppendLine(" />");
+            }
+            else
+            {
+                o.AppendLine(">");
+
+                // We have file specific configuration options
+                for (int iConf = 0; iConf < configurations.Count; iConf++)
+                {
+                    String confName = configurations[iConf];
+                    FileConfigurationInfo conf = fi.fileConfig[iConf];
+                    DumpConfiguration(conf, confName, projectConfig[iConf]);
+                }
+                o.AppendLine("    </" + fi.includeType + ">");
+            } //if-else
+        } //for
+
+        if (bItemGroupOpened)
+            o.AppendLine("  </ItemGroup>");
+
+        o.AppendLine(
+@"  <Import Project=""$(VCTargetsPath)\Microsoft.Cpp.targets"" />
+  <ImportGroup Label=""ExtensionTargets"">
+  </ImportGroup>
+</Project>");
 
         //
         // Write project itself.
@@ -822,7 +968,7 @@ public class Project
         Console.Write("Writing project '" + projectPath + "' ... ");
         if (File.Exists(projectPath)) currentPrj = File.ReadAllText(projectPath);
 
-        String newPrj = o.ToString();
+        String newPrj = o.ToString().Replace("\r\n", "\n");
         //
         // Save only if needed.
         //

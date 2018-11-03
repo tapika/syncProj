@@ -542,8 +542,8 @@ public class SolutionOrProject
         // Semicolon (';') separated lists.
         //  Like defines, additional include directories.
         //---------------------------------------------------------------------------------
-        String[] fieldNames = new String[] { "PreprocessorDefinitions", "AdditionalIncludeDirectories", "AdditionalDependencies" };
-        String[] funcNames = new String[] { "defines", "includedirs", "links" };
+        String[] fieldNames = new String[] { "PreprocessorDefinitions", "AdditionalIncludeDirectories", "AdditionalDependencies", "AdditionalLibraryDirectories" };
+        String[] funcNames = new String[] { "defines", "includedirs", "links", "libdirs" };
 
         for (int iListIndex = 0; iListIndex < fieldNames.Length; iListIndex++)
         {
