@@ -1,0 +1,5 @@
+syncProj exited with ERROR: -2
+UnrecognizedEscapeSequence.cs :
+UnrecognizedEscapeSequence.cs(10,13): error: Unrecognized escape sequence:
+'WrongEscapeSequence**** here ****'
+

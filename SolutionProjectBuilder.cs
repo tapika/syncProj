@@ -626,7 +626,14 @@ public class SolutionProjectBuilder
         } //for
     } //references
 
+    static Regex unrecognizedEscapeSequence = new Regex("[\x00-\x0D]");
 
+    static void validatePathName( String s )
+    {
+        var m = unrecognizedEscapeSequence.Match(s);
+        if (m.Success)
+            throw new Exception2( "Unrecognized escape sequence:\r\n'" + s.Substring(0,m.Index) + "**** here ****'\r\n", 1);
+    }
 
     /// <summary>
     /// Sets current "directory" where project should be placed.
@@ -634,6 +641,7 @@ public class SolutionProjectBuilder
     /// <param name="groupPath"></param>
     static public void group(String groupPath)
     {
+        validatePathName(groupPath);
         m_groupPath = groupPath;
     }
     
@@ -1324,6 +1332,8 @@ public class SolutionProjectBuilder
         foreach (String _filePattern in filePatterns)
         {
             bool bMandatory = true;
+
+            validatePathName(_filePattern);
             
             String filePattern;
             if (_filePattern.StartsWith("??"))              // Escape questionmark for pattern matching.
