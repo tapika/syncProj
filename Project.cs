@@ -378,6 +378,10 @@ public class Project
     public Project parent;                              // Points to folder which contains given project
 
     public string ProjectName;
+    
+    /// <summary>
+    /// Sub-folder and filename of project to save. language defines project file extension
+    /// </summary>
     public string RelativePath;
     public string language;                             // if null - RelativePath includes file extension, if non-null - "C++" or "C#" - defines project file extension.
 
@@ -387,6 +391,9 @@ public class Project
     /// <returns></returns>
     public String getRelativePath()
     {
+        if (RelativePath == null)
+            throw new Exception2("Project '" + ProjectName + "' location was not specified");
+
         String path = RelativePath.Replace("/", "\\");
 
         if (language != null)

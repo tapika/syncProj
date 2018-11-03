@@ -14,7 +14,12 @@ public class SolutionProjectBuilder
 {
     static Solution m_solution = null;
     static Project m_project = null;
-    static String m_solutionDir;         // Path where we are building solution / project at. By default same as script is started from.
+    public static String m_workPath;  // Path where we are building solution / project at. By default same as script is started from.
+    
+    /// <summary>
+    /// Relative directory from solution. Set by RunScript.
+    /// </summary>
+    public static String m_scriptRelativeDir = "";
     static List<String> m_platforms = new List<String>();
     static List<String> m_configurations = new List<String>();
     static Project m_solutionRoot = new Project();
@@ -23,12 +28,17 @@ public class SolutionProjectBuilder
 
     static SolutionProjectBuilder()
     {
-        m_solutionDir = Path.GetDirectoryName(Path2.GetScriptPath(3));
-        //Console.WriteLine(buildDir);
+        m_workPath = Path.GetDirectoryName(Path2.GetScriptPath(3));
+        //Console.WriteLine(m_workPath);
     }
 
     /// <summary>
-    /// Execute once for each script using SolutionProjectBuilder class.
+    /// Just an indicator that we did not have any exception.
+    /// </summary>
+    static bool bEverythingIsOk = true;
+
+    /// <summary>
+    /// Execute once for each invocation of script. Not executed if multiple scripts are included.
     /// </summary>
     private sealed class Destructor
     {
@@ -36,6 +46,9 @@ public class SolutionProjectBuilder
         {
             try
             {
+                if (!bEverythingIsOk)
+                    return;
+                
                 externalproject(null);
 
                 String slnPath = m_solution.path;
@@ -184,7 +197,7 @@ public class SolutionProjectBuilder
     static public void solution(String name)
     {
         m_solution = new Solution();
-        m_solution.path = Path.Combine(m_solutionDir, name);
+        m_solution.path = Path.Combine(m_workPath, name);
         if (!m_solution.path.EndsWith(".sln"))
             m_solution.path += ".sln";
     }
@@ -192,6 +205,8 @@ public class SolutionProjectBuilder
 
     static void generateConfigurations()
     {
+        m_solution.configurations.Clear();
+
         foreach (String platform in m_platforms)
             foreach (String configuration in m_configurations)
                 m_solution.configurations.Add(configuration + "|" + platform);
@@ -252,11 +267,7 @@ public class SolutionProjectBuilder
     }
 
 
-    /// <summary>
-    /// Add to solution reference to external project
-    /// </summary>
-    /// <param name="name">Project name</param>
-    static public void externalproject(String name)
+    static void specifyproject(String name)
     {
         if (m_project != null)
             m_solution.projects.Add(m_project);
@@ -266,6 +277,8 @@ public class SolutionProjectBuilder
 
         m_project = new Project();
         m_project.ProjectName = name;
+        m_project.language = "C++";
+        m_project.RelativePath = Path.Combine(m_scriptRelativeDir, name);
 
         Project parent = m_solutionRoot;
         String pathSoFar = "";
@@ -290,6 +303,25 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Add to solution reference to external project
+    /// </summary>
+    /// <param name="name">Project name</param>
+    static public void externalproject(String name)
+    {
+        specifyproject(name);
+    }
+
+    /// <summary>
+    /// Adds new project to solution
+    /// </summary>
+    /// <param name="name">Project name</param>
+    static public void project(String name)
+    {
+        specifyproject(name);
+    }
+
+
+    /// <summary>
     /// The location function sets the destination directory for a generated solution or project file.
     /// </summary>
     /// <param name="path"></param>
@@ -297,7 +329,7 @@ public class SolutionProjectBuilder
     {
         if (m_project == null)
         {
-            m_solutionDir = path;
+            m_workPath = path;
         }
         else
         {
@@ -360,26 +392,105 @@ public class SolutionProjectBuilder
         m_groupPath = groupPath;
     }
 
+    
+    /// <summary>
+    /// Invokes C# Script by source code path. If any error, exception will be thrown.
+    /// </summary>
+    /// <param name="path">c# script path</param>
+    static public void invokeScript(String path)
+    {
+        String errors = "";
+        if (!CsScript.RunScript(path, true, out errors, "no_exception_handling"))
+            throw new Exception(errors);
+    }
+
+    static public void toolset(String name)
+    {
+    }
+
+    static public void characterset(String name)
+    {
+    }
+
+    static public void targetdir(String name)
+    {
+    }
+
+    static public void objdir(String name)
+    {
+    }
+
+    static public void targetname(String name)
+    {
+    }
+
+    static public void targetextension(String name)
+    {
+    }
+
+    static public void pchheader(String name)
+    {
+    }
+
+    static public void pchsource(String name)
+    {
+    }
+
+    static public void filter(params String[] filter)
+    { 
+    }
+
+    static public void symbols(String name)
+    {
+    }
+
+    static public void includedirs(params String[] dirs)
+    {
+    }
+
+    static public void defines(params String[] defines)
+    {
+    }
+
+    static public void files(params String[] files)
+    {
+    }
+
+    static public void flags(params String[] flags)
+    {
+    }
+
+
     /// <summary>
     /// Prints more details about given exception. In visual studio format for errors.
     /// </summary>
     /// <param name="ex">Exception occurred.</param>
-    static public void ConsolePrintException(Exception ex)
+    static public void ConsolePrintException(Exception ex, String[] args = null)
     {
+        if (args != null && args.Contains("no_exception_handling"))
+            throw ex;
+
         Exception2 ex2 = ex as Exception2;
         String fromWhere = "";
         if (ex2 != null)
         {
             StackFrame f = ex2.strace.GetFrame(ex2.strace.FrameCount - 1);
-            fromWhere = f.GetFileName() + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
+            // Not always can be determined for some reason
+            if(f.GetFileName() != null )
+                fromWhere = f.GetFileName() + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
         }
 
-        Console.WriteLine(fromWhere + "error: " + ex.Message);
+        if(!ex.Message.Contains("error") )
+            Console.WriteLine(fromWhere + "error: " + ex.Message);
+        else
+            Console.WriteLine(ex.Message);
+
         Console.WriteLine();
         Console.WriteLine("----------------------- Full call stack trace follows -----------------------");
         Console.WriteLine();
         Console.WriteLine(ex.StackTrace);
         Console.WriteLine();
+        bEverythingIsOk = false;
     }
 };
 

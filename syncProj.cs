@@ -36,6 +36,11 @@ class Dictionary2<TKey, TValue> : Dictionary<TKey, TValue>
     }
 }
 
+public class UpdateInfo
+{
+    public int nUpToDate = 0;
+    public List<String> filesUpdated = new List<string>();
+};
 
 
 /// <summary>
@@ -255,7 +260,7 @@ public class SolutionOrProject
     /// <param name="bProcessProjects">true to process sub-project, false not</param>
     /// <param name="format">lua or cs</param>
     /// <param name="outFile">Output filename without extension</param>
-    static public void UpdateProjectScript( String path, object solutionOrProject, String outFile, String format, bool bProcessProjects, String outPrefix)
+    static public void UpdateProjectScript(UpdateInfo uinfo, String path, object solutionOrProject, String outFile, String format, bool bProcessProjects, String outPrefix)
     {
         bool bCsScript = (format == "cs");
         if (bCsScript)
@@ -273,7 +278,6 @@ public class SolutionOrProject
         String outDir = Path.GetDirectoryName(path);
         String outPath = Path.Combine(outDir, fileName + "." + format);
 
-        Console.WriteLine("- Updating '" + fileName + "." + format + "...");
         StringBuilder o = new StringBuilder();
         Solution sln = solutionOrProject as Solution;
         Project proj = solutionOrProject as Project;
@@ -283,17 +287,14 @@ public class SolutionOrProject
         //
         if (bCsScript)
         {
-            o.AppendLine("//css_ref " +
-                Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(path)));
+            o.AppendLine("//css_ref " + Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(path)));
+            
             o.AppendLine("using System;         //Exception");
             o.AppendLine();
             o.AppendLine("partial class Builder: SolutionProjectBuilder");
             o.AppendLine("{");
             o.AppendLine();
-            if( sln != null )
-                o.AppendLine("  static void Main()");
-            else
-                o.AppendLine("  static void project" + proj.ProjectName + "()");
+            o.AppendLine("  static void Main(String[] args)");
             
             o.AppendLine("  {");
             o.AppendLine();
@@ -322,7 +323,7 @@ public class SolutionOrProject
 
                 String projectPath = Path.Combine(outDir, p.RelativePath);
                 if(bProcessProjects)
-                    UpdateProjectScript(projectPath, p, null, format, false, outPrefix);
+                    UpdateProjectScript(uinfo, projectPath, p, null, format, false, outPrefix);
                     
                 // Defines group / in which sub-folder we are.
                 groupParts.Clear();
@@ -349,14 +350,17 @@ public class SolutionOrProject
                     if (outPrefix != "") fileInclude = outPrefix + name;
 
                     o.AppendLine(head + "    " + comment + "Project '" + fileInclude + "'");
+                    fileInclude = Path.Combine(dir, fileInclude + "." + format);
 
                     if (format == "lua")
                     {
-                        fileInclude = Path.Combine(dir, fileInclude + "." + format);
                         fileInclude = fileInclude.Replace("\\", "/");
-
                         o.AppendLine(head + "    include \"" + fileInclude + "\"");
                     }
+                    else {
+                        fileInclude = fileInclude.Replace("\\", "\\\\");
+                        o.AppendLine(head + "    invokeScript(\"" + fileInclude + "\");");
+                    } //if-else
                 }
                 else
                 {
@@ -384,21 +388,6 @@ public class SolutionOrProject
                     } //foreach
                 } //if
             } //foreach
-
-            o.AppendLine();
-            //
-            // C# script trailer
-            //
-            if (bCsScript)
-            {
-                o.AppendLine("    } catch( Exception ex )");
-                o.AppendLine("    {");
-                o.AppendLine("        ConsolePrintException(ex);");
-                o.AppendLine("    }");
-                o.AppendLine("  } //Main");
-                o.AppendLine("}; //class Builder");
-                o.AppendLine();
-            }
         }
         else {
             // ---------------------------------------------------------------------------------
@@ -466,10 +455,14 @@ public class SolutionOrProject
             if (proj.files.Count != 0)
             {
                 o.AppendLine(head + "    files" + arO);
+                bool first = true;
                 foreach (FileInfo fi in proj.files)
                 {
-                    o.AppendLine(head + "        \"" + fi.relativePath.Replace("\\", "/") + "\",");
+                    if (!first) o.AppendLine(",");
+                    first = false;
+                    o.Append(head + "        \"" + fi.relativePath.Replace("\\", "/") + "\"");
                 }
+                o.AppendLine();
                 o.AppendLine(head + "    " + arC);
             } //if
 
@@ -482,7 +475,30 @@ public class SolutionOrProject
 
         } //if-else
 
-        File.WriteAllText(outPath, o.ToString());
+        o.AppendLine();
+        //
+        // C# script trailer
+        //
+        if (bCsScript)
+        {
+            o.AppendLine("    } catch( Exception ex )");
+            o.AppendLine("    {");
+            o.AppendLine("        ConsolePrintException(ex, args);");
+            o.AppendLine("    }");
+            o.AppendLine("  } //Main");
+            o.AppendLine("}; //class Builder");
+            o.AppendLine();
+        }
+
+        String text2save = o.ToString();
+        if (File.Exists(outPath) && File.ReadAllText(outPath) == text2save)
+        {
+            uinfo.nUpToDate++;
+            return;
+        }
+
+        File.WriteAllText(outPath, text2save);
+        uinfo.filesUpdated.Add(outPath);
     } //UpdateProjectScript
 
 
@@ -772,6 +788,9 @@ class Path2
             if (String.Compare(p1[i], p2[i], true) != 0)    // Case insensitive match
                 break;
 
+        if (i == 0)     // Cannot make relative path, for example if resides on different drive
+            return fromPath;
+                
         String r = String.Join(pathSep, Enumerable.Repeat("..", p2.Length - i).Concat(p1.Skip(i).Take(p1.Length - i)));
         return r;
     }
@@ -845,8 +864,37 @@ partial class Script
             }
 
             proj.SaveCache(projCacheFile);
+
+            UpdateInfo uinfo = new UpdateInfo();
             foreach ( String format in formats )
-                SolutionOrProject.UpdateProjectScript(proj.path, proj.solutionOrProject, outFile, format, bProcessProjects, outPrefix);
+                SolutionOrProject.UpdateProjectScript(uinfo, proj.path, proj.solutionOrProject, outFile, format, bProcessProjects, outPrefix);
+
+            Console.Write(slnFile + ": ");
+
+            if (uinfo.nUpToDate != 0)
+                Console.Write(uinfo.nUpToDate + " files are up-to-date. ");
+
+            if (uinfo.filesUpdated.Count != 0)
+            {
+                if (uinfo.filesUpdated.Count == 1)
+                {
+                    Console.WriteLine("File updated: " + uinfo.filesUpdated[0]);
+                }
+                else
+                {
+                    if (uinfo.filesUpdated.Count < 3)
+                    {
+                        Console.WriteLine("Files updated: " + String.Join(", ", uinfo.filesUpdated.Select(x => Path.GetFileName(x))));
+                    }
+                    else
+                    {
+                        Console.WriteLine(uinfo.filesUpdated.Count + " files updated");
+                    }
+                }
+            }
+            else {
+                Console.WriteLine();
+            }
         }
         catch (Exception ex)
         {

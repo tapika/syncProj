@@ -4,6 +4,26 @@
         <name>syncproj</name>
     </assembly>
     <members>
+        <member name="T:CsScript">
+            <summary>
+            class for executing c# script.
+            </summary>
+        </member>
+        <member name="M:CsScript.RunScript(System.String,System.Boolean,System.String@,System.String[])">
+            <summary>
+            Compiles .cs script into dll/pdb, loads as assembly, and executes Main function.
+            Temporary dll/pdb gets deleted. If .cs throws exception - it will be converted to
+            error information, including .cs filename and source code line information.
+            </summary>
+            <param name="_path">Path to script which to execute</param>
+            <param name="bCompileNextToCs">
+                When this parameter is set to true, produced assembly will be kept next to C# script path.
+                This also means that StackTrace will be able to display correct source code path and code line, unlike when loaded into ram
+                false - if you don't care about source code position</param>
+            <param name="errors">Errors if any</param>
+            <param name="args">Main argument parameters</param>
+            <returns>true if execution was successful.</returns>
+        </member>
         <member name="T:PremakeTagAttribute">
             <summary>
             Custom class for mapping enumeration values to premake configuration tag.
@@ -186,6 +206,11 @@
             Made as a property so can be set over reflection.
             </summary>
         </member>
+        <member name="F:Project.RelativePath">
+            <summary>
+            Sub-folder and filename of project to save. language defines project file extension
+            </summary>
+        </member>
         <member name="M:Project.getRelativePath">
             <summary>
             gets relative path based on programming language
@@ -285,9 +310,14 @@
             Helper class for generating solution or projects.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.bEverythingIsOk">
+            <summary>
+            Just an indicator that we did not have any exception.
+            </summary>
+        </member>
         <member name="T:SolutionProjectBuilder.Destructor">
             <summary>
-            Execute once for each script using SolutionProjectBuilder class.
+            Execute once for each invocation of script. Not executed if multiple scripts are included.
             </summary>
         </member>
         <member name="M:SolutionProjectBuilder.solution(System.String)">
@@ -324,6 +354,12 @@
             </summary>
             <param name="name">Project name</param>
         </member>
+        <member name="M:SolutionProjectBuilder.project(System.String)">
+            <summary>
+            Adds new project to solution
+            </summary>
+            <param name="name">Project name</param>
+        </member>
         <member name="M:SolutionProjectBuilder.location(System.String)">
             <summary>
             The location function sets the destination directory for a generated solution or project file.
@@ -348,7 +384,13 @@
             </summary>
             <param name="groupPath"></param>
         </member>
-        <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception)">
+        <member name="M:SolutionProjectBuilder.invokeScript(System.String)">
+            <summary>
+            Invokes C# Script by source code path. If any error, exception will be thrown.
+            </summary>
+            <param name="path">c# script path</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.ConsolePrintException(System.Exception,System.String[])">
             <summary>
             Prints more details about given exception. In visual studio format for errors.
             </summary>
@@ -370,7 +412,7 @@
             <param name="lines2dump">Lines which shall be created / updated.</param>
             <param name="valueToLine">value to config line translator function</param>
         </member>
-        <member name="M:SolutionOrProject.UpdateProjectScript(System.String,System.Object,System.String,System.String,System.Boolean,System.String)">
+        <member name="M:SolutionOrProject.UpdateProjectScript(UpdateInfo,System.String,System.Object,System.String,System.String,System.Boolean,System.String)">
             <summary>
             Builds solution or project .lua/.cs scripts
             </summary>
