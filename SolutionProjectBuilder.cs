@@ -1587,6 +1587,7 @@ public class SolutionProjectBuilder
                         }
                         break;
                     case ".c":
+                    case ".cc":
                     case ".cxx":
                     case ".cpp":
                         fi.includeType = IncludeType.ClCompile; break;
