@@ -1,4 +1,4 @@
 syncProj exited with no error
 TestCharset.cs :
-TestCharset.cs(19,17): error: characterset value is not supported 'Invalid' - supported values are: Unicode,MultiByte
+TestCharset.cs(19,17): error: characterset value is not supported 'Invalid' - supported values are: Unicode,Unicode,MultiByte
 7 files updated

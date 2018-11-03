@@ -1454,7 +1454,7 @@
             <summary>
             Sets project programming language (reflects to used project extension)
             </summary>
-            <param name="lang">C++ or C#</param>
+            <param name="lang">C, C++, C#, if no parameter is specified (null), sets project to autodetect programming language</param>
         </member>
         <member name="M:SolutionProjectBuilder.dependson(System.String[])">
             <summary>

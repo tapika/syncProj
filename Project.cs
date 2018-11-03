@@ -194,18 +194,8 @@ public class Project
         {
             return path + ".androidproj";
         }
-        
-        if (language != null)
-        {
-            switch (language)
-            {
-                case "C": return path + ".vcxproj";
-                case "C++": return path + ".vcxproj";
-                case "C#": return path + ".csproj";
-            }
-        }
 
-        return path;
+        return path + getProjectExtension();
     } //getRelativePath
 
 
@@ -215,17 +205,13 @@ public class Project
     /// <returns>Project extension</returns>
     public String getProjectExtension()
     {
-        if (language != null)
+        switch (language)
         {
-            switch (language)
-            {
-                case "C": return ".vcxproj";
-                case "C++": return ".vcxproj";
-                case "C#": return ".csproj";
-            }
+            default: return ".vcxproj";
+            case "C": return ".vcxproj";
+            case "C++": return ".vcxproj";
+            case "C#": return ".csproj";
         }
-
-        return "";
     }
 
 

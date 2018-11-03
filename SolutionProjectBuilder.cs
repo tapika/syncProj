@@ -521,14 +521,18 @@ public class SolutionProjectBuilder
     /// <summary>
     /// Sets project programming language (reflects to used project extension)
     /// </summary>
-    /// <param name="lang">C++ or C#</param>
-    static public void language(String lang)
+    /// <param name="lang">C, C++, C#, if no parameter is specified (null), sets project to autodetect programming language</param>
+    static public void language(String lang = null)
     {
         requireProjectSelected();
         ECompileAs compileAs = ECompileAs.Default;
 
         switch (lang)
         {
+            case null:
+                m_project.language = null;
+                compileAs = ECompileAs.Default;
+                break;
             case "C":  
                 m_project.language = lang; 
                 compileAs = ECompileAs.CompileAsC;
