@@ -62,11 +62,82 @@ public class CsScript
         String pdb = tempDll + ".pdb";
         tempDll += ".dll";
 
-        bool bCompileDll = true;
+        // ----------------------------------------------------------------
+        //  Scan through C# header at begging of file, and include more
+        //  sources if needed.
+        //
+        //  Using C# kind of syntax - like this:
+        //      //css_import <file.cs>;
+        // ----------------------------------------------------------------
+        Regex reIsCommentUsingEmptyLine = new Regex("^ *(//|using|$)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        Regex reCssImport = new Regex("^ *//css_import +(.*?);?$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        Regex reDebug = new Regex("^ *//css_debug", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        List<String> filesToCompile = new List<string>();
 
-        // Compile .dll only if .cs is newer than .dll.
-        if (bCompileDll && File.Exists(tempDll))
-            bCompileDll = File.GetLastWriteTime(path) > File.GetLastWriteTime(tempDll);
+        filesToCompile.Add(path);
+        int iLine = 1;
+
+        bool bCsDebug = false;
+
+        using (StreamReader reader = new StreamReader(path))
+        {
+            for (; ; iLine++)
+            {
+                String line = reader.ReadLine();
+                if (line == null)
+                    break;
+
+                // If we have any comments, or using namespace or empty line, we continue scanning, otherwise aborting (class, etc...)
+                if (!reIsCommentUsingEmptyLine.Match(line).Success)
+                    break;
+
+                var rem = reCssImport.Match(line);
+                if (rem.Success)
+                {
+                    String file = rem.Groups[1].Value;
+
+                    if (!Path.IsPathRooted(file))
+                        file = Path.Combine(Path.GetDirectoryName(path), file);
+
+                    if (!File.Exists(file))
+                        throw new FileSpecificException("Include file '" + file + "' was not found", path, iLine);
+
+                    filesToCompile.Add(file);
+                } //if
+
+                if (reDebug.Match(line).Success)
+                    bCsDebug = true;
+            } //for
+        } //using
+
+        bool bCompileDll = false;
+
+        //---------------------------------------------------------------------------------------------------
+        // Compile .dll only if script.cs and it's dependent .cs are newer than compiled .dll.
+        //---------------------------------------------------------------------------------------------------
+        if (!File.Exists(tempDll))
+            bCompileDll = true;
+
+        if (!bCompileDll)
+        {
+            DateTime tempDllDate = File.GetLastWriteTime(tempDll);
+
+            foreach (String file in filesToCompile)
+            {
+                if (File.GetLastWriteTime(file) > tempDllDate)
+                {
+                    bCompileDll = true;
+
+                    if (bCsDebug)
+                        Console.WriteLine("Compiling '" + tempDll + " because following file changed: " + file);
+
+                    break;
+                }
+            }
+        }
+        if (bCsDebug && !bCompileDll)
+            Console.WriteLine(tempDll + " is up-to-date.");
+
 
         if (bCompileDll)
         {
@@ -109,48 +180,6 @@ public class CsScript
                 refAssemblies = assemblies.ToArray();
             }
             compilerparams.ReferencedAssemblies.AddRange(refAssemblies);
-
-            // ----------------------------------------------------------------
-            //  Scan through C# header at begging of file, and include more
-            //  sources if needed.
-            //
-            //  Using C# kind of syntax - like this:
-            //      //css_import <file.cs>;
-            // ----------------------------------------------------------------
-            Regex reIsCommentUsingEmptyLine = new Regex("^ *(//|using|$)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            Regex reCssImport = new Regex("^ *//css_import +(.*?);?$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            List<String> filesToCompile = new List<string>();
-
-            filesToCompile.Add(path);
-            int iLine = 1;
-
-            using (StreamReader reader = new StreamReader(path))
-            {
-                for ( ; ; iLine++ )
-                {
-                    String line = reader.ReadLine();
-                    if (line == null)
-                        break;
-
-                    // If we have any comments, or using namespace or empty line, we continue scanning, otherwise aborting (class, etc...)
-                    if (!reIsCommentUsingEmptyLine.Match(line).Success)
-                        break;
-
-                    var rem = reCssImport.Match(line);
-                    if (rem.Success)
-                    {
-                        String file = rem.Groups[1].Value;
-
-                        if (!Path.IsPathRooted(file))
-                            file = Path.Combine(Path.GetDirectoryName(path), file);
-
-                        if (!File.Exists(file))
-                            throw new FileSpecificException("Include file '" + file + "' was not found", path, iLine);
-                            
-                        filesToCompile.Add(file);
-                    } //if
-                } //for
-            } //using
 
             // ----------------------------------------------------------------
             //  If compile errors - report and exit.
