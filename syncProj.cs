@@ -444,8 +444,14 @@ public class SolutionOrProject
                 return "symbols" + brO + "\"" + ((s == "True") ? "on" : "off") + "\"" + brC;
             });
 
-            if (proj.Keyword == EKeyword.Package)
+            if (proj.Keyword == EKeyword.Package || proj.Keyword == EKeyword.Android)
             {
+                // If we have at least one api level set, we figure out the rest (defaults), and then we set up api level correctlt everywhere.
+                bool bUsesApiLevel = proj.projectConfig.Where(x => x.AndroidAPILevel != null).FirstOrDefault() != null;
+                for (int i = 0; i < proj.configurations.Count; i++)
+                    if (proj.projectConfig[i].AndroidAPILevel == null)
+                        proj.projectConfig[i].AndroidAPILevel = Configuration.getAndroidAPILevelDefault(proj.configurations[i]);
+
                 ConfigationSpecificValue(proj, proj.projectConfig, "AndroidAPILevel", lines2dump, (s) => {
                     return "androidapilevel" + brO + "\"" + s + "\"" + brC;
                 });

@@ -546,10 +546,23 @@ public class Configuration: FileConfigurationInfo
     public bool UseDebugLibraries = false;
 
     /// <summary>
-    /// Android api level, for example "android-22".
-    /// By default "android-19" (KitKat 4.4 - 4.4.4, (android-19))
+    /// Android api level, for example "android-22". If null - uses Visual studio default.
+    /// 
     /// </summary>
-    public String AndroidAPILevel = "android-19";
+    public String AndroidAPILevel;
+
+    /// <summary>
+    /// Visual studio default depends on cpu architecture - android-19 is default for ARM, android-21 for ARM64.
+    /// </summary>
+    /// <param name="confName"></param>
+    /// <returns>android api level default</returns>
+    static public String getAndroidAPILevelDefault(String confName)
+    {
+        if (confName.Contains("64"))
+            return "android-21";
+     
+        return "android-19";
+    }
 
     /// <summary>
     /// For example:
@@ -1296,7 +1309,9 @@ public class Project
     /// <returns></returns>
     static public List<String> getSortedConfigurations(List<String> configurations, bool bX3264hasPriority, bool? b64HasPriority = true, bool bCompareConfigNameFirst = false)
     {
-        List<String> configurationsSorted = configurations;
+        List<String> configurationsSorted = new List<string>();
+        configurationsSorted.AddRange(configurations);
+
         int xPriority = bX3264hasPriority ? 1 : -1;
         int xa64Priority = 1;
         
@@ -1473,7 +1488,7 @@ public class Project
             {
                 o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
                 o.AppendLine("    <ConfigurationType>Application</ConfigurationType>"); // Why this line is needed anyway?
-                if (conf.AndroidAPILevel != "android-19" )
+                if (conf.AndroidAPILevel != null && conf.AndroidAPILevel != Configuration.getAndroidAPILevelDefault(confName))
                     o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
             }
             else {
@@ -1487,7 +1502,7 @@ public class Project
                 if (pts == null) pts = conf.getPlatformToolsetDefault(this);
                 o.AppendLine("    <PlatformToolset>" + pts + "</PlatformToolset>");
 
-                if (Keyword == EKeyword.Android && conf.AndroidAPILevel != "android-19")
+                if (Keyword == EKeyword.Android && conf.AndroidAPILevel != null && conf.AndroidAPILevel != Configuration.getAndroidAPILevelDefault(confName))
                     o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
             }
 

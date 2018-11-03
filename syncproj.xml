@@ -467,9 +467,16 @@
         </member>
         <member name="F:Configuration.AndroidAPILevel">
             <summary>
-            Android api level, for example "android-22".
-            By default "android-19" (KitKat 4.4 - 4.4.4, (android-19))
+            Android api level, for example "android-22". If null - uses Visual studio default.
+            
             </summary>
+        </member>
+        <member name="M:Configuration.getAndroidAPILevelDefault(System.String)">
+            <summary>
+            Visual studio default depends on cpu architecture - android-19 is default for ARM, android-21 for ARM64.
+            </summary>
+            <param name="confName"></param>
+            <returns>android api level default</returns>
         </member>
         <member name="F:Configuration.PlatformToolset">
             <summary>
