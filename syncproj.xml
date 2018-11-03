@@ -4,6 +4,11 @@
         <name>syncproj</name>
     </assembly>
     <members>
+        <member name="T:PremakeTagAttribute">
+            <summary>
+            Custom class for mapping enumeration values to premake configuration tag.
+            </summary>
+        </member>
         <member name="F:IncludeType.ClInclude">
             <summary>
             Header file (.h)
@@ -54,6 +59,11 @@
             Pre-configuration list of include directories;
             </summary>
         </member>
+        <member name="F:FileInfo.ShowIncludes">
+            <summary>
+            Pre-configuration list of show .h includes
+            </summary>
+        </member>
         <member name="F:FileInfo.ObjectFileName">
             <summary>
             Pre-configuration list of output filename
@@ -84,6 +94,98 @@
             Visual studio: additional dependencies
             </summary>
         </member>
+        <member name="F:EConfigurationType.Application">
+            <summary>
+            .exe
+            </summary>
+        </member>
+        <member name="F:EConfigurationType.DynamicLibrary">
+            <summary>
+            .dll
+            </summary>
+        </member>
+        <member name="F:ECharacterSet.Unicode">
+            <summary>
+            Unicode
+            </summary>
+        </member>
+        <member name="F:ECharacterSet.MultiByte">
+            <summary>
+            Ansi
+            </summary>
+        </member>
+        <member name="F:EWholeProgramOptimization.NoWholeProgramOptimization">
+            <summary>
+            Visual studio default.
+            </summary>
+        </member>
+        <member name="F:EOptimization.MinSpace">
+            <summary>
+            Minimize Size
+            </summary>
+        </member>
+        <member name="F:EOptimization.MaxSpeed">
+            <summary>
+            Maximize Speed
+            </summary>
+        </member>
+        <member name="F:EOptimization.Full">
+            <summary>
+            Full Optimization
+            </summary>
+        </member>
+        <member name="F:Configuration.PlatformToolset">
+            <summary>
+            For example:
+                'v140' - for Visual Studio 2015.
+                'v120' - for Visual Studio 2013.
+            </summary>
+        </member>
+        <member name="F:Configuration.OutDir">
+            <summary>
+            Output Directory. 
+                Visual studio default:  $(SolutionDir)$(Configuration)\
+                premake default:        bin\$(Platform)\$(Configuration)\
+            </summary>
+        </member>
+        <member name="F:Configuration.IntDir">
+            <summary>
+            Intermediate Directory.
+                Visual studio default:  $(Configuration)\
+                premake default:        obj\$(Platform)\$(Configuration)\
+            </summary>
+        </member>
+        <member name="F:Configuration.TargetName">
+            <summary>
+            Target Name.
+            Visual studio default: $(ProjectName)
+            </summary>
+        </member>
+        <member name="F:Configuration.TargetExt">
+            <summary>
+            Target Extension (.exe, .dll, ...)
+            </summary>
+        </member>
+        <member name="F:Configuration.PreprocessorDefinitions">
+            <summary>
+            Defines, ';' separated list.
+            </summary>
+        </member>
+        <member name="F:Configuration.AdditionalIncludeDirectories">
+            <summary>
+            Additional Include Directories, ';' separated list.
+            </summary>
+        </member>
+        <member name="F:Configuration.SubSystem">
+            <summary>
+            Typically Windows or Console.
+            </summary>
+        </member>
+        <member name="F:Configuration.GenerateDebugInformation">
+            <summary>
+            Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
+            </summary>
+        </member>
         <member name="F:Project.bIsFolder">
             <summary>
             true if it's folder (in solution), false if it's project. (default)
@@ -111,6 +213,16 @@
             List of supported configuration|platform permutations, like "Debug|Win32", "Debug|x64" and so on.
             </summary>
         </member>
+        <member name="M:Project.getConfigurationNames">
+            <summary>
+            Gets list of supported configurations like 'Debug' / 'Release'
+            </summary>
+        </member>
+        <member name="M:Project.getPlatforms">
+            <summary>
+            Gets list of supported platforms like 'Win32' / 'x64'
+            </summary>
+        </member>
         <member name="F:Project.slnBuildProject">
             <summary>
             true or false whether to build project or not.
@@ -124,6 +236,11 @@
         <member name="F:Project.ProjectGuid">
             <summary>
             Project guid, for example "{65787061-7400-0000-0000-000000000000}"
+            </summary>
+        </member>
+        <member name="F:Project.projectConfig">
+            <summary>
+            per configuration list
             </summary>
         </member>
         <member name="P:Project.ProjectDependencies">
@@ -172,23 +289,6 @@
             Loads visual studio .sln solution
             </summary>
             <exception cref="T:System.IO.FileNotFoundException">The file specified in path was not found.</exception>
-        </member>
-        <member name="T:SolutionOrProject">
-            <summary>
-            Let's make system flexible enough that we can load projects and solutions independently of file format.
-            </summary>
-        </member>
-        <member name="M:SolutionOrProject.UpdateProjectScript(System.String,System.String)">
-            <summary>
-            Builds solution or project .lua/.cs scripts
-            </summary>
-            <param name="format">lua or cs</param>
-            <param name="outFile">Output filename without extension</param>
-        </member>
-        <member name="T:Exception2">
-            <summary>
-            Same as Exception, only we save call stack in here (to be able to report error line later on).
-            </summary>
         </member>
         <member name="T:SolutionProjectBuilder">
             <summary>
@@ -263,6 +363,37 @@
             Prints more details about given exception. In visual studio format for errors.
             </summary>
             <param name="ex">Exception occurred.</param>
+        </member>
+        <member name="T:SolutionOrProject">
+            <summary>
+            Let's make system flexible enough that we can load projects and solutions independently of file format.
+            </summary>
+        </member>
+        <member name="M:SolutionOrProject.ConfigationSpecificValue(Project,System.Collections.IList,System.String,Dictionary2{System.String,System.Collections.Generic.List{System.String}},System.Func{System.String,System.String})">
+            <summary>
+            Walks through list of items, locates value using fieldName, identifies how many configuration lines we will need
+            and inserts lines into lines2dump.
+            </summary>
+            <param name="proj">Project which hosts configuration list.</param>
+            <param name="list">List to get values from</param>
+            <param name="fieldName">Field name to scan </param>
+            <param name="lines2dump">Lines which shall be created / updated.</param>
+            <param name="valueToLine">value to config line translator function</param>
+        </member>
+        <member name="M:SolutionOrProject.UpdateProjectScript(System.String,System.Object,System.String,System.String,System.Boolean,System.String)">
+            <summary>
+            Builds solution or project .lua/.cs scripts
+            </summary>
+            <param name="path">Full path from where project was loaded.</param>
+            <param name="solutionOrProject">Solution or project</param>
+            <param name="bProcessProjects">true to process sub-project, false not</param>
+            <param name="format">lua or cs</param>
+            <param name="outFile">Output filename without extension</param>
+        </member>
+        <member name="T:Exception2">
+            <summary>
+            Same as Exception, only we save call stack in here (to be able to report error line later on).
+            </summary>
         </member>
         <member name="M:Path2.makeRelative(System.String,System.String)">
             <summary>

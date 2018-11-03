@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -8,12 +9,37 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 
-public enum PrecompiledHeaderUse
+/// <summary>
+/// Custom class for mapping enumeration values to premake configuration tag.
+/// </summary>
+public class PremakeTagAttribute : Attribute
+{
+    public String tag;
+
+    public PremakeTagAttribute(String s)
+    {
+        tag = s;
+    }
+}
+
+
+public enum EPrecompiledHeaderUse
 {
     Create,
     Use,
     NotUsing = 0 //enum default is 0.
 }
+
+public enum EWarningLevel
+{
+    TurnOffAllWarnings,
+    Level1,
+    Level2,
+    Level3,
+    Level4,
+    EnableAllWarnings
+}
+
 
 public enum IncludeType
 {
@@ -71,7 +97,7 @@ public class FileInfo
     /// <summary>
     /// Pre-configuration list.
     /// </summary>
-    public List<PrecompiledHeaderUse> phUse = new List<PrecompiledHeaderUse>();
+    public List<EPrecompiledHeaderUse> phUse = new List<EPrecompiledHeaderUse>();
 
     /// <summary>
     /// Pre-configuration list of defines. ';' separated strings. null if not used.
@@ -82,6 +108,11 @@ public class FileInfo
     /// Pre-configuration list of include directories;
     /// </summary>
     public List<String> AdditionalIncludeDirectories;
+    
+    /// <summary>
+    /// Pre-configuration list of show .h includes
+    /// </summary>
+    public List<String> ShowIncludes;
 
     /// <summary>
     /// Pre-configuration list of output filename
@@ -116,6 +147,194 @@ public class CustomBuildToolProperties
     /// </summary>
     public String AdditionalInputs = "";
 }
+
+public enum EConfigurationType
+{
+    /// <summary>
+    /// .exe
+    /// </summary>
+    [PremakeTag("WindowedApp")]
+    Application = 0,
+    
+    /// <summary>
+    /// .dll
+    /// </summary>
+    [PremakeTag("SharedLib")]
+    DynamicLibrary
+};
+
+public enum ECharacterSet
+{ 
+    /// <summary>
+    /// Unicode
+    /// </summary>
+    [PremakeTag("Unicode")]
+    Unicode = 0,
+    
+    /// <summary>
+    /// Ansi
+    /// </summary>
+    [PremakeTag("MBCS")]
+    MultiByte
+}
+
+
+[Description("")]   // Marker to switch Enum value / Description when parsing
+public enum EWholeProgramOptimization
+{
+    /// <summary>
+    /// Visual studio default.
+    /// </summary>
+    [Description("false")]
+    NoWholeProgramOptimization = 0,
+
+    [Description("true")]
+    UseLinkTimeCodeGeneration,
+
+    [Description("PGInstrument")]
+    ProfileGuidedOptimization_Instrument,
+
+    [Description("PGOptimize")]
+    ProfileGuidedOptimization_Optimize,
+
+    [Description("PGUpdate")]
+    ProfileGuidedOptimization_Update
+}
+
+
+public enum ESubSystem
+{
+    NotSet,
+    Windows,
+    Console,
+    Native,
+    EFI_Application,
+    EFI_Boot_Service_Driver,
+    EFI_ROM,
+    EFI_Runtime,
+    POSIX
+}
+
+public enum EOptimization
+{
+    Custom,
+    Disabled,
+    
+    /// <summary>
+    /// Minimize Size
+    /// </summary>
+    MinSpace,
+
+    /// <summary>
+    /// Maximize Speed
+    /// </summary>
+    MaxSpeed,
+
+    /// <summary>
+    /// Full Optimization
+    /// </summary>
+    Full
+}
+
+[Description("")]   // Marker to switch Enum value / Description when parsing
+public enum EGenerateDebugInformation
+{
+    [Description("false"), PremakeTag("off")]
+    No = 0,
+
+    [Description("true"), PremakeTag("on")]
+    OptimizeForDebugging,
+
+    [Description("DebugFastLink"), PremakeTag("fastlink")]
+    OptimizeForFasterLinking
+}
+
+
+
+public class Configuration
+{
+    public EConfigurationType ConfigurationType = EConfigurationType.Application;
+
+    public void ConfigurationTypeUpdated()
+    {
+        switch (ConfigurationType)
+        {
+            case EConfigurationType.Application: TargetExt = ".exe"; break;
+            case EConfigurationType.DynamicLibrary: TargetExt = ".dll"; break;
+        }
+    } //ConfigurationTypeUpdated
+
+    public bool UseDebugLibraries = false;
+
+    /// <summary>
+    /// For example:
+    ///     'v140' - for Visual Studio 2015.
+    ///     'v120' - for Visual Studio 2013.
+    /// </summary>
+    public String PlatformToolset = "v140";
+    public ECharacterSet CharacterSet = ECharacterSet.Unicode;
+
+    public bool LinkIncremental = true;
+    public EWholeProgramOptimization WholeProgramOptimization;
+
+    /// <summary>
+    /// Output Directory. 
+    ///     Visual studio default:  $(SolutionDir)$(Configuration)\
+    ///     premake default:        bin\$(Platform)\$(Configuration)\
+    /// </summary>
+    public String OutDir = "$(SolutionDir)$(Configuration)\\";
+
+    /// <summary>
+    /// Intermediate Directory.
+    ///     Visual studio default:  $(Configuration)\
+    ///     premake default:        obj\$(Platform)\$(Configuration)\
+    /// </summary>
+    public String IntDir = "$(Configuration)\\";
+
+    /// <summary>
+    /// Target Name.
+    /// Visual studio default: $(ProjectName)
+    /// </summary>
+    public String TargetName = "$(ProjectName)";
+
+    /// <summary>
+    /// Target Extension (.exe, .dll, ...)
+    /// </summary>
+    public String TargetExt;
+
+    //--------------------------------------------------------------------------------------------
+    // Following fields are located under following XML nodes
+    // ItemDefinitionGroup\
+    //                     ClCompile
+    //                     Link
+    //--------------------------------------------------------------------------------------------
+    public EPrecompiledHeaderUse PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
+    public String PrecompiledHeaderFile = "stdafx.h";
+
+    public EWarningLevel WarningLevel = EWarningLevel.Level1;
+
+    /// <summary>
+    /// Defines, ';' separated list.
+    /// </summary>
+    public String PreprocessorDefinitions = "";
+
+    /// <summary>
+    /// Additional Include Directories, ';' separated list.
+    /// </summary>
+    public String AdditionalIncludeDirectories = "";
+
+    /// <summary>
+    /// Typically Windows or Console.
+    /// </summary>
+    public ESubSystem SubSystem;
+    public EOptimization Optimization;
+
+    /// <summary>
+    /// Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
+    /// </summary>
+    public EGenerateDebugInformation GenerateDebugInformation;
+}
+
 
 
 [DebuggerDisplay("{ProjectName}, {RelativePath}, {ProjectGuid}")]
@@ -201,6 +420,23 @@ public class Project
     public List<String> configurations = new List<string>();
 
     /// <summary>
+    /// Gets list of supported configurations like 'Debug' / 'Release'
+    /// </summary>
+    public List<String> getConfigurationNames()
+    {
+        return configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Gets list of supported platforms like 'Win32' / 'x64'
+    /// </summary>
+    public List<String> getPlatforms()
+    {
+        return configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct().ToList();
+    }
+
+
+    /// <summary>
     /// true or false whether to build project or not.
     /// </summary>
     public List<bool> slnBuildProject = new List<bool>();
@@ -214,6 +450,11 @@ public class Project
     /// Project guid, for example "{65787061-7400-0000-0000-000000000000}"
     /// </summary>
     public string ProjectGuid;
+
+    /// <summary>
+    /// per configuration list
+    /// </summary>
+    public List<Configuration> projectConfig = new List<Configuration>();
 
     /// <summary>
     /// Project dependent guids. Set to null if not used.
@@ -283,7 +524,7 @@ public class Project
             if (localName == "PrecompiledHeader")
             {
                 confListInit(ref file2compile.phUse);
-                file2compile.phUse[iCfg] = (PrecompiledHeaderUse)Enum.Parse(typeof(PrecompiledHeaderUse), fileProps.Value);
+                file2compile.phUse[iCfg] = (EPrecompiledHeaderUse)Enum.Parse(typeof(EPrecompiledHeaderUse), fileProps.Value);
                 continue;
             }
 
@@ -311,6 +552,64 @@ public class Project
     {
         o2set.GetType().GetField(field).SetValue(o2set, node.Element(node.Document.Root.Name.Namespace + field)?.Value);
     }
+
+    void extractGeneralCompileOptions(XElement node)
+    {
+        String config = getConfiguration(node);
+
+        int iCfg = configurations.IndexOf(config);
+
+        if (iCfg == -1)
+            return;
+
+        Configuration cfg = projectConfig[iCfg];
+
+        List<XElement> nodes = node.Elements().ToList();
+
+        //  Explode sub nodes if we have anything extra to scan. (Comes from ItemDefinitionGroup)
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            String nodeName = nodes[i].Name.LocalName;
+            if (nodeName == "ClCompile" || nodeName == "Link")      // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
+            {
+                nodes.AddRange(nodes[i].Elements());
+                nodes.RemoveAt(i);
+                i--;
+            }
+        } //for
+
+        foreach (XElement cfgNode in nodes)
+        {
+            String fieldName = cfgNode.Name.LocalName;
+            FieldInfo fi = typeof(Configuration).GetField(fieldName);
+            if (fi == null)
+                continue;
+
+            if (fi.FieldType.IsEnum)
+            {
+                if (fi.FieldType.GetCustomAttribute<DescriptionAttribute>() == null )
+                {
+                    fi.SetValue(cfg, Enum.Parse(fi.FieldType, cfgNode.Value));
+                }
+                else
+                {
+                    // Extract from Description attributes their values and map corresponding enumeration.
+                    int value = fi.FieldType.GetEnumNames().Select(x => fi.FieldType.GetMember(x)[0].GetCustomAttribute<DescriptionAttribute>().Description).ToList().IndexOf(cfgNode.Value);
+                    if (value == -1)
+                        new Exception2("Invalid / not supported value '" + cfgNode.Value + "'");
+                    fi.SetValue(cfg, Enum.Parse(fi.FieldType, fi.FieldType.GetEnumNames()[value]));
+                }
+
+                if (fieldName == "ConfigurationType")
+                    ((Configuration)cfg).ConfigurationTypeUpdated();
+            }
+            else
+            {
+                fi.SetValue(cfg, Convert.ChangeType(cfgNode.Value, fi.FieldType));
+            }
+        } //foreach
+    } //extractGeneralCompileOptions
+
 
 
     /// <summary>
@@ -341,6 +640,7 @@ public class Project
                     if (node.Attribute("Label")?.Value == "ProjectConfigurations")
                     {
                         project.configurations = node.Elements().Select(x => x.Attribute("Include").Value).ToList();
+                        project.configurations.ForEach(x => project.projectConfig.Add(new Configuration()));
                     }
                     else
                     {
@@ -388,12 +688,37 @@ public class Project
 
                 case "PropertyGroup":
                     {
-                        if (node.Attribute("Label")?.Value == "Globals")
+                        String label = node.Attribute("Label")?.Value;
+
+                        switch (label)
                         {
-                            foreach (String field in new String[] { "ProjectGuid", "Keyword" /*, "RootNamespace"*/ })
-                                CopyField(project, field, node);
-                        }
+                            case "Globals":
+                                foreach (String field in new String[] { "ProjectGuid", "Keyword" /*, "RootNamespace"*/ })
+                                    CopyField(project, field, node);
+                                break;
+                            case null:                  // Non tagged node contains rest of configurations like 'LinkIncremental', 'OutDir', 'IntDir', 'TargetName', 'TargetExt'
+                            case "Configuration":
+                                project.extractGeneralCompileOptions(node);
+                                break;
+                            case "UserMacros":
+                                // What is it - does needs to be supported ?
+                                break;
+
+                            default:
+                                if (Debugger.IsAttached) Debugger.Break();
+                                break;
+                        } //switch
                     }
+                    break;
+
+                case "Import": break;           // Skip for now.
+                case "ImportGroup": break;      // Skip for now.
+                case "ItemDefinitionGroup":
+                    project.extractGeneralCompileOptions(node);
+                    break;
+
+                default:
+                    if (Debugger.IsAttached) Debugger.Break();
                     break;
             } //switch
         } //foreach
