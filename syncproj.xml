@@ -1885,6 +1885,12 @@
             </summary>
             <param name="b">true to enable, false to disable</param>
         </member>
+        <member name="M:SolutionProjectBuilder.CCpp_CodeGeneration_RuntimeLibrary(ERuntimeLibrary)">
+            <summary>
+            Sets specific run-time library
+            </summary>
+            <param name="rtl">Run-time library to use</param>
+        </member>
         <member name="M:SolutionProjectBuilder.Ccpp_Optimization_WholeProgramGeneration(EWholeProgramOptimization)">
             <summary>
             Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.

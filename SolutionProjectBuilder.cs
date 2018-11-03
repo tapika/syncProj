@@ -2045,6 +2045,16 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Sets specific run-time library
+    /// </summary>
+    /// <param name="rtl">Run-time library to use</param>
+    static public void CCpp_CodeGeneration_RuntimeLibrary( ERuntimeLibrary rtl )
+    {
+        foreach( var conf in getSelectedConfigurations( false ) )
+            conf.RuntimeLibrary = rtl;
+    }
+
+    /// <summary>
     /// Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
     /// </summary>
     /// <param name="wpgen"></param>

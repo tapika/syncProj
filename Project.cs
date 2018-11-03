@@ -866,7 +866,10 @@ public class Project
         if (conf.AdditionalIncludeDirectories.Length != 0 )
             o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>");
 
-        if (conf.DisableSpecificWarnings.Length != 0)
+        if( conf.RuntimeLibrary != ERuntimeLibrary.NotSet)
+            o.AppendLine( "      <RuntimeLibrary" + sCond + ">" + conf.RuntimeLibrary.ToString() + "</RuntimeLibrary>" );
+
+        if( conf.DisableSpecificWarnings.Length != 0)
             o.AppendLine("      <DisableSpecificWarnings" + sCond + ">" + conf.DisableSpecificWarnings + ";%(DisableSpecificWarnings)</DisableSpecificWarnings>");
 
         if ( conf.ClCompile_AdditionalOptions.Length != 0)
