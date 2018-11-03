@@ -354,6 +354,7 @@ public class Project
     /// <summary>
     /// Solution where project is included from. null if project loaded as standalone.
     /// </summary>
+    [XmlIgnore]
     public Solution solution;
 
     /// <summary>
