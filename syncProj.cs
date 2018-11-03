@@ -314,19 +314,19 @@ public class SolutionOrProject
             pathToSyncProjExe = Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(Path.GetFullPath(path)));
             o.AppendLine("//css_ref " + pathToSyncProjExe);
             
-            o.AppendLine("using System;         //Exception");
+            o.AppendLine("using System;");
             o.AppendLine();
-            o.AppendLine("partial class Builder: SolutionProjectBuilder");
+            o.AppendLine("class Builder: SolutionProjectBuilder");
             o.AppendLine("{");
-            o.AppendLine();
-            o.AppendLine("  static void Main(String[] args)");
+            o.AppendLine("    static void Main(String[] args)");
             
-            o.AppendLine("  {");
-            o.AppendLine();
-            o.AppendLine("    try {");
+            o.AppendLine("    {");
+            o.AppendLine("        try {");
         }
 
         o.AppendLine("");
+
+        head = "    " + "    " + "    ";
 
         if (sln != null)
         {
@@ -375,7 +375,7 @@ public class SolutionOrProject
                     String fileInclude = name;
                     if (outPrefix != "") fileInclude = outPrefix + name;
 
-                    o.AppendLine(head + "    " + comment + "Project '" + fileInclude + "'");
+                    // o.AppendLine(head + "    " + comment + "Project '" + fileInclude + "'");
                     fileInclude = Path.Combine(dir, fileInclude + "." + format);
 
                     if (format == "lua")
@@ -545,11 +545,11 @@ public class SolutionOrProject
         //
         if (bCsScript)
         {
-            o.AppendLine("    } catch( Exception ex )");
-            o.AppendLine("    {");
-            o.AppendLine("        ConsolePrintException(ex, args);");
-            o.AppendLine("    }");
-            o.AppendLine("  } //Main");
+            o.AppendLine("        } catch( Exception ex )");
+            o.AppendLine("        {");
+            o.AppendLine("            ConsolePrintException(ex, args);");
+            o.AppendLine("        }");
+            o.AppendLine("    } //Main");
             o.AppendLine("}; //class Builder");
             o.AppendLine();
         }

@@ -559,6 +559,15 @@ public class SolutionProjectBuilder
             }
         } //for
 
+        bool bFilterResultsAreEmpty = false;
+        if (bLastSetFilterWasFileSpecific)
+            bFilterResultsAreEmpty = selectedFileConfigurations.Count == 0;
+        else
+            bFilterResultsAreEmpty = selectedConfigurations.Count == 0;
+
+        if (bFilterResultsAreEmpty)
+            throw new Exception2("Specified filter did not select any of configurations, please check the filter");
+
         if (!bLastSetFilterWasFileSpecific)
             selectedFilters = filters;
     } //filter
