@@ -1242,7 +1242,10 @@ public class SolutionProjectBuilder
 
         if (filePattern.IndexOfAny(new char[] { '*', '?' }) == -1)      // Speed up matching, if no asterisk / widlcard, then it can be simply file path.
         {
-            String path = Path.Combine(_dir.Replace("/", "\\"), filePattern);
+            //
+            // GetFullPath removes upper folder references (..\)
+            //
+            String path = Path.GetFullPath(Path.Combine(_dir.Replace("/", "\\"), filePattern));
             if (File.Exists(path))
                 return new String[] { filePattern };
 
