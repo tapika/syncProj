@@ -1463,6 +1463,7 @@ public class Exception2 : Exception
         }
     }
 
+    [ExcludeFromCodeCoverage]   // Not executed during testing, as output varies
     /// <summary>
     /// Formats stack trace into double clickable trace format.
     /// </summary>
@@ -1492,6 +1493,7 @@ public class Exception2 : Exception
         return s;
     }
 
+    [ExcludeFromCodeCoverage]   // Not executed during testing, as output varies
     /// <summary>
     /// Format stack trace so it would be double clickable in Visual studio output window.
     /// http://stackoverflow.com/questions/12301055/double-click-to-go-to-source-in-output-window
@@ -1612,6 +1614,8 @@ public partial class syncProj
     /// </summary>
     public static int Main(params String[] args)
     {
+        // Force English for exception messages for non-English windows.
+        System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-us");
         try
         {
             String inFile = null;

@@ -2327,20 +2327,6 @@
             Gets exception message
             </summary>
         </member>
-        <member name="M:Exception2.formatStackTrace(System.Diagnostics.StackTrace,System.Boolean)">
-            <summary>
-            Formats stack trace into double clickable trace format.
-            </summary>
-            <param name="strace">stack trace</param>
-            <param name="bShowFrames">true if show frame numbers</param>
-            <returns>String</returns>
-        </member>
-        <member name="P:Exception2.StackTrace">
-            <summary>
-            Format stack trace so it would be double clickable in Visual studio output window.
-            http://stackoverflow.com/questions/12301055/double-click-to-go-to-source-in-output-window
-            </summary>
-        </member>
         <member name="T:FileSpecificException">
             <summary>
             Exception which references specific file, specific line.

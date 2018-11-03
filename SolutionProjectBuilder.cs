@@ -163,6 +163,9 @@ public class SolutionProjectBuilder
         if ( path == null || Path.GetFileNameWithoutExtension(path).ToLower() == "solutionprojectbuilder" )
             path = Path2.GetScriptPath(3);
 
+        if (path == null)   // If instantiated via C# script project
+            path = Path2.GetScriptPath(4);
+
         if (path != null)
             m_workPath = Path.GetDirectoryName(path);
         //Console.WriteLine(m_workPath);
