@@ -156,19 +156,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CustomBuild Include="MFCApplication1.cs">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">&quot;..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
 echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">&quot;..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
 echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">&quot;..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
 echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">&quot;..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
 echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'"></Message>

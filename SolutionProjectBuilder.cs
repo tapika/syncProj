@@ -717,15 +717,19 @@ public class SolutionProjectBuilder
 
         for ( int i = 0; i < m_project.configurations.Count; i++ )
         {
+            //
+            // Add into list same amount of configurations as in m_project.configuration list.
+            //
+            while (i >= configItems.Count)
+            {
+                // new Configuration or new FileConfigurationInfo depending whether it's project configuration or file configuration.
+                FileConfigurationInfo fci = (FileConfigurationInfo)Activator.CreateInstance(type);
+                fci.confName = m_project.configurations[i];
+                configItems.Add(fci);
+            }
+
             if (reConfMatch.Match(m_project.configurations[i]).Success)
             {
-                while (i >= configItems.Count)
-                {
-                    FileConfigurationInfo fci = (FileConfigurationInfo)Activator.CreateInstance(type);
-                    fci.confName = m_project.configurations[i];
-                    configItems.Add(fci);
-                }
-            
                 if(bLastSetFilterWasFileSpecific)
                     selectedFileConfigurations.Add((FileConfigurationInfo)configItems[i]);
                 else

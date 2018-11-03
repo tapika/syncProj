@@ -64,11 +64,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CustomBuild Include="MFCApplication1_sln.cs">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">&quot;..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1_sln.cs
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1_sln.cs
 echo 1&gt;$(IntermediateOutputPath)MFCApplication1_sln_cs_log.txt</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntermediateOutputPath)MFCApplication1_sln_cs_log.txt</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">&quot;..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1_sln.cs
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1_sln.cs
 echo 1&gt;$(IntermediateOutputPath)MFCApplication1_sln_cs_log.txt</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntermediateOutputPath)MFCApplication1_sln_cs_log.txt</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"></Message>

@@ -106,7 +106,16 @@ partial class syncProj
         Console.Write("Self testing ");
         int nTestsPassed = 0;
 
-        var testCategoryToStart = dirs.Where(x => Path.GetFileName(x) == testToStart).FirstOrDefault();
+        String testCategoryToStart = null;
+
+        String[] localDirs = dirs.Select(x => Path2.makeRelative(x, testsDir)).ToArray();
+
+        int index = Array.IndexOf(localDirs, testToStart);
+        if (index != -1)
+            testCategoryToStart = dirs[index];
+
+        if (testCategoryToStart == null )
+            testCategoryToStart = dirs.Where(x => Path.GetFileName(x) == testToStart).FirstOrDefault();
 
         if (testCategoryToStart != null )
         {

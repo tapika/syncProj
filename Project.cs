@@ -854,15 +854,22 @@ public class Project
     public void SaveProject(UpdateInfo uinfo)
     {
         //
-        // We serialize here using string append, so we can easily compare with Visual studio projects with your favorite comaprison tool.
+        // We serialize here using string append, so we can easily compare with Visual studio projects with your favorite comparison tool.
         //
+
+        //
+        // Make our project selected just to fix it if necessary
+        //
+        SolutionProjectBuilder.externalproject(null);
+        SolutionProjectBuilder.m_project = this;
+
         if (String.IsNullOrEmpty(ProjectGuid))
-        {
-            SolutionProjectBuilder.externalproject(null);
-            SolutionProjectBuilder.m_project = this;
             SolutionProjectBuilder.uuid(ProjectName);
-            SolutionProjectBuilder.m_project = null;
-        }
+
+        if (projectConfig.Count != configurations.Count)        // Make sure we have project configurations created.
+            SolutionProjectBuilder.filter();
+
+        SolutionProjectBuilder.m_project = null;
 
         //
         //  Reassign unique object filenames so linker would not conflict

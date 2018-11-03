@@ -1,4 +1,4 @@
-//css_ref ..\..\syncproj.exe
+//css_ref ..\..\..\syncproj.exe
 using System;
 
 class Builder: SolutionProjectBuilder
