@@ -272,6 +272,11 @@
             true if it's folder (in solution), false if it's project. (default)
             </summary>
         </member>
+        <member name="F:Project.bIsPackagingProject">
+            <summary>
+            true if it's Android packaging project
+            </summary>
+        </member>
         <member name="P:Project.ProjectHostGuid">
             <summary>
             Made as a property so can be set over reflection.

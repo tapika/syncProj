@@ -419,6 +419,11 @@ public class Project
     /// </summary>
     public bool bIsFolder = false;
 
+    /// <summary>
+    /// true if it's Android packaging project
+    /// </summary>
+    public bool bIsPackagingProject = false;
+
 
     /// <summary>
     /// Made as a property so can be set over reflection.
@@ -428,9 +433,16 @@ public class Project
         get
         {
             if (bIsFolder)
+            {
                 return "{2150E333-8FDC-42A3-9474-1A3956D46DE8}";
+            }
             else
+            {
+                if (bIsPackagingProject)
+                    return "{39E2626F-3545-4960-A6E8-258AD8476CE5}";
+
                 return "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}";
+            }
         }
         set
         {
@@ -438,6 +450,7 @@ public class Project
             {
                 case "{2150E333-8FDC-42A3-9474-1A3956D46DE8}": bIsFolder = true; break;
                 case "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}": bIsFolder = false; break;
+                case "{39E2626F-3545-4960-A6E8-258AD8476CE5}": bIsFolder = false; bIsPackagingProject = true; break;
                 default:
                     throw new Exception2("Invalid project host guid '" + value + "'");
             }
@@ -784,7 +797,16 @@ public class Project
                                 foreach (String field in new String[] { "ProjectGuid", "Keyword" /*, "RootNamespace"*/ })
                                     CopyField(project, field, node);
                                 break;
+
                             case null:                  // Non tagged node contains rest of configurations like 'LinkIncremental', 'OutDir', 'IntDir', 'TargetName', 'TargetExt'
+                                
+                                if (node.Attribute("Condition") == null)
+                                    // Android packaging project can contain such empty nodes. "<PropertyGroup />"
+                                    continue;
+
+                                project.extractGeneralCompileOptions(node);
+                                break;
+
                             case "Configuration":
                                 project.extractGeneralCompileOptions(node);
                                 break;
