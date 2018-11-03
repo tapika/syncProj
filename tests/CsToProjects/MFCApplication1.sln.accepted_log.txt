@@ -1,2 +1,0 @@
-syncProj exited with no error
-MFCApplication1.sln: 2 files updated

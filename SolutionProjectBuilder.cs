@@ -1282,6 +1282,36 @@ public class SolutionProjectBuilder
             conf.customBuildRule = cbt;
     } //buildrule
 
+    /// <summary>
+    /// Specifies commands to be executed after project build
+    /// </summary>
+    static public void postbuildcommands(params String[] commands)
+    { 
+        requireProjectSelected();
+        foreach (var conf in getSelectedProjectConfigurations())
+            conf.PostBuildEvent.Command = String.Join("\r\n", commands);
+    }
+
+    /// <summary>
+    /// Specifies commands to be executed before project build
+    /// </summary>
+    static public void prebuildcommands(params String[] commands)
+    {
+        requireProjectSelected();
+        foreach (var conf in getSelectedProjectConfigurations())
+            conf.PreBuildEvent.Command = String.Join("\r\n", commands);
+    }
+
+    /// <summary>
+    /// Specifies commands to be executed before linking phase
+    /// </summary>
+    static public void prelinkcommands(params String[] commands)
+    {
+        requireProjectSelected();
+        foreach (var conf in getSelectedProjectConfigurations())
+            conf.PreLinkEvent.Command = String.Join("\r\n", commands);
+    }
+
 
     /// <summary>
     /// Sets up custom build rule for project or solution configuration script.

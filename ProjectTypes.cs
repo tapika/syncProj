@@ -671,7 +671,68 @@ public enum EUseOfStl
     cpp_shared
 }
 
+/// <summary>
+/// Just a helper class for serializing class instances
+/// </summary>
+public class XmlSerializer2
+{
+    /// <summary>
+    /// Serializes any custom type to string.
+    /// </summary>
+    /// <returns>Serialized xml string</returns>
+    static public string ToString(object o)
+    {
+        Type type = o.GetType();
+        XmlSerializer ser = new XmlSerializer(type, type.GetNestedTypes());
+        using (var ms = new MemoryStream())
+        {
+            ser.Serialize(ms, o);
+            return Encoding.UTF8.GetString(ms.ToArray());
+        }
+    }
 
+    /// <summary>
+    /// Deserializes class instance from string s.
+    /// </summary>
+    static public T FromString<T>( String s )
+    {
+        XmlSerializer ser = new XmlSerializer(typeof(T), typeof(T).GetNestedTypes());
+
+        using (TextReader reader = new StringReader(s))
+        {
+            return (T)ser.Deserialize(reader);
+        }
+    }
+}
+
+
+/// <summary>
+/// Pre-link / pre-build / post-build item events.
+/// </summary>
+public class BuildEvent
+{
+    /// <summary>
+    /// Command to be executed
+    /// </summary>
+    public String Command = "";
+
+    /// <summary>
+    /// We don't care about Message currently since it's not used in pre/postbuildcommands
+    /// </summary>
+    [XmlIgnore]
+    /// <summary>
+    /// Command description (is not used)
+    /// </summary>
+    public String Message = "";
+
+    /// <summary>
+    /// class instance to string.
+    /// </summary>
+    public override string ToString()
+    {
+        return XmlSerializer2.ToString(this);
+    }
+}
 
 /// <summary>
 /// All values set by default are Visual Studio default.
@@ -917,6 +978,39 @@ public class Configuration : FileConfigurationInfo
     /// Android specific.
     /// </summary>
     public ECompileAs CompileAs = ECompileAs.CompileAsCpp;
+
+    //-------------------------------------------------------------
+    // Pre-build / pre-link / post build events
+    //-------------------------------------------------------------
+    /// <summary>
+    /// When disabled - pre build event is not used.
+    /// </summary>
+    public bool PreBuildEventUseInBuild = true;
+
+    /// <summary>
+    /// Pre-build event
+    /// </summary>
+    public BuildEvent PreBuildEvent = new BuildEvent();
+
+    /// <summary>
+    /// When disabled - post build event is not used.
+    /// </summary>
+    public bool PostBuildEventUseInBuild = true;
+
+    /// <summary>
+    /// Post-build event
+    /// </summary>
+    public BuildEvent PostBuildEvent = new BuildEvent();
+
+    /// <summary>
+    /// When disabled - pre link build event is not used.
+    /// </summary>
+    public bool PreLinkEventUseInBuild = true;
+
+    /// <summary>
+    /// Prelink-build event
+    /// </summary>
+    public BuildEvent PreLinkEvent = new BuildEvent();
 }
 
 /// <summary>

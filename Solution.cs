@@ -366,18 +366,19 @@ public class Solution
                         if (projConfs.Contains(confPlat[0]) && confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
                         {
                             mappedConf = confPlat[0] + '|' + "Win32";
-                            continue;
                         }
+                        else
+                        {
+                            // Configuration cannot be mapped (E.g. Solution has "Debug|Arm", project supports only "Debug|Win32".
+                            // We disable project build, but try to map configuration anyway - otherwise Visual Studio will 
+                            // try to save solution by itself.
+                            bPeformBuild = false;
+                            bPerformDeploy = null;
 
-                        // Configuration cannot be mapped (E.g. Solution has "Debug|Arm", project supports only "Debug|Win32".
-                        // We disable project build, but try to map configuration anyway - otherwise Visual Studio will 
-                        // try to save solution by itself.
-                        bPeformBuild = false;
-                        bPerformDeploy = null;
-                            
-                        mappedConf = p.configurations.Where(x => x.StartsWith(confPlat[0])).FirstOrDefault();
-                        if (mappedConf == null)
-                            mappedConf = p.configurations[0];
+                            mappedConf = p.configurations.Where(x => x.StartsWith(confPlat[0])).FirstOrDefault();
+                            if (mappedConf == null)
+                                mappedConf = p.configurations[0];
+                        } //if-else
                     } //if
                 }
 

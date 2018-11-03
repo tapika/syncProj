@@ -444,6 +444,49 @@ public class Project
         return true;
     }
 
+    static bool IsSimpleDataType(Type type)
+    {
+        if (type == typeof(bool) ||
+            type == typeof(double) ||
+            type == typeof(int) ||
+            type.IsEnum ||
+            type == typeof(string) ||
+            type == typeof(float) ||
+            type == typeof(System.Int64) ||
+            type == typeof(System.Int16)
+            )
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Copies data from node to object o, using field info fi.
+    /// </summary>
+    void copyNodeToObject(FieldInfo fi, XElement node, object o)
+    {
+        object childo = fi.GetValue(o);
+        Type type = fi.FieldType;
+        XElement[] nodes = node.Elements().ToArray();
+
+        //  Explode sub nodes if we have anything extra to scan. (Comes from ItemDefinitionGroup)
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            String nodeName = nodes[i].Name.LocalName;
+            FieldInfo childFi = type.GetField(nodeName);
+            if (childFi == null)
+                continue;
+
+            if (!IsSimpleDataType(childFi.FieldType))
+                continue;
+
+            childFi.SetValue(childo, Convert.ChangeType(nodes[i].Value, childFi.FieldType));
+        }
+    }
+
+
+
+
     void extractGeneralCompileOptions(XElement node)
     {
         String config = getConfiguration(node);
@@ -487,6 +530,12 @@ public class Project
             FieldInfo fi = typeof(Configuration).GetField(fieldName);
             if (fi == null)
                 continue;
+
+            if (!IsSimpleDataType(fi.FieldType))
+            {
+                copyNodeToObject(fi, cfgNode, cfg);
+                continue;
+            }
 
             if (fi.FieldType.IsEnum)
             {
@@ -1166,6 +1215,20 @@ public class Project
 
             // OutputFile ?
             o.AppendLine("    </Link>");
+
+            // PreBuildEvent, PreLinkEvent, PostBuildEvent
+            foreach (String step in new String[] { "PreBuild", "PreLink", "PostBuild" })
+            {
+                BuildEvent bevent = (BuildEvent)conf.GetType().GetField(step + "Event").GetValue(conf);
+
+                if (bevent.Command != "")
+                { 
+                    o.AppendLine("    <" + step + "Event>");
+                    o.AppendLine("      <Command>" + XmlEscape(bevent.Command) + "</Command>");
+                    o.AppendLine("    </" + step + "Event>");
+                }
+            } //foreach
+
             o.AppendLine("  </ItemDefinitionGroup>");
         } //for
 

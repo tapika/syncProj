@@ -10,9 +10,9 @@ class Builder: SolutionProjectBuilder
             project("out_MFCApplication1");
                 configurations(  "Debug","Release" );
                 platforms( "Win32","x64" );
-                uuid("60378CC4-9C63-4026-962D-35FD3447499D");
+                uuid("22DF2B57-18B4-4C55-A294-03C2FB53D478");
                 vsver(2015);
-                projectScript("out_MFCApplication1.cs");
+                projectScript("MFCApplication1.cs");
                 flags("MFC");
                 systemversion("8.1");
                 kind("WindowedApp","windows");
@@ -23,12 +23,15 @@ class Builder: SolutionProjectBuilder
                 filter ( "Debug" );
                     symbols("on");
                     optimize("off");
+                    postbuildcommands( "echo Post build step from Debug configuration" );
                     defines( "_DEBUG" );
 
                 filter ( "Release" );
                     symbols("off");
                     optimize("speed");
                     flags( "LinkTimeOptimization" );
+                    prebuildcommands( "echo Prebuild step from Release configuration" );
+                    prelinkcommands( "echo prelink event" );
                     defines( "NDEBUG" );
 
                 filter ( "platforms:Win32" );

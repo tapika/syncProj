@@ -193,6 +193,11 @@
             </summary>
             <returns>false if fails (value does not exists(</returns>
         </member>
+        <member name="M:Project.copyNodeToObject(System.Reflection.FieldInfo,System.Xml.Linq.XElement,System.Object)">
+            <summary>
+            Copies data from node to object o, using field info fi.
+            </summary>
+        </member>
         <member name="M:Project.getProjectGuid(System.String)">
             <summary>
             Gets projects guid from file.
@@ -807,6 +812,42 @@
             LLVM libc++ shared library (c++_shared)
             </summary>
         </member>
+        <member name="T:XmlSerializer2">
+            <summary>
+            Just a helper class for serializing class instances
+            </summary>
+        </member>
+        <member name="M:XmlSerializer2.ToString(System.Object)">
+            <summary>
+            Serializes any custom type to string.
+            </summary>
+            <returns>Serialized xml string</returns>
+        </member>
+        <member name="M:XmlSerializer2.FromString``1(System.String)">
+            <summary>
+            Deserializes class instance from string s.
+            </summary>
+        </member>
+        <member name="T:BuildEvent">
+            <summary>
+            Pre-link / pre-build / post-build item events.
+            </summary>
+        </member>
+        <member name="F:BuildEvent.Command">
+            <summary>
+            Command to be executed
+            </summary>
+        </member>
+        <member name="F:BuildEvent.Message">
+            <summary>
+            We don't care about Message currently since it's not used in pre/postbuildcommands
+            </summary>
+        </member>
+        <member name="M:BuildEvent.ToString">
+            <summary>
+            class instance to string.
+            </summary>
+        </member>
         <member name="T:Configuration">
             <summary>
             All values set by default are Visual Studio default.
@@ -969,6 +1010,36 @@
         <member name="F:Configuration.CompileAs">
             <summary>
             Android specific.
+            </summary>
+        </member>
+        <member name="F:Configuration.PreBuildEventUseInBuild">
+            <summary>
+            When disabled - pre build event is not used.
+            </summary>
+        </member>
+        <member name="F:Configuration.PreBuildEvent">
+            <summary>
+            Pre-build event
+            </summary>
+        </member>
+        <member name="F:Configuration.PostBuildEventUseInBuild">
+            <summary>
+            When disabled - post build event is not used.
+            </summary>
+        </member>
+        <member name="F:Configuration.PostBuildEvent">
+            <summary>
+            Post-build event
+            </summary>
+        </member>
+        <member name="F:Configuration.PreLinkEventUseInBuild">
+            <summary>
+            When disabled - pre link build event is not used.
+            </summary>
+        </member>
+        <member name="F:Configuration.PreLinkEvent">
+            <summary>
+            Prelink-build event
             </summary>
         </member>
         <member name="T:EKeyword">
@@ -1446,6 +1517,21 @@
             Specifies custom build rule for specific file.
             </summary>
             <param name="cbt">Custom build rule.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.postbuildcommands(System.String[])">
+            <summary>
+            Specifies commands to be executed after project build
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.prebuildcommands(System.String[])">
+            <summary>
+            Specifies commands to be executed before project build
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.prelinkcommands(System.String[])">
+            <summary>
+            Specifies commands to be executed before linking phase
+            </summary>
         </member>
         <member name="M:SolutionProjectBuilder.selfCompileScript(System.String,System.String,System.String,System.String)">
             <summary>

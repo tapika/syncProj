@@ -1,5 +1,6 @@
 //css_ref ..\..\syncproj.exe
 using System;
+using System.IO;
 
 class Builder: SolutionProjectBuilder
 {
@@ -11,9 +12,9 @@ class Builder: SolutionProjectBuilder
                 vsver(2015);
                 configurations(  "Debug","Release" );
                 platforms( "x64","x86" );
-                solutionScript("out_MFCApplication1_sln.cs");
-
-                invokeScript("out_MFCApplication1.cs");
+                solutionScript("MFCApplication1_sln.cs");
+                
+                invokeScript("MFCApplication1.cs");
 
         } catch( Exception ex )
         {

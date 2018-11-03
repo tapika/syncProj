@@ -771,6 +771,25 @@ public class SolutionOrProject
                 return "";
             });
 
+
+            foreach (String step in new String[] { "PreBuild", "PreLink", "PostBuild" })
+            {
+                ConfigationSpecificValue(proj, proj.projectConfig, step + "Event", lines2dump, (s) =>
+                {
+                    BuildEvent bevent = XmlSerializer2.FromString<BuildEvent>(s);
+
+                    if (bevent.Command == "") return "";
+
+                    if (!bCsScript && step == "PreLink")
+                        return "";
+
+                    if (bCsScript)
+                        return step.ToLower() + "commands" + arO + csQuoteString(bevent.Command) + arC;
+                    else
+                        return step.ToLower() + "commands" + arO + luaQuoteString(bevent.Command) + arC;
+                });
+            }
+
             UpdateConfigurationEntries(proj, proj.projectConfig, lines2dump);
 
             bool bFiltersActive = false;
@@ -1589,19 +1608,7 @@ public partial class syncProj
             }
 
             SolutionOrProject proj = new SolutionOrProject(inFile);
-            String projCacheFile = inFile + ".cache";
             SolutionOrProject projCache;
-
-            if (File.Exists(projCacheFile))
-            {
-                try
-                {
-                    projCache = SolutionOrProject.LoadCache(projCacheFile);
-                }
-                catch (Exception)
-                {
-                }
-            }
 
             Solution s = proj.solutionOrProject as Solution;
             if (s != null && bProcessProjects)
@@ -1614,8 +1621,6 @@ public partial class syncProj
                     Project.LoadProject(s, null, p);
                 }
             }
-
-            proj.SaveCache(projCacheFile);
 
             UpdateInfo uinfo = new UpdateInfo();
             foreach ( String format in formats )
