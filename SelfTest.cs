@@ -132,7 +132,7 @@ partial class syncProj
             // All test cases are either .cs or .sln projects.
             //
             String[] tests = Directory.GetFiles(dir, "*", SearchOption.AllDirectories).
-                Where( x => (x.EndsWith(".cs") || x.EndsWith(".sln") ) && !Path.GetFileName(x).StartsWith("_")).ToArray();
+                Where( x => (x.EndsWith(".cs") || x.EndsWith(".sln") || x.EndsWith(".bat")) && !Path.GetFileName(x).StartsWith("_")).ToArray();
             String logActual = "";
 
             foreach (String test in tests)
@@ -153,7 +153,14 @@ partial class syncProj
                 // I've left here ExecCmd - but main problem is that even MessageBox shown from console application
                 // is closed without any clear reason.
                 //
-                //if (Debugger.IsAttached)
+                bool bIsBat = Path.GetExtension(test).ToLower() == ".bat";
+                String toolName = "syncProj";
+                if (bIsBat)
+                {
+                    error = ExecCmd(test + " -x", ref logActual);
+                    toolName = "Batch";
+                }
+                else 
                 {
                     ConsoleWriter cw = new ConsoleWriter();
                     SolutionProjectBuilder.resetStatics();
@@ -169,18 +176,14 @@ partial class syncProj
                     Console.SetOut(co);
                     logActual = cw.sb.ToString();
                 }
-                //else
-                //{
-                //    error = ExecCmd(exePath + " -x \"" + test + "\" -p out_", ref logActual);
-                //}
 
                 String errMsg;
 
                 // Add command line tool error code into log itself.
                 if (error == 0)
-                    errMsg = "syncProj exited with no error";
+                    errMsg = toolName + " exited with no error";
                 else
-                    errMsg = "syncProj exited with ERROR: " + error;
+                    errMsg = toolName + " exited with ERROR: " + error;
 
                 logActual = errMsg + "\r\n" + logActual;
 

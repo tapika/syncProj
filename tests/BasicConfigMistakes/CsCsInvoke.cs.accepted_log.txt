@@ -1,0 +1,5 @@
+syncProj exited with no error
+CsCsInvoke.cs :
+Started from path 'BasicConfigMistakes'
+No solution or project defined. Use project() or solution() functions in script
+0 files updated

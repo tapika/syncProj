@@ -1398,6 +1398,35 @@ public class Exception2 : Exception
     }
 
     /// <summary>
+    /// Formats stack trace into double clickable trace format.
+    /// </summary>
+    /// <param name="strace">stack trace</param>
+    /// <param name="bShowFrames">true if show frame numbers</param>
+    /// <returns>String</returns>
+    public static String formatStackTrace(StackTrace strace, bool bShowFrames = false)
+    {
+        String s = "";
+
+        for (int i = 0; i < strace.FrameCount; i++)
+        {
+            StackFrame sf = strace.GetFrame(i);
+            String f = sf.GetFileName();
+
+            if (!g_bReportFullPath)
+                f = Path.GetFileName(f);
+
+            // Omit stack trace if filename is not known (Simplify output)
+            if (f != null)
+            {
+                s += f + "(" + sf.GetFileLineNumber() + "," + sf.GetFileColumnNumber() + "): ";
+                s += sf.GetMethod() + ((bShowFrames) ? ("frame: " + i.ToString()): "") +  "\r\n";
+            }
+        }
+
+        return s;
+    }
+
+    /// <summary>
     /// Format stack trace so it would be double clickable in Visual studio output window.
     /// http://stackoverflow.com/questions/12301055/double-click-to-go-to-source-in-output-window
     /// </summary>
@@ -1405,25 +1434,7 @@ public class Exception2 : Exception
     {
         get
         {
-            String s = "";
-
-            for( int i = 0; i < strace.FrameCount; i++ )
-            {
-                StackFrame sf = strace.GetFrame(i);
-                String f = sf.GetFileName();
-
-                if (!g_bReportFullPath)
-                    f = Path.GetFileName(f);
-
-                // Omit stack trace if filename is not known (Simplify output)
-                if (f != null)
-                {
-                    s += f + "(" + sf.GetFileLineNumber() + "," + sf.GetFileColumnNumber() + "): ";
-                    s += sf.GetMethod() + "\r\n";
-                }
-            }
-
-            return s;
+            return formatStackTrace(strace);
         }
     }
 

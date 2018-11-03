@@ -1245,8 +1245,15 @@
         <member name="M:SolutionProjectBuilder.setWorkPath(System.String)">
             <summary>
             Sets currently work path (where we are building project / solutions )
+            if null is passed as input parameter, sets script's directory as working path.
             </summary>
-            <param name="path">Path relative or aboslute</param>
+            <param name="path">Path relative or aboslute, null if relative to calling script</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.initFromArgs(System.String[])">
+            <summary>
+            Intialize testing settings from command line arguments.
+            </summary>
+            <param name="args"></param>
         </member>
         <member name="F:SolutionProjectBuilder.m_currentlyExecutingScriptPath">
             <summary>
@@ -1837,6 +1844,14 @@
             <summary>
             Gets exception message
             </summary>
+        </member>
+        <member name="M:Exception2.formatStackTrace(System.Diagnostics.StackTrace,System.Boolean)">
+            <summary>
+            Formats stack trace into double clickable trace format.
+            </summary>
+            <param name="strace">stack trace</param>
+            <param name="bShowFrames">true if show frame numbers</param>
+            <returns>String</returns>
         </member>
         <member name="P:Exception2.StackTrace">
             <summary>

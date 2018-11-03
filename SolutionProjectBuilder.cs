@@ -40,10 +40,17 @@ public class SolutionProjectBuilder
 
     /// <summary>
     /// Sets currently work path (where we are building project / solutions )
+    /// if null is passed as input parameter, sets script's directory as working path.
     /// </summary>
-    /// <param name="path">Path relative or aboslute</param>
-    public static void setWorkPath(String path)
+    /// <param name="path">Path relative or aboslute, null if relative to calling script</param>
+    public static void setWorkPath(String path = null)
     {
+        if (path == null)
+        {
+            m_workPath = Path.GetDirectoryName(Path2.GetScriptPath(2));
+            return;
+        }
+
         if (!Path.IsPathRooted(path))
             path = Path.Combine(getCurrentlyExecutingScriptDirectory(), path);
 
@@ -51,6 +58,26 @@ public class SolutionProjectBuilder
             throw new Exception2("Path '" + Exception2.getPath(path) + "' does not exists", 1);
 
         m_workPath = path;
+    }
+
+    /// <summary>
+    /// Intialize testing settings from command line arguments.
+    /// </summary>
+    /// <param name="args"></param>
+    public static void initFromArgs(params String[] args)
+    {
+        for (int i = 0; i < args.Length; i++)
+        {
+            String arg = args[i];
+
+            if (!(arg.StartsWith("-") || arg.StartsWith("/")))
+                continue;
+
+            switch (arg.Substring(1).ToLower())
+            {
+                case "x": Exception2.g_bReportFullPath = false; break;
+            }
+        } //foreach
     }
 
     /// <summary>
@@ -82,7 +109,16 @@ public class SolutionProjectBuilder
 
     static SolutionProjectBuilder()
     {
-        String path = Path2.GetScriptPath(3);
+        String path = Path2.GetScriptPath(2);
+
+        //
+        // We could have couple of issues here. SolutionProjectBuilder can be instantiated directly or indirectly -
+        // in this case 2 or 3 varies. But additionally to that we might have or not have syncProj.pdb debug symbols
+        // causing path to be resolved (incorrectly) or not resolved (null)
+        //  See CsCsInvoke.cs & CsCsInvoke3.cs differences.
+        //
+        if ( path == null || Path.GetFileNameWithoutExtension(path).ToLower() == "solutionprojectbuilder" )
+            path = Path2.GetScriptPath(3);
 
         if (path != null)
         {
