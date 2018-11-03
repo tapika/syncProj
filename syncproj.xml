@@ -1042,7 +1042,24 @@
             syncProj tool.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:syncProj.StartSelfTests(System.String[],System.Int32)" -->
+        <member name="M:syncProj.StartSelfTests(System.String[],System.Int32)">
+            <summary>
+            Starts self diagnostic tests.
+            
+            Basic concept of syncProj self testing is that syncProj finds all *.sln and *.cs and tries to "execute" them and record console output.
+            
+            Recorded output then is compared against *.accepted_log.txt (console output) or *.accepted (actual xml output)-files - whether they are the same.
+            If not same - developer can accept changes made or continue fixing the code.
+            
+            Developer can use:
+                syncProj.exe -t                 - to start testing
+                syncProj.exe -t someTest        - to start individual test (without .cs extension)
+                syncProj.exe -t someTest -keep  - to keep generated files
+            
+            </summary>
+            <param name="args">command line arguments to syncProj tool</param>
+            <param name="i">args should be parsed from i'th position</param>
+        </member>
         <!-- Badly formed XML comment ignored for member "M:syncProj.ExecCmd(System.String,System.String@)" -->
         <member name="M:syncProj.Main(System.String[])">
             <summary>

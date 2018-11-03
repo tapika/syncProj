@@ -34,7 +34,7 @@ partial class syncProj
     /// <summary>
     /// Starts self diagnostic tests.
     /// 
-    /// Basic concept of syncProj self testing is that syncProj finds all *.sln & *.cs and tries to "execute" them and record console output.
+    /// Basic concept of syncProj self testing is that syncProj finds all *.sln and *.cs and tries to "execute" them and record console output.
     /// 
     /// Recorded output then is compared against *.accepted_log.txt (console output) or *.accepted (actual xml output)-files - whether they are the same.
     /// If not same - developer can accept changes made or continue fixing the code.

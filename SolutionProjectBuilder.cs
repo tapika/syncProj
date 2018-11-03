@@ -539,7 +539,8 @@ public class SolutionProjectBuilder
                 guid = Project.getProjectGuid(path);
             }
 
-            files(relPath);
+            using (new UsingSyncProj(1))
+                files(relPath);
             FileInfo fi = m_project.files.Last();
             fi.includeType = IncludeType.ProjectReference;
             fi.Project = guid;

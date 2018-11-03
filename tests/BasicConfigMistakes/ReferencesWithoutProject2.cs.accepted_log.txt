@@ -1,0 +1,4 @@
+syncProj exited with ERROR: -2
+ReferencesWithoutProject2.cs :
+ReferencesWithoutProject2.cs(11,13): error: No file found which is specified by pattern 'test_DoesNotExists.vcxproj'.
+If file is generated during project build, please mark it as optional with '?' character in front of filename - for example files("?temp.txt") 
