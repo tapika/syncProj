@@ -408,6 +408,7 @@ public class SolutionOrProject
             if (format == "lua")
                 o.AppendLine(head + "    location \".\"");
 
+            o.AppendLine(head + "    " + ((format == "lua") ? comment: "") + "osbase" + brO + "\"" + proj.getOsBase() + "\"" + brC);
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    uuid" + brO + "\"" + proj.ProjectGuid.Substring(1, proj.ProjectGuid.Length - 2) + "\"" + brC);
@@ -422,6 +423,13 @@ public class SolutionOrProject
             ConfigationSpecificValue(proj, proj.projectConfig, "UseDebugLibraries", lines2dump, (s) => {
                 return "symbols" + brO + "\"" + ((s == "True") ? "on" : "off") + "\"" + brC;
             });
+
+            if (proj.Keyword == EKeyword.None)
+            {
+                ConfigationSpecificValue(proj, proj.projectConfig, "AndroidAPILevel", lines2dump, (s) => {
+                    return "androidapilevel" + brO + "\"" + s + "\"" + brC;
+                });
+            }
 
             ConfigationSpecificValue(proj, proj.projectConfig, "PlatformToolset", lines2dump, (s) => {
                 return "toolset" + brO + "\"" + s + "\"" + brC;
@@ -454,20 +462,21 @@ public class SolutionOrProject
 
             UpdateConfigurationEntries(proj, proj.projectConfig, lines2dump);
 
-
-            //ConfigationSpecificValue(proj, proj.projectConfig, "GenerateDebugInformation", lines2dump, (s) => {
-            //    String r = typeof(EGenerateDebugInformation).GetMember(s)[0].GetCustomAttribute<PremakeTagAttribute>().tag;
-            //    return "symbols" + brO + "\"" + r + "\"" + brC;
-            //});
-            ///...................
             bool bFiltersActive = false;
             WriteLinesToDump(o, lines2dump, ref bFiltersActive, null);
 
-            if (proj.files.Count != 0)
+
+            List<FileInfo> files2dump = proj.files.Where(x => x.includeType != IncludeType.ProjectReference).ToList();
+            List<FileInfo> projReferences = proj.files.Where(x => x.includeType == IncludeType.ProjectReference).ToList();
+
+            //
+            // Dump files array.
+            //
+            if (files2dump.Count != 0)
             {
                 o.AppendLine(head + "    files" + arO);
                 bool first = true;
-                foreach (FileInfo fi in proj.files)
+                foreach (FileInfo fi in files2dump)
                 {
                     if (!first) o.AppendLine(",");
                     first = false;
@@ -476,6 +485,24 @@ public class SolutionOrProject
                 o.AppendLine();
                 o.AppendLine(head + "    " + arC);
             } //if
+
+            //
+            // Dump project references
+            //
+            if (projReferences.Count != 0)
+            {
+                if (files2dump.Count != 0) o.AppendLine();
+                o.AppendLine(head + "     dependson" + arO);
+                bool first = true;
+                foreach (FileInfo fi in projReferences)
+                {
+                    if (!first) o.AppendLine(",");
+                    first = false;
+                    o.Append(head + "        \"" + fi.Project.Substring(1, fi.Project.Length - 2) + "\", \"" + fi.relativePath.Replace("\\", "/") + "\"");
+                }
+                o.AppendLine();
+                o.AppendLine(head + "    " + arC);
+            }
 
             foreach (FileInfo fi in proj.files)
             { 
@@ -590,10 +617,10 @@ public class SolutionOrProject
 
         //---------------------------------------------------------------------------------
         // Semicolon (';') separated lists.
-        //  Like defines, additional include directories.
+        //  Like defines, additional include directories, libraries
         //---------------------------------------------------------------------------------
-        String[] fieldNames = new String[] { "PreprocessorDefinitions", "AdditionalIncludeDirectories", "AdditionalDependencies", "AdditionalLibraryDirectories" };
-        String[] funcNames = new String[] { "defines", "includedirs", "links", "libdirs" };
+        String[] fieldNames = new String[] { "PreprocessorDefinitions", "AdditionalIncludeDirectories", "AdditionalDependencies", "LibraryDependencies", "AdditionalLibraryDirectories" };
+        String[] funcNames = new String[] { "defines", "includedirs", "links", "links", "libdirs" };
 
         for (int iListIndex = 0; iListIndex < fieldNames.Length; iListIndex++)
         {
@@ -641,7 +668,9 @@ public class SolutionOrProject
                 fi.SetValue(configList[i], origValues[i]);
         } //for
 
-        foreach (String funcName in funcNames)
+        String[] funcNames2 = new String[] { "defines", "includedirs", "links", "libdirs" };
+
+        foreach (String funcName in funcNames2)
         {
             foreach (var kv in lines2dump)
             {
@@ -664,7 +693,9 @@ public class SolutionOrProject
                     if (oneEntryValue == "" ||
                         // Special kind of define which simply tells to inherit from project settings.
                         (funcName == "defines" && oneEntryValue == "%(PreprocessorDefinitions)") ||
-                        (funcName == "links" && oneEntryValue == "%(AdditionalDependencies)")
+                        (funcName == "links" && oneEntryValue == "%(AdditionalDependencies)") ||
+                        // Android project
+                        (funcName == "links" && oneEntryValue == "%(LibraryDependencies)")
                         )
                         continue;
 

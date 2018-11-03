@@ -105,6 +105,41 @@
             Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
             </summary>
         </member>
+        <member name="T:EDebugInformationFormat">
+            <summary>
+            Defines debug information format.
+            </summary>
+        </member>
+        <member name="F:EDebugInformationFormat.EditAndContinue">
+            <summary>
+            Applicable for windows projects only
+            </summary>
+        </member>
+        <member name="F:EDebugInformationFormat.None">
+            <summary>
+            Applicable for windows and android projects
+            </summary>
+        </member>
+        <member name="F:EDebugInformationFormat.OldStyle">
+            <summary>
+            Applicable for windows projects only
+            </summary>
+        </member>
+        <member name="F:EDebugInformationFormat.ProgramDatabase">
+            <summary>
+            Applicable for windows projects only
+            </summary>
+        </member>
+        <member name="F:EDebugInformationFormat.LineNumber">
+            <summary>
+            Applicable for android projects only.
+            </summary>
+        </member>
+        <member name="F:EDebugInformationFormat.FullDebug">
+            <summary>
+            Applicable for android projects only.
+            </summary>
+        </member>
         <member name="T:FileConfigurationInfo">
             <summary>
             Configuration class which configures project as well as individual file entries.
@@ -128,6 +163,12 @@
         <member name="F:FileConfigurationInfo.AdditionalDependencies">
             <summary>
             obj / lib files, ';' separated list.
+            On windows platform can include also libraries, on android 'LibraryDependencies' specifies library files.
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.LibraryDependencies">
+            <summary>
+            Android specific: Additional libraries to link
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.AdditionalLibraryDirectories">
@@ -148,6 +189,36 @@
         <member name="F:FileConfigurationInfo.OptimizeReferences">
             <summary>
             Eliminates functions and data that are never referenced
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.DebugInformationFormat">
+            <summary>
+            Format of debug information
+            </summary>
+        </member>
+        <member name="T:FileInfo">
+            <summary>
+            Information about that particular file.
+            </summary>
+        </member>
+        <member name="F:FileInfo.includeType">
+            <summary>
+            Include type, same as specified in .vcxproj / .androidproj.
+            </summary>
+        </member>
+        <member name="F:FileInfo.relativePath">
+            <summary>
+            Relative path to file (from project path perspective)
+            </summary>
+        </member>
+        <member name="F:FileInfo.Project">
+            <summary>
+            Android specific: when includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
+            </summary>
+        </member>
+        <member name="F:FileInfo.fileConfig">
+            <summary>
+            Per configuration specific file configuration.
             </summary>
         </member>
         <member name="F:FileInfo.customBuildTool">
@@ -215,9 +286,35 @@
             Full Optimization
             </summary>
         </member>
+        <member name="T:ECompileAs">
+            <summary>
+            Compile As option.
+            </summary>
+        </member>
+        <member name="F:ECompileAs.Default">
+            <summary>
+            Compile as 'Default'
+            </summary>
+        </member>
+        <member name="F:ECompileAs.CompileAsCpp">
+            <summary>
+            Compile as C++ Code (-x c++)
+            </summary>
+        </member>
+        <member name="F:ECompileAs.CompileAsC">
+            <summary>
+            Compile as C Code (-x c)
+            </summary>
+        </member>
         <member name="T:Configuration">
             <summary>
             All values set by default are Visual Studio default.
+            </summary>
+        </member>
+        <member name="F:Configuration.AndroidAPILevel">
+            <summary>
+            Android api level, for example "android-22".
+            By default "android-19" (KitKat 4.4 - 4.4.4, (android-19))
             </summary>
         </member>
         <member name="F:Configuration.PlatformToolset">
@@ -262,6 +359,36 @@
             Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
             </summary>
         </member>
+        <member name="F:Configuration.AndroidAppLibName">
+            <summary>
+            Android specific.
+            </summary>
+        </member>
+        <member name="F:Configuration.CompileAs">
+            <summary>
+            Android specific.
+            </summary>
+        </member>
+        <member name="T:EKeyword">
+            <summary>
+            Tags platform
+            </summary>
+        </member>
+        <member name="F:EKeyword.None">
+            <summary>
+            Typically set for Android packaging project.
+            </summary>
+        </member>
+        <member name="F:EKeyword.Win32Proj">
+            <summary>
+            Windows project (32 or 64 bit)
+            </summary>
+        </member>
+        <member name="F:EKeyword.Android">
+            <summary>
+            Android project
+            </summary>
+        </member>
         <member name="F:Project.solution">
             <summary>
             Solution where project is included from. null if project loaded as standalone.
@@ -280,6 +407,16 @@
         <member name="P:Project.ProjectHostGuid">
             <summary>
             Made as a property so can be set over reflection.
+            </summary>
+        </member>
+        <member name="F:Project.ToolsVersion">
+            <summary>
+            "4.0" for vs2010/vs2012, "12.0" for vs2013, "14.0" for vs2015
+            </summary>
+        </member>
+        <member name="M:Project.setOsBase(System.String)">
+            <summary>
+            Sets os base, returns false if not supported.
             </summary>
         </member>
         <member name="F:Project.RelativePath">
@@ -459,6 +596,12 @@
             </summary>
             <param name="name">Project name</param>
         </member>
+        <member name="M:SolutionProjectBuilder.osbase(System.String)">
+            <summary>
+            Specifies IDE / OS where project is targetted upon.
+            </summary>
+            <param name="osName">One of following: vs2010, vs2012, vs2015, android, package</param>
+        </member>
         <member name="M:SolutionProjectBuilder.location(System.String)">
             <summary>
             The location function sets the destination directory for a generated solution or project file.
@@ -477,11 +620,11 @@
             </summary>
             <param name="lang">C++ or C#</param>
         </member>
-        <member name="M:SolutionProjectBuilder.dependson(System.String)">
+        <member name="M:SolutionProjectBuilder.dependson(System.String[])">
             <summary>
             Specify one or more non-linking project build order dependencies.
             </summary>
-            <param name="projectName">project name on which your currently selected project depends on</param>
+            <param name="dependencies">List of dependent project. Can include only project name. Can include first guid and then project path. (For android packaging project)</param>
         </member>
         <member name="M:SolutionProjectBuilder.group(System.String)">
             <summary>
@@ -536,6 +679,12 @@
                 'v140' - for Visual Studio 2015.<para />
                 'v120' - for Visual Studio 2013.<para />
             </param>
+        </member>
+        <member name="M:SolutionProjectBuilder.androidapilevel(System.String)">
+            <summary>
+            Sets current android api level. Default is "android-19".
+            </summary>
+            <param name="apilevel">Android api level</param>
         </member>
         <member name="M:SolutionProjectBuilder.characterset(System.String)">
             <summary>
@@ -683,6 +832,13 @@
             <summary>
             Same as Exception, only we save call stack in here (to be able to report error line later on).
             </summary>
+        </member>
+        <member name="M:Path2.GetScriptPath(System.Int32)">
+            <summary>
+            Gets source code full path of script, executing given function.
+            </summary>
+            <param name="iFrame">number of frame in stack.</param>
+            <returns>Source code path, null if cannot be determined</returns>
         </member>
         <member name="M:Path2.makeRelative(System.String,System.String)">
             <summary>

@@ -113,12 +113,40 @@ public enum IncludeType
     Invalid
 }
 
+/// <summary>
+/// Defines debug information format.
+/// </summary>
 public enum EDebugInformationFormat
 {
+    /// <summary>
+    /// Applicable for windows projects only
+    /// </summary>
     EditAndContinue,
+
+    /// <summary>
+    /// Applicable for windows and android projects
+    /// </summary>
     None,
+
+    /// <summary>
+    /// Applicable for windows projects only
+    /// </summary>
     OldStyle,
-    ProgramDatabase
+
+    /// <summary>
+    /// Applicable for windows projects only
+    /// </summary>
+    ProgramDatabase,
+    
+    /// <summary>
+    /// Applicable for android projects only.
+    /// </summary>
+    LineNumber,
+
+    /// <summary>
+    /// Applicable for android projects only.
+    /// </summary>
+    FullDebug
 }
 
 
@@ -156,8 +184,14 @@ public class FileConfigurationInfo
 
     /// <summary>
     /// obj / lib files, ';' separated list.
+    /// On windows platform can include also libraries, on android 'LibraryDependencies' specifies library files.
     /// </summary>
     public String AdditionalDependencies = "";
+
+    /// <summary>
+    /// Android specific: Additional libraries to link
+    /// </summary>
+    public String LibraryDependencies = "";
 
     /// <summary>
     /// Additional directory from where to search obj / lib files, ';' separated list.
@@ -186,19 +220,37 @@ public class FileConfigurationInfo
     /// </summary>
     public bool OptimizeReferences = false;
 
+    /// <summary>
+    /// Format of debug information
+    /// </summary>
     public EDebugInformationFormat DebugInformationFormat = EDebugInformationFormat.ProgramDatabase;
 }
 
 
-
-
+/// <summary>
+/// Information about that particular file.
+/// </summary>
 [DebuggerDisplay("{relativePath} ({includeType})")]
 public class FileInfo
 {
+    /// <summary>
+    /// Include type, same as specified in .vcxproj / .androidproj.
+    /// </summary>
     public IncludeType includeType;
 
+    /// <summary>
+    /// Relative path to file (from project path perspective)
+    /// </summary>
     public String relativePath;
 
+    /// <summary>
+    /// Android specific: when includeType == ProjectReference - specifies referenced project guid. Includes guid brackets - '{'/'}'
+    /// </summary>
+    public String Project;
+
+    /// <summary>
+    /// Per configuration specific file configuration.
+    /// </summary>
     public List<FileConfigurationInfo> fileConfig = new List<FileConfigurationInfo>();
 
     /// <summary>
@@ -337,6 +389,31 @@ public enum EGenerateDebugInformation
 }
 
 /// <summary>
+/// Compile As option.
+/// </summary>
+public enum ECompileAs
+{
+    /// <summary>
+    /// Compile as 'Default'
+    /// </summary>
+    [FunctionName("default")]
+    Default,
+
+    /// <summary>
+    /// Compile as C++ Code (-x c++)
+    /// </summary>
+    [FunctionName("cpp")]
+    CompileAsCpp,
+
+    /// <summary>
+    /// Compile as C Code (-x c)
+    /// </summary>
+    [FunctionName("c")]
+    CompileAsC
+}
+
+
+/// <summary>
 /// All values set by default are Visual Studio default.
 /// </summary>
 public class Configuration: FileConfigurationInfo
@@ -353,6 +430,12 @@ public class Configuration: FileConfigurationInfo
     } //ConfigurationTypeUpdated
 
     public bool UseDebugLibraries = false;
+
+    /// <summary>
+    /// Android api level, for example "android-22".
+    /// By default "android-19" (KitKat 4.4 - 4.4.4, (android-19))
+    /// </summary>
+    public String AndroidAPILevel = "android-19";
 
     /// <summary>
     /// For example:
@@ -401,6 +484,37 @@ public class Configuration: FileConfigurationInfo
     /// Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
     /// </summary>
     public EGenerateDebugInformation GenerateDebugInformation;
+
+    /// <summary>
+    /// Android specific.
+    /// </summary>
+    public String AndroidAppLibName;
+
+    /// <summary>
+    /// Android specific.
+    /// </summary>
+    public ECompileAs CompileAs;
+}
+
+/// <summary>
+/// Tags platform
+/// </summary>
+public enum EKeyword
+{
+    /// <summary>
+    /// Typically set for Android packaging project.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// Windows project (32 or 64 bit)
+    /// </summary>
+    Win32Proj,
+
+    /// <summary>
+    /// Android project
+    /// </summary>
+    Android
 }
 
 
@@ -457,7 +571,64 @@ public class Project
         }
     }
 
-    public String Keyword;
+    /// <summary>
+    /// "4.0" for vs2010/vs2012, "12.0" for vs2013, "14.0" for vs2015
+    /// </summary>
+    public String ToolsVersion;
+    public EKeyword Keyword;
+
+    public String getOsBase()
+    {
+        switch (Keyword)
+        {
+            case EKeyword.Android:
+                return "android";
+            case EKeyword.None:
+                return "package";
+            default:
+            case EKeyword.Win32Proj:
+                if (Double.Parse(ToolsVersion) <= 4.0)
+                    return "vs2012";
+                return "vs2015";
+        }
+    } //getOsBase
+
+
+    /// <summary>
+    /// Sets os base, returns false if not supported.
+    /// </summary>
+    public bool setOsBase(String osBase)
+    {
+        switch (osBase.ToLower())
+        {
+            case "package":
+                ToolsVersion = "14.0";
+                Keyword = EKeyword.None;
+                break;
+            case "vs2010":
+            case "vs2012":
+                ToolsVersion = "4.0";
+                Keyword = EKeyword.Win32Proj;
+                break;
+            case "vs2013":
+                ToolsVersion = "12.0";
+                Keyword = EKeyword.Win32Proj;
+                break;
+            case "vs2015":
+                ToolsVersion = "14.0";
+                Keyword = EKeyword.Win32Proj;
+                break;
+            case "android":
+                ToolsVersion = "12.0";
+                Keyword = EKeyword.Android;
+                break;
+            default:
+                return false;
+        }
+
+        return true;
+    } //setOsBase
+
 
     [XmlIgnore]
     public List<Project> nodes = new List<Project>();   // Child nodes (Empty folder also does not have any children)
@@ -651,7 +822,18 @@ public class Project
 
     static void CopyField(object o2set, String field, XElement node)
     {
-        o2set.GetType().GetField(field).SetValue(o2set, node.Element(node.Document.Root.Name.Namespace + field)?.Value);
+        FieldInfo fi = o2set.GetType().GetField(field);
+        Object oValue = node.Element(node.Document.Root.Name.Namespace + field)?.Value;
+
+        if (fi.FieldType == typeof(EKeyword))
+        {
+            if (oValue == null)
+                oValue = EKeyword.None;
+            else
+                oValue = Enum.Parse(typeof(EKeyword), (String)oValue);
+        }
+
+        fi.SetValue(o2set, oValue);
     }
 
     void extractGeneralCompileOptions(XElement node)
@@ -671,7 +853,8 @@ public class Project
         for (int i = 0; i < nodes.Count; i++)
         {
             String nodeName = nodes[i].Name.LocalName;
-            if (nodeName == "ClCompile" || nodeName == "Link")      // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
+            // Nodes can be exploded into same scan loop as long as key do not overlap (e.g. compile options versus link options).
+            if (nodeName == "ClCompile" || nodeName == "Link" || nodeName == "AntPackage")    // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
             {
                 nodes.AddRange(nodes[i].Elements());
                 nodes.RemoveAt(i);
@@ -682,6 +865,10 @@ public class Project
         foreach (XElement cfgNode in nodes)
         {
             String fieldName = cfgNode.Name.LocalName;
+
+            if (fieldName == "LibraryDependencies")
+                fieldName = "AdditionalDependencies";
+
             FieldInfo fi = typeof(Configuration).GetField(fieldName);
             if (fi == null)
                 continue;
@@ -782,6 +969,9 @@ public class Project
                                 } //for
                             } //if
 
+                            if (f.includeType == IncludeType.ProjectReference)
+                                f.Project = igNode.Elements().Where(x => x.Name.LocalName == "Project").FirstOrDefault()?.Value;
+
                             project.files.Add(f);
                         } //for
                     }
@@ -874,6 +1064,57 @@ public class Project
             o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
     } //DumpConfiguration
 
+
+    List<String> getSortedConfigurations(bool bX3264hasPriority)
+    {
+        List<String> configurationsSorted = configurations;
+        int xPriority = bX3264hasPriority ? 1 : -1;
+        configurationsSorted.Sort(delegate (String c1, String c2)
+        {
+            String[] cp1 = c1.Split('|');
+            String[] cp2 = c2.Split('|');
+            String p1 = cp1[1].ToLower();
+            String p2 = cp2[1].ToLower();
+
+            if (p1.StartsWith("x") != p2.StartsWith("x"))       // Give x86 & x64 priority over ARM based names.
+                return p1.StartsWith("x") ? -xPriority : xPriority;
+
+            if (p1.Contains("64") != p2.Contains("64"))         // 64-bit named configurations have priority.
+                return p1.Contains("64") ? -1 : 1;
+
+            int cr = p1.CompareTo(p2);
+            if (cr != 0)
+                return cr;
+
+            return cp1[0].CompareTo(cp2[0]);
+        }
+        );
+
+        return configurationsSorted;
+    }
+
+
+    IncludeType simplifyForGroupReopen(IncludeType inctype)
+    {
+        switch (inctype)
+        {
+            default:
+                return inctype;
+
+            case IncludeType.ProjectReference:
+                return inctype;     // Must be separated from rest of xml stuff
+
+            case IncludeType.AndroidManifest:
+            case IncludeType.Content:
+            case IncludeType.AntBuildXml:
+            case IncludeType.AntProjectPropertiesFile:
+                // Android tags does not require ItemGroup reopen, just return one of android types.
+                return IncludeType.Content;
+        }
+    }
+
+
+
     /// <summary>
     /// Saves project if necessary.
     /// </summary>
@@ -889,7 +1130,7 @@ public class Project
 
         o = new StringBuilder();
         o.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        o.AppendLine("<Project DefaultTargets=\"Build\" ToolsVersion=\"12.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
+        o.AppendLine("<Project DefaultTargets=\"Build\" ToolsVersion=\"" + ToolsVersion + "\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
         o.AppendLine("  <ItemGroup Label=\"ProjectConfigurations\">");
 
         //
@@ -914,73 +1155,152 @@ public class Project
         // configurations.
         //
         o.AppendLine("    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>");
-        o.AppendLine("    <Keyword>Win32Proj</Keyword>");
+        
+        if( Keyword != EKeyword.None )
+            o.AppendLine("    <Keyword>" + Keyword + "</Keyword>");
+        
         o.AppendLine("    <RootNamespace>" + ProjectName + "</RootNamespace>");
+
+        bool bIsAndroidProject = Keyword == EKeyword.Android;
+        bool bIsPackagingProject = Keyword == EKeyword.None;
+        if (bIsAndroidProject)
+            o.AppendLine("    <DefaultLanguage>en-US</DefaultLanguage>");
+
+        if (bIsAndroidProject || bIsPackagingProject)
+            o.AppendLine("    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>");
+        
+        if (bIsAndroidProject)
+            o.AppendLine("    <ApplicationType>Android</ApplicationType>");
+        
+        if (bIsAndroidProject)
+            o.AppendLine("    <ApplicationTypeRevision>2.0</ApplicationTypeRevision>");
+
         o.AppendLine("  </PropertyGroup>");
-        o.AppendLine("  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.Default.props\" />");
+
+        // Some mysterious xml tag.
+        String propsPath = "$(VCTargetsPath)\\Microsoft.Cpp";
+
+        if (Keyword == EKeyword.None)
+            propsPath = "$(AndroidTargetsPath)\\Android";
+
+        o.AppendLine("  <Import Project=\""+ propsPath + ".Default.props\" />");
 
         //
         // Dump general information.
         //
-        for ( int iConf = 0; iConf < configurations.Count; iConf++ )
+        foreach ( String confName in getSortedConfigurations( Keyword == EKeyword.Android ))
         {
-            String confName = configurations[iConf];
+            int iConf = configurations.IndexOf(confName);
             Configuration conf = projectConfig[iConf];
 
             o.AppendLine("  <PropertyGroup " + condition(confName) + " Label=\"Configuration\">");
-            o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
-            o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
-            o.AppendLine("    <PlatformToolset>" + conf.PlatformToolset + "</PlatformToolset>");
+
+            if (bIsPackagingProject)
+            {
+                o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
+                o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
+                if(conf.AndroidAPILevel != "android-19" )
+                    o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
+            }
+            else {
+                o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
+                o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
+            }
+
+            if ( !bIsPackagingProject )
+                o.AppendLine("    <PlatformToolset>" + conf.PlatformToolset + "</PlatformToolset>");
 
             if (conf.WholeProgramOptimization != EWholeProgramOptimization.NoWholeProgramOptimization)
             {
                 String value = typeof(EWholeProgramOptimization).GetMember(conf.WholeProgramOptimization.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
                 o.AppendLine("    <WholeProgramOptimization>" + value + "</WholeProgramOptimization>");
             }
-            o.AppendLine("    <CharacterSet>" + conf.CharacterSet.ToString() + "</CharacterSet>");
+            if( Keyword == EKeyword.Win32Proj )
+                o.AppendLine("    <CharacterSet>" + conf.CharacterSet.ToString() + "</CharacterSet>");
             o.AppendLine("  </PropertyGroup>");
         } //for
 
-        o.AppendLine(
-@"  <Import Project=""$(VCTargetsPath)\Microsoft.Cpp.props"" />
-  <ImportGroup Label=""ExtensionSettings"">
-  </ImportGroup>
-  <ImportGroup Label=""PropertySheets"" Condition=""'$(Configuration)|$(Platform)'=='Debug|Win32'"">
-    <Import Project=""$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"" Condition=""exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"" Label=""LocalAppDataPlatform"" />
-  </ImportGroup>
-  <ImportGroup Label=""PropertySheets"" Condition=""'$(Configuration)|$(Platform)'=='Release|Win32'"">
-    <Import Project=""$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"" Condition=""exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"" Label=""LocalAppDataPlatform"" />
-  </ImportGroup>");
+        o.AppendLine("  <Import Project=\"" + propsPath + ".props\" />");
+
+        if (Keyword == EKeyword.None)
+        {
+            o.AppendLine("  <ImportGroup Label=\"ExtensionSettings\" />");
+        }
+        else
+        {
+            o.AppendLine("  <ImportGroup Label=\"ExtensionSettings\">");
+            o.AppendLine("  </ImportGroup>");
+        }
+
+        if (Keyword == EKeyword.Android)
+        {
+            o.AppendLine("  <ImportGroup Label=\"Shared\">");
+            o.AppendLine("  </ImportGroup>");
+        }
+        else if (Keyword == EKeyword.None)
+        { 
+            o.AppendLine("  <ImportGroup Label=\"Shared\" />");
+        }
+
+        if( !bIsPackagingProject )
+            foreach (String confName in getSortedConfigurations(true))
+            { 
+                o.AppendLine("  <ImportGroup Label=\"PropertySheets\" Condition=\"'$(Configuration)|$(Platform)'=='" + confName + "'\">");
+                o.AppendLine("    <Import Project=\"$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props\" Condition=\"exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')\" Label=\"LocalAppDataPlatform\" />");
+                o.AppendLine("  </ImportGroup>");
+            } //foreach
 
         //
         // Dump compiler and linker options.
         //
         o.AppendLine("  <PropertyGroup Label=\"UserMacros\" />");
-        for (int iConf = 0; iConf < configurations.Count; iConf++)
-        {
-            String confName = configurations[iConf];
-            Configuration conf = projectConfig[iConf];
-            o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
-            o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
-            
-            if(conf.OutDir != "$(SolutionDir)$(Configuration)\\" )      // Visual studio defaults does not needs to be serialized.
-                o.AppendLine("    <OutDir>" + conf.OutDir + "</OutDir>");
 
-            if (conf.IntDir != "$(Configuration)\\") 
-                o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
+        if (bIsPackagingProject)
+            o.AppendLine("  <PropertyGroup />");
+
+        if ( !bIsPackagingProject )
+            foreach (String confName in getSortedConfigurations(false))
+            {
+                int iConf = configurations.IndexOf(confName);
+                Configuration conf = projectConfig[iConf];
+
+                if (Keyword == EKeyword.Android)
+                { 
+                    o.AppendLine("  <PropertyGroup " + condition(confName) + " />");
+                    continue;
+                }
+
+                o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
+                o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
             
-            if (conf.TargetName != "$(ProjectName)") 
-                o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
+                if(conf.OutDir != "$(SolutionDir)$(Configuration)\\" )      // Visual studio defaults does not needs to be serialized.
+                    o.AppendLine("    <OutDir>" + conf.OutDir + "</OutDir>");
+
+                if (conf.IntDir != "$(Configuration)\\") 
+                    o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
             
-            o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
-            o.AppendLine("  </PropertyGroup>");
-        } //for
+                if (conf.TargetName != "$(ProjectName)") 
+                    o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
+            
+                o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
+                o.AppendLine("  </PropertyGroup>");
+            } //for
 
         for (int iConf = 0; iConf < configurations.Count; iConf++)
         {
             String confName = configurations[iConf];
             Configuration conf = projectConfig[iConf];
             o.AppendLine("  <ItemDefinitionGroup " + condition(confName) + ">");
+
+            if (bIsPackagingProject)
+            {
+                o.AppendLine("    <AntPackage>");
+                o.AppendLine("      <AndroidAppLibName>$(RootNamespace)</AndroidAppLibName>");
+                o.AppendLine("    </AntPackage>");
+                o.AppendLine("  </ItemDefinitionGroup>");
+                continue;
+            }
+
             o.AppendLine("    <ClCompile>");
             o.AppendLine("      <PrecompiledHeader>" + conf.PrecompiledHeader.ToString() + "</PrecompiledHeader>");
             
@@ -988,15 +1308,18 @@ public class Project
             if (conf.PrecompiledHeader == EPrecompiledHeaderUse.Use && conf.PrecompiledHeaderFile != "stdafx.h")
                 o.AppendLine("      <PrecompiledHeaderFile>" + conf.PrecompiledHeaderFile + "</PrecompiledHeaderFile>");
 
+            if( Keyword == EKeyword.Android )
+                o.AppendLine("      <CompileAs>CompileAsCpp</CompileAs>");
+
             // No need to specify as it's Visual studio default.
-            if(conf.WarningLevel != EWarningLevel.Level1 )
+            if (conf.WarningLevel != EWarningLevel.Level1 )
                 o.AppendLine("      <WarningLevel>" + conf.WarningLevel + "</WarningLevel>");
             
             o.AppendLine("      <Optimization>" + conf.Optimization + "</Optimization>");
             
             if(conf.FunctionLevelLinking)   //premake5 is not generating those, I guess disabled if it's value is false.
                 o.AppendLine("      <FunctionLevelLinking>true</FunctionLevelLinking>");
-            if(conf.IntrinsicFunctions)
+            if(conf.IntrinsicFunctions && Keyword != EKeyword.Android )
                 o.AppendLine("      <IntrinsicFunctions>true</IntrinsicFunctions>");
             if(conf.EnableCOMDATFolding)
                 o.AppendLine("      <EnableCOMDATFolding>true</EnableCOMDATFolding>");
@@ -1008,22 +1331,47 @@ public class Project
             o.AppendLine("    </ClCompile>");
 
             o.AppendLine("    <Link>");
-            o.AppendLine("      <SubSystem>" + conf.SubSystem + "</SubSystem>");
+            
+            if( Keyword != EKeyword.Android )
+                o.AppendLine("      <SubSystem>" + conf.SubSystem + "</SubSystem>");
 
-            String v = "";
-            switch (conf.GenerateDebugInformation)
+            if (Keyword != EKeyword.Android)
             {
-                default:
-                case EGenerateDebugInformation.No: v = "false"; break;
-                case EGenerateDebugInformation.OptimizeForDebugging: v = "true"; break;
-                case EGenerateDebugInformation.OptimizeForFasterLinking: v = "DebugFastLink"; break;
+                String v = "";
+                switch (conf.GenerateDebugInformation)
+                {
+                    default:
+                    case EGenerateDebugInformation.No: v = "false"; break;
+                    case EGenerateDebugInformation.OptimizeForDebugging: v = "true"; break;
+                    case EGenerateDebugInformation.OptimizeForFasterLinking: v = "DebugFastLink"; break;
+                }
+                o.AppendLine("      <GenerateDebugInformation>" + v + "</GenerateDebugInformation>");
+            } //if
+
+            // Link libraries.
+            String links = conf.AdditionalDependencies;
+
+            if (conf.LibraryDependencies.Length != 0)
+            {
+                if (links.Length != 0) links += ";";
+                links += conf.LibraryDependencies;
             }
-            o.AppendLine("      <GenerateDebugInformation>" + v + "</GenerateDebugInformation>");
-            
-            if(conf.AdditionalDependencies.Length != 0)
-                o.AppendLine("      <AdditionalDependencies>" + conf.AdditionalDependencies + ";%(AdditionalDependencies)</AdditionalDependencies>");
-            
-            if(conf.AdditionalLibraryDirectories.Length != 0)
+
+            if (links.Length != 0)
+            {
+                if (Keyword == EKeyword.Win32Proj)
+                {
+                    o.AppendLine("      <AdditionalDependencies>" + links + ";%(AdditionalDependencies)</AdditionalDependencies>");
+                }
+                else
+                {
+                    o.AppendLine("      <LibraryDependencies>%(LibraryDependencies);" + links + ";</LibraryDependencies>");
+                    //o.AppendLine("      <AdditionalDependencies>");
+                    //o.AppendLine("      </AdditionalDependencies>");
+                }
+            }
+
+            if (conf.AdditionalLibraryDirectories.Length != 0)
                 o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + "</AdditionalLibraryDirectories>");
             
             // OutputFile ?
@@ -1039,7 +1387,7 @@ public class Project
         //
         foreach (FileInfo fi in files)
         {
-            if (inctype != fi.includeType)
+            if (simplifyForGroupReopen(inctype) != simplifyForGroupReopen(fi.includeType))
             { 
                 if( bItemGroupOpened )
                     o.AppendLine("  </ItemGroup>");
@@ -1050,6 +1398,14 @@ public class Project
             } //if
 
             o.Append("    <" + fi.includeType + " Include=\"" + fi.relativePath.Replace("/", "\\") + "\"");
+
+            if (fi.includeType == IncludeType.ProjectReference)
+            { 
+                o.AppendLine(">");
+                o.AppendLine("      <Project>" + fi.Project + "</Project>");
+                o.AppendLine("    </ProjectReference>");
+                continue;
+            }
 
             if (fi.fileConfig.Count == 0)
             {
@@ -1073,11 +1429,18 @@ public class Project
         if (bItemGroupOpened)
             o.AppendLine("  </ItemGroup>");
 
-        o.AppendLine(
-@"  <Import Project=""$(VCTargetsPath)\Microsoft.Cpp.targets"" />
-  <ImportGroup Label=""ExtensionTargets"">
-  </ImportGroup>
-</Project>");
+        
+        o.AppendLine("  <Import Project=\""+ propsPath + ".targets\" />");
+
+        if (bIsPackagingProject)
+        {
+            o.AppendLine("  <ImportGroup Label=\"ExtensionTargets\" />");
+        }
+        else { 
+            o.AppendLine("  <ImportGroup Label=\"ExtensionTargets\">");
+            o.AppendLine("  </ImportGroup>");
+        }
+        o.AppendLine("</Project>");
 
         //
         // Write project itself.
@@ -1086,7 +1449,11 @@ public class Project
         Console.Write("Writing project '" + projectPath + "' ... ");
         if (File.Exists(projectPath)) currentPrj = File.ReadAllText(projectPath);
 
-        String newPrj = o.ToString().Replace("\r\n", "\n");
+        String newPrj = o.ToString();
+
+        if( Keyword == EKeyword.Win32Proj )     // Android & None projects have windows linefeeds.
+            newPrj = newPrj.Replace("\r\n", "\n");
+
         //
         // Save only if needed.
         //

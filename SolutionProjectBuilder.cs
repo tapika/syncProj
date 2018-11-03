@@ -224,6 +224,17 @@ public class SolutionProjectBuilder
         specifyproject(name);
     }
 
+    /// <summary>
+    /// Specifies IDE / OS where project is targetted upon.
+    /// </summary>
+    /// <param name="osName">One of following: vs2010, vs2012, vs2015, android, package</param>
+    static public void osbase(String osBase)
+    {
+        requireProjectSelected();
+
+        if( !m_project.setOsBase(osBase) )
+            throw new Exception2("osbase not supported '" + osBase + "' - supported bases are: vs2010, vs2012, vs2015, android, package");
+    }
 
     /// <summary>
     /// The location function sets the destination directory for a generated solution or project file.
@@ -273,17 +284,43 @@ public class SolutionProjectBuilder
         } //switch
     }
 
+    static Regex guidMatcher = new Regex("^[{(]?([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})[)}]?$");
+
     /// <summary>
     /// Specify one or more non-linking project build order dependencies.
     /// </summary>
-    /// <param name="projectName">project name on which your currently selected project depends on</param>
-    static public void dependson(String projectName)
+    /// <param name="dependencies">List of dependent project. Can include only project name. Can include first guid and then project path. (For android packaging project)</param>
+    static public void dependson(params String[] dependencies)
     {
-        if (m_project.ProjectDependencies == null)
-            m_project.ProjectDependencies = new List<string>();
+        requireProjectSelected();
 
-        m_project.ProjectDependencies.Add(projectName);
-    }
+        for (int i = 0; i < dependencies.Length; i++)
+        {
+            String nameOrGuid = dependencies[i];
+            String name = "";
+
+            Match mGuid = guidMatcher.Match(nameOrGuid);
+            if (mGuid.Success)
+            {
+                if (i + 1 != dependencies.Length) name = dependencies[i + 1];
+
+                files(name);
+                FileInfo fi = m_project.files.Last();
+                fi.includeType = IncludeType.ProjectReference;
+                fi.Project = "{" + mGuid.Groups[1].Value + "}";
+                i++;
+            }
+            else
+            {
+                name = nameOrGuid;
+            }
+
+            if (m_project.ProjectDependencies == null)
+                m_project.ProjectDependencies = new List<string>();
+
+            m_project.ProjectDependencies.Add(nameOrGuid);
+        } //for
+    } //dependson
 
     /// <summary>
     /// Sets current "directory" where project should be placed.
@@ -472,6 +509,18 @@ public class SolutionProjectBuilder
             conf.PlatformToolset = toolset;
     }
 
+    
+    /// <summary>
+    /// Sets current android api level. Default is "android-19".
+    /// </summary>
+    /// <param name="apilevel">Android api level</param>
+    static public void androidapilevel(String apilevel)
+    {
+        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+            conf.AndroidAPILevel = apilevel;
+    }
+
+
     /// <summary>
     /// Selects character set.
     /// </summary>
@@ -645,6 +694,19 @@ public class SolutionProjectBuilder
 
             switch (Path.GetExtension(file).ToLower())
             {
+                case ".properties":
+                    fi.includeType = IncludeType.AntProjectPropertiesFile; break;
+                case ".xml":
+                    {
+                        String filename = Path.GetFileNameWithoutExtension(file).ToLower();
+                        if (filename == "build")
+                            fi.includeType = IncludeType.AntBuildXml;
+                        else if (filename.Contains("manifest") )
+                            fi.includeType = IncludeType.AndroidManifest;
+                        else
+                            fi.includeType = IncludeType.Content;
+                    }
+                    break;
                 case ".c":
                 case ".cxx":
                 case ".cpp": 
@@ -739,13 +801,22 @@ public class SolutionProjectBuilder
         EDebugInformationFormat debugFormat = EDebugInformationFormat.None;
         if (conf.UseDebugLibraries)
         {
-            if (conf.Optimization == EOptimization.Full)
+            if (m_project.Keyword == EKeyword.Android)
             {
-                debugFormat = EDebugInformationFormat.ProgramDatabase;
+                // Android
+                debugFormat = EDebugInformationFormat.FullDebug;
             }
             else
-            { 
-                debugFormat = EDebugInformationFormat.EditAndContinue;
+            {
+                // Windows
+                if (conf.Optimization == EOptimization.Full)
+                {
+                    debugFormat = EDebugInformationFormat.ProgramDatabase;
+                }
+                else
+                {
+                    debugFormat = EDebugInformationFormat.EditAndContinue;
+                }
             }
         }
         else 
