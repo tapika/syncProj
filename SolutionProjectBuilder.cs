@@ -1178,6 +1178,17 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Enables incremental linking. 
+    /// Enabling incremental linking increases size of produced executable or dll approximately by 50%.
+    /// </summary>
+    /// <param name="b">true - enable, false disable</param>
+    static public void Linker_General_EnableIncrementalLinking(bool b)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+            conf.LinkIncremental = b;
+    }
+
+    /// <summary>
     /// Specifies output directory.
     /// </summary>
     static public void targetdir(String directory)

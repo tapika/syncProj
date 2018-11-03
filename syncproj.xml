@@ -1765,6 +1765,13 @@
             </summary>
             <param name="charset">One of following: "Unicode", "Multibyte", "MBCS", "None"</param>
         </member>
+        <member name="M:SolutionProjectBuilder.Linker_General_EnableIncrementalLinking(System.Boolean)">
+            <summary>
+            Enables incremental linking. 
+            Enabling incremental linking increases size of produced executable or dll approximately by 50%.
+            </summary>
+            <param name="b">true - enable, false disable</param>
+        </member>
         <member name="M:SolutionProjectBuilder.targetdir(System.String)">
             <summary>
             Specifies output directory.
