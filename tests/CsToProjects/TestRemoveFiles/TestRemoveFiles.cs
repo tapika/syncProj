@@ -13,7 +13,7 @@ partial class Builder : SolutionProjectBuilder
         files( "?indir1/subdir/gamma.c" );
         files( "?indir2/delta.c" );
 
-        // Select multple files, and disable them from building on all from Win32 configuration, but keep building in x64 configuration
+        // Select multiple files, and disable them from building on all from Win32 configuration, but keep building in x64 configuration
         filter( "files:indir1/*.c", "platforms:Win32" );
             removefiles( "**" );
         filter();
