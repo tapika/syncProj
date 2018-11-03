@@ -1124,6 +1124,9 @@ public class Project
                         String v = typeof(EUseOfStl).GetField(conf.UseOfStl.ToString()).GetCustomAttribute<DescriptionAttribute>().Description;
                         o.AppendLine("    <UseOfStl>" + v + "</UseOfStl>");
                     }
+                    
+                    if( conf.ThumbMode != EThumbMode.NotSpecified && conf.ThumbMode != Configuration.getThumbModeDefault(confName))
+                        o.AppendLine( "    <ThumbMode>" + conf.ThumbMode + "</ThumbMode>" );
                 }
             }
 

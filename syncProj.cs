@@ -732,6 +732,12 @@ public class SolutionOrProject
 
                     return "useofstl" + brO + "\"" + value + "\"" + brC;
                 });
+
+                ConfigationSpecificValue( proj, proj.projectConfig, "ThumbMode", lines2dump, ( s ) =>
+                {
+                    if( s == "NotSpecified" ) s = ""; else s = "EThumbMode." + s;
+                    return "thumbmode" + brO + s + brC;
+                });
             }
 
             if (proj.Keyword == EKeyword.MFCProj)

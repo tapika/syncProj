@@ -1,0 +1,2 @@
+syncProj exited with no error
+Android1.sln: 3 files updated

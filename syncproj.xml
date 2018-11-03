@@ -919,6 +919,31 @@
             LLVM libc++ shared library (c++_shared)
             </summary>
         </member>
+        <member name="T:EThumbMode">
+            <summary>
+            Arm architecture only
+            </summary>
+        </member>
+        <member name="F:EThumbMode.Disabled">
+            <summary>
+            Default for ARM64 architecture
+            </summary>
+        </member>
+        <member name="F:EThumbMode.Thumb">
+            <summary>
+            Default for ARM architecture
+            </summary>
+        </member>
+        <member name="F:EThumbMode.ARM">
+            <summary>
+            ARM
+            </summary>
+        </member>
+        <member name="F:EThumbMode.NotSpecified">
+            <summary>
+            Not specified
+            </summary>
+        </member>
         <member name="T:XmlSerializer2">
             <summary>
             Just a helper class for serializing class instances
@@ -980,6 +1005,18 @@
             <summary>
             Use of STL
             </summary>
+        </member>
+        <member name="F:Configuration.ThumbMode">
+            <summary>
+            ARM or Thumb execution mode
+            </summary>
+        </member>
+        <member name="M:Configuration.getThumbModeDefault(System.String)">
+            <summary>
+            Gets default for ThumbMode
+            </summary>
+            <param name="confName">Configuration name</param>
+            <returns>Visual studio default for Thumb mode</returns>
         </member>
         <member name="M:Configuration.UseOfStl_getSupportedValues">
             <summary>
@@ -1619,6 +1656,12 @@
             Sets specific STL library for Android platform.
             </summary>
             <param name="useofstl"></param>
+        </member>
+        <member name="M:SolutionProjectBuilder.thumbmode(EThumbMode)">
+            <summary>
+            Sets Thumb or ARM mode for ARM configuration only.
+            </summary>
+            <param name="thumbMode">Thumb mode parameter</param>
         </member>
         <member name="M:SolutionProjectBuilder.characterset(System.String)">
             <summary>

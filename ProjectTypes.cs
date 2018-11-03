@@ -766,6 +766,32 @@ public enum EUseOfStl
 }
 
 /// <summary>
+/// Arm architecture only
+/// </summary>
+public enum EThumbMode
+{ 
+    /// <summary>
+    /// Default for ARM64 architecture
+    /// </summary>
+    Disabled,
+
+    /// <summary>
+    /// Default for ARM architecture
+    /// </summary>
+    Thumb,
+
+    /// <summary>
+    /// ARM
+    /// </summary>
+    ARM,
+
+    /// <summary>
+    /// Not specified
+    /// </summary>
+    NotSpecified
+}
+
+/// <summary>
 /// Just a helper class for serializing class instances
 /// </summary>
 public class XmlSerializer2
@@ -858,6 +884,24 @@ public class Configuration : FileConfigurationInfo
     /// Use of STL
     /// </summary>
     public EUseOfStl UseOfStl = EUseOfStl.gnustl_static;
+
+    /// <summary>
+    /// ARM or Thumb execution mode
+    /// </summary>
+    public EThumbMode ThumbMode = EThumbMode.NotSpecified;
+
+    /// <summary>
+    /// Gets default for ThumbMode
+    /// </summary>
+    /// <param name="confName">Configuration name</param>
+    /// <returns>Visual studio default for Thumb mode</returns>
+    static public EThumbMode getThumbModeDefault( String confName )
+    {
+        if( confName.Contains( "64" ) )
+            return EThumbMode.NotSpecified;
+
+        return EThumbMode.Thumb;
+    }
 
     /// <summary>
     /// Get list of supported UseOfSTL values

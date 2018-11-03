@@ -1,0 +1,28 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            solution("out_Android1_sln");
+                vsver(2015);
+                configurations(  "Debug","Release" );
+                platforms( "ARM","ARM64","x64","x86" );
+                solutionScript("out_Android1_sln.cs");
+
+                group("Android1");
+
+                invokeScript("Android1\\Android1.Packaging\\out_Android1.Packaging.cs");
+
+                invokeScript("Android1\\Android1.NativeActivity\\out_Android1.NativeActivity.cs");
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+

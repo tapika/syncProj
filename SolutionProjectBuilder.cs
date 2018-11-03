@@ -842,7 +842,7 @@ public class SolutionProjectBuilder
         confMatchPatten += "\\|";
 
         if (dFilt.ContainsKey("platforms"))
-            confMatchPatten += dFilt["platforms"];
+            confMatchPatten += dFilt["platforms"] + "$";
         else
             confMatchPatten += ".*";
 
@@ -1108,6 +1108,16 @@ public class SolutionProjectBuilder
 
         foreach (var conf in getSelectedProjectConfigurations())
             conf.UseOfStl = v;
+    }
+
+    /// <summary>
+    /// Sets Thumb or ARM mode for ARM configuration only.
+    /// </summary>
+    /// <param name="thumbMode">Thumb mode parameter</param>
+    static public void thumbmode( EThumbMode thumbMode = EThumbMode.NotSpecified )
+    {
+        foreach( var conf in getSelectedProjectConfigurations() )
+            conf.ThumbMode = thumbMode;
     }
 
 

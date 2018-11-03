@@ -1,0 +1,60 @@
+//css_ref ..\..\..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            project("out_Android1.NativeActivity");
+                configurations(  "Debug","Release" );
+                platforms( "ARM","ARM64","x64","x86" );
+                uuid("4cf1dad5-e69d-426b-beb9-b29c40d3ac3d");
+                vsver(2012);
+                projectScript("out_Android1.NativeActivity.cs");
+                kind("SharedLib","android");
+                useofstl("gnustl_static");
+                thumbmode();
+                toolset("Clang_3_8");
+                characterset("Unicode");
+                optimize("speed");
+                pchheader("pch.h");
+                links( "GLESv1_CM", "EGL" );
+                filter ( "Debug" );
+                    symbols("on");
+
+                filter ( "Release" );
+                    symbols("off");
+
+                filter ( "platforms:ARM" );
+                    androidapilevel("android-19");
+
+                filter ( "platforms:ARM64" );
+                    androidapilevel("android-21");
+
+                filter ( "platforms:x64" );
+                    androidapilevel("android-21");
+
+                filter ( "platforms:x86" );
+                    androidapilevel("android-19");
+
+                filter ( "Debug", "platforms:ARM" );
+                    thumbmode(EThumbMode.ARM);
+
+                filter (  );
+
+                files( 
+                    "android_native_app_glue.c",
+                    "android_native_app_glue.h",
+                    "main.cpp",
+                    "pch.h"
+                 );
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+
