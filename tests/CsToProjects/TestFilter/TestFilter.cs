@@ -13,7 +13,7 @@ partial class Builder : SolutionProjectBuilder
             files("?test.c");
 
             filter("files:test.c", "platforms:Win32");
-                buildrule( new CustomBuildRule() { Command = "echo 1", Outputs = "test.log", Message = "" } );
+                buildrule( new CustomBuildRule() { Command = "echo 1", Outputs = "test.log", Message = "", AdditionalInputs = "in.txt", LinkObjects = false } );
             filter();
 
         }
