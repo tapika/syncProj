@@ -333,10 +333,10 @@ public class CsScript
 
         // ----------------------------------------------------------------
         //  Using C# kind of syntax - like this:
-        //      //css_import <file.cs>;
+        //      //css_include <file.cs>;
         // ----------------------------------------------------------------
         Regex reIsCommentUsingEmptyLine = new Regex("^ *(//|using|$)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        Regex reCssImport = new Regex("^ *//css_import +(.*?);?$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        Regex reCssImport = new Regex("^ *//css_include +(.*?);?$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
         Regex reDebug = new Regex("^ *//css_debug", RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
         int iLine = 1;

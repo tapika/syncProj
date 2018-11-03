@@ -1,5 +1,5 @@
 //css_ref ..\..\syncproj.exe
-//css_import _helloWorld2.cs
+//css_include _helloWorld2.cs
 
 using System;
 

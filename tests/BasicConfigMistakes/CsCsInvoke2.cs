@@ -1,5 +1,5 @@
 //css_ref ..\..\syncproj.exe
-//css_import ..\_cscsInvokeHelper.cs
+//css_include ..\_cscsInvokeHelper.cs
 
 using System;
 
