@@ -7,11 +7,18 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Xml.Serialization;
+using System.Xml.Linq;
 
 [DebuggerDisplay("{ProjectName}, {RelativePath}, {ProjectGuid}")]
 public class Project
 {
     public string ParentProjectGuid;
+    
+    [XmlIgnore]
+    public List<Project> nodes = new List<Project>();   // Child nodes (Empty folder also does not have any children)
+    [XmlIgnore]
+    public Project parent;                              // Points to folder which contains given project
+
     public string ProjectName;
     public string RelativePath;
 
@@ -45,6 +52,22 @@ public class Project
     {
         return "Project(\"" + ParentProjectGuid + "\") = \"" + ProjectName + "\", \"" + RelativePath + "\", \"" + ProjectGuid + "\"";
     }
+
+    /// <summary>
+    /// Loads project. If project exists in solution, it's loaded in same instance.
+    /// </summary>
+    /// <param name="solution">Solution if any exists, null if not available.</param>
+    static public Project LoadProject(Solution solution, String path, Project project = null)
+    {
+        if (path == null)
+            path = Path.GetDirectoryName(solution.path) + "\\" + project.RelativePath;
+
+        if (project == null)
+            project = new Project();
+
+        XDocument p = XDocument.Load(path);
+        return project;
+    }
 }
 
 /// <summary>
@@ -52,6 +75,8 @@ public class Project
 /// </summary>
 public class Solution
 {
+    [XmlIgnore]
+    public String path;                                 // File path from where solution was loaded.
     double slnVer;                                      // 11.00 - vs2010, 12.00 - vs2015
     
     public String VisualStudioVersion;                  // null for old visual studio's
@@ -66,10 +91,13 @@ public class Solution
     /// Loads visual studio .sln solution
     /// </summary>
     /// <exception cref="System.IO.FileNotFoundException">The file specified in path was not found.</exception>
-    public Solution(string path)
+    static public Solution LoadSolution(string path)
     {
+        Solution s = new Solution();
+        s.path = path;
+
         String slnTxt = File.ReadAllText(path);
-        slnVer = Double.Parse( Regex.Match(slnTxt, "[\r\n]+Microsoft Visual Studio Solution File, Format Version ([0-9.]+)", RegexOptions.Multiline).Groups[1].Value, CultureInfo.InvariantCulture);
+        s.slnVer = Double.Parse( Regex.Match(slnTxt, "[\r\n]+Microsoft Visual Studio Solution File, Format Version ([0-9.]+)", RegexOptions.Multiline).Groups[1].Value, CultureInfo.InvariantCulture);
 
         foreach (String line in new String[] { "VisualStudioVersion", "MinimumVisualStudioVersion" })
         {
@@ -78,7 +106,7 @@ public class Solution
             if (m.Success)
                 v = m.Groups[1].Value;
 
-            GetType().GetField(line).SetValue(this, v);
+            s.GetType().GetField(line).SetValue(s, v);
         }
 
         Regex reProjects = new Regex(
@@ -114,7 +142,7 @@ public class Solution
                     p.ProjectDependencies = new Regex("\\s*?({[A-F0-9-]+}) = ({[A-F0-9-]+})[\r\n]+", RegexOptions.Multiline).Matches(depsv).Cast<Match>().Select(x => x.Groups[1].Value).ToList();
                 } //foreach
 
-                projects.Add(p);
+                s.projects.Add(p);
                 return "";
            }
         )
@@ -122,7 +150,7 @@ public class Solution
 
         new Regex("GlobalSection\\(SolutionConfigurationPlatforms\\).*?[\r\n]+(.*?)EndGlobalSection[\r\n]+", RegexOptions.Singleline).Replace(slnTxt, new MatchEvaluator(m2 =>
             {
-                configurations = new Regex("\\s*(.*)\\s+=").Matches(m2.Groups[1].ToString()).Cast<Match>().Select( x => x.Groups[1].Value ).ToList();
+                s.configurations = new Regex("\\s*(.*)\\s+=").Matches(m2.Groups[1].ToString()).Cast<Match>().Select( x => x.Groups[1].Value ).ToList();
                 return "";
             }
         ) );
@@ -136,15 +164,15 @@ public class Solution
                 String action = m3.Groups[3].Value;
                 String projectConfig = m3.Groups[4].Value;
 
-                Project p = projects.Where(x => x.ProjectGuid == guid).FirstOrDefault();
+                Project p = s.projects.Where(x => x.ProjectGuid == guid).FirstOrDefault();
                 if (p == null)
                     continue;
                 
-               int iConfigIndex = configurations.IndexOf(solutionConfig);
+               int iConfigIndex = s.configurations.IndexOf(solutionConfig);
                if(iConfigIndex == -1)
                     continue;
 
-                while (p.configurations.Count < configurations.Count)
+                while (p.configurations.Count < s.configurations.Count)
                 {
                     p.configurations.Add(null);
                     p.build.Add(false);
@@ -166,7 +194,7 @@ public class Solution
                         {
                             if (p.deploy == null) p.deploy = new List<bool?>();
 
-                            while (p.deploy.Count < configurations.Count)
+                            while (p.deploy.Count < s.configurations.Count)
                                 p.deploy.Add(null);
 
                             p.deploy[iConfigIndex] = true;
@@ -178,9 +206,27 @@ public class Solution
         }
         ));
 
+        //
+        // Initializes parent-child relationship.
+        //
+        new Regex("GlobalSection\\(NestedProjects\\).*?[\r\n]+(.*?)EndGlobalSection[\r\n]+", RegexOptions.Singleline).Replace(slnTxt, new MatchEvaluator(m4 =>
+            {
+                String v = m4.Groups[1].Value;
+                new Regex("\\s*?({[A-F0-9-]+}) = ({[A-F0-9-]+})[\r\n]+", RegexOptions.Multiline).Replace(v, new MatchEvaluator(m5 =>
+                {
+                    String[] args = m5.Groups.Cast<Group>().Skip(1).Select(x => x.Value).ToArray();
+                    Project child = s.projects.Where(x => args[0] == x.ProjectGuid).FirstOrDefault();
+                    Project parent = s.projects.Where(x => args[1] == x.ProjectGuid).FirstOrDefault();
+                    parent.nodes.Add(child);
+                    child.parent = parent;
+                    return "";
+                }));
+                return "";
+            }
+        ));
 
-
-    } //Solution
+        return s;
+    } //LoadSolution
 } //class Solution
 
 /// <summary>
@@ -202,29 +248,16 @@ public class SolutionOrProject
         }
 
         if (header.Contains("Microsoft Visual Studio Solution File"))
-            solutionOrProject = new Solution(path);
+            solutionOrProject = Solution.LoadSolution(path);
         else if (header.Contains("<SolutionOrProject"))
             LoadCache(path);
         else
-            solutionOrProject = LoadProject(null, path);
+            solutionOrProject = Project.LoadProject(null, path);
     }
 
     public SolutionOrProject()
     {
     }
-
-    /// <summary>
-    /// Loads project. If project exists in solution, it's loaded in same instance.
-    /// </summary>
-    /// <param name="solution">Solution if any exists, null if not available.</param>
-    static public Project LoadProject( Solution solution, String path )
-    {
-        Project p = null;
-
-
-        return p;
-    }
-
 
 
     public void SaveCache(String path)
@@ -271,6 +304,18 @@ class Script
                 projCache = SolutionOrProject.LoadCache(projCacheFile);
 
             proj.SaveCache(projCacheFile);
+
+            Solution s = proj.solutionOrProject as Solution;
+            if (s != null)
+            {
+                foreach (Project p in s.projects)
+                {
+                    if (p.RelativePath == p.ProjectName)
+                        continue;
+                    
+                    Project.LoadProject(s, null, p);
+                }
+            }
         }
         catch (Exception ex)
         {
