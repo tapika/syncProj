@@ -74,7 +74,7 @@ public class Project
     /// <summary>
     /// Visual studio file format version, e.g. 2010, 2012, ...
     /// </summary>
-    public int fileFormatVersion;
+    public int fileFormatVersion = 2015;        // By default generate projects for vs2015
 
     /// <summary>
     /// Sets project file format version
