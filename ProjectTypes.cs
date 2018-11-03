@@ -434,6 +434,10 @@ public class CustomBuildRule
     /// Specify whether the inputs and outputs files with specific extension are passed to linker.
     /// </summary>
     public bool LinkObjects = true;
+    /// <summary>
+    /// Probably unused field. Added to satisfy code when loading project.
+    /// </summary>
+    public bool ExcludedFromBuild = false;
 
     /// <summary>
     /// Gets class instance as one xml string.

@@ -344,9 +344,14 @@ public class Project
     /// Extracts configuration name in readable form.
     /// Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" => "Debug|x64"
     /// </summary>
+    /// <returns>null if Condition node does not exists, configuration name otherwise</returns>
     static String getConfiguration(XElement node)
     {
-        String config = RegexExract("^ *'\\$\\(Configuration\\)\\|\\$\\(Platform\\)' *== *'(.*)'", node.Attribute("Condition").Value)[0];
+        var n = node.Attribute( "Condition" );
+        if( n == null )
+            return null;
+        
+        String config = RegexExract("^ *'\\$\\(Configuration\\)\\|\\$\\(Platform\\)' *== *'(.*)'", n.Value)[0];
         return config;
     }
 
@@ -540,96 +545,110 @@ public class Project
 
     void extractGeneralCompileOptions(XElement node)
     {
+        int[] cfgIndexes = null;
+        
         String config = getConfiguration(node);
-
-        int iCfg = configurations.IndexOf(config);
-
-        if (iCfg == -1)
-            return;
-
-        Configuration cfg = projectConfig[iCfg];
-
-        List<XElement> nodes = node.Elements().ToList();
-
-        //  Explode sub nodes if we have anything extra to scan. (Comes from ItemDefinitionGroup)
-        for (int i = 0; i < nodes.Count; i++)
+        if( config == null )
         {
-            String nodeName = nodes[i].Name.LocalName;
-            // Nodes can be exploded into same scan loop as long as key do not overlap (e.g. compile options versus link options).
-            if (nodeName == "ClCompile" || nodeName == "Link" || nodeName == "AntPackage" || nodeName == "Lib")    // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
+            // Visual studio does not have projects like this, but GYP generator does
+            cfgIndexes = Enumerable.Range( 0, configurations.Count ).ToArray();
+        }
+        else
+        {
+            int iCfg = configurations.IndexOf( config );
+
+            if( iCfg == -1 )
+                return;
+
+            cfgIndexes = new int[] { iCfg };
+        }
+
+        foreach ( int iCfg in cfgIndexes )
+        {
+            Configuration cfg = projectConfig[iCfg];
+
+            List<XElement> nodes = node.Elements().ToList();
+
+            //  Explode sub nodes if we have anything extra to scan. (Comes from ItemDefinitionGroup)
+            for (int i = 0; i < nodes.Count; i++)
             {
-                foreach (XElement compLinkNode in nodes[i].Elements())
+                String nodeName = nodes[i].Name.LocalName;
+                // Nodes can be exploded into same scan loop as long as key do not overlap (e.g. compile options versus link options).
+                if (nodeName == "ClCompile" || nodeName == "Link" || nodeName == "AntPackage" || nodeName == "Lib")    // These nodes are located in ItemDefinitionGroup, we simply expand sub children.
                 {
-                    // ClCompile & Link has same named options, we try to differentiate them here.
-                    if (compLinkNode.Name.LocalName == "AdditionalOptions")
-                        compLinkNode.Name = nodeName + "_AdditionalOptions";
-                    nodes.Add(compLinkNode);
+                    foreach (XElement compLinkNode in nodes[i].Elements())
+                    {
+                        // ClCompile & Link has same named options, we try to differentiate them here.
+                        if (compLinkNode.Name.LocalName == "AdditionalOptions")
+                            compLinkNode.Name = nodeName + "_AdditionalOptions";
+                        nodes.Add(compLinkNode);
+                    }
+
+                    nodes.RemoveAt(i);
+                    i--;
+                }
+            } //for
+
+            foreach (XElement cfgNode in nodes)
+            {
+                String fieldName = cfgNode.Name.LocalName;
+
+                if (fieldName == "LibraryDependencies")
+                    fieldName = "AdditionalDependencies";
+
+                //
+                // Visual studio project keeps Lib options in separate xml tag <Lib> <AdditionalOptions>... - but for us it's the same as LinkOptions.
+                //
+                if (fieldName == "Lib_AdditionalOptions") fieldName = "Link_AdditionalOptions";
+
+                FieldInfo fi = typeof(Configuration).GetField(fieldName);
+                if (fi == null)
+                    continue;
+
+                if (!IsSimpleDataType(fi.FieldType))
+                {
+                    copyNodeToObject(fi, cfgNode, cfg);
+                    continue;
                 }
 
-                nodes.RemoveAt(i);
-                i--;
-            }
-        } //for
-
-        foreach (XElement cfgNode in nodes)
-        {
-            String fieldName = cfgNode.Name.LocalName;
-
-            if (fieldName == "LibraryDependencies")
-                fieldName = "AdditionalDependencies";
-
-            //
-            // Visual studio project keeps Lib options in separate xml tag <Lib> <AdditionalOptions>... - but for us it's the same as LinkOptions.
-            //
-            if (fieldName == "Lib_AdditionalOptions") fieldName = "Link_AdditionalOptions";
-
-            FieldInfo fi = typeof(Configuration).GetField(fieldName);
-            if (fi == null)
-                continue;
-
-            if (!IsSimpleDataType(fi.FieldType))
-            {
-                copyNodeToObject(fi, cfgNode, cfg);
-                continue;
-            }
-
-            if (fi.FieldType.IsEnum)
-            {
-                if (fi.FieldType.GetCustomAttribute<DescriptionAttribute>() == null )
+                if (fi.FieldType.IsEnum)
                 {
-                    if (fi.FieldType == typeof(EUseOfMfc) && cfgNode.Value == "false")
+                    if (fi.FieldType.GetCustomAttribute<DescriptionAttribute>() == null )
                     {
-                        fi.SetValue(cfg, EUseOfMfc._false);
+                        if (fi.FieldType == typeof(EUseOfMfc) && cfgNode.Value == "false")
+                        {
+                            fi.SetValue(cfg, EUseOfMfc._false);
+                        }
+                        else
+                        {
+                            String v = cfgNode.Value;
+                            if (fi.Name == "PrecompiledHeader" && v == "")
+                                v = "ProjectDefault";
+
+                            // cmake produces file like this.
+                            if (fi.Name == "DebugInformationFormat" && v == "")
+                                v = "Invalid";
+
+                            fi.SetValue(cfg, Enum.Parse(fi.FieldType, v));
+                        }
                     }
                     else
                     {
-                        String v = cfgNode.Value;
-                        if (fi.Name == "PrecompiledHeader" && v == "")
-                            v = "ProjectDefault";
-
-                        // cmake produces file like this.
-                        if (fi.Name == "DebugInformationFormat" && v == "")
-                            v = "Invalid";
-
-                        fi.SetValue(cfg, Enum.Parse(fi.FieldType, v));
+                        // Extract from Description attributes their values and map corresponding enumeration.
+                        int value = fi.FieldType.GetEnumNames().Select(x => fi.FieldType.GetMember(x)[0].GetCustomAttribute<DescriptionAttribute>().Description).ToList().IndexOf(cfgNode.Value);
+                        if (value == -1)
+                            new Exception2("Invalid / not supported value '" + cfgNode.Value + "'");
+                        fi.SetValue(cfg, Enum.Parse(fi.FieldType, fi.FieldType.GetEnumNames()[value]));
                     }
+
+                    if (fieldName == "ConfigurationType")
+                        ((Configuration)cfg).ConfigurationTypeUpdated();
                 }
                 else
                 {
-                    // Extract from Description attributes their values and map corresponding enumeration.
-                    int value = fi.FieldType.GetEnumNames().Select(x => fi.FieldType.GetMember(x)[0].GetCustomAttribute<DescriptionAttribute>().Description).ToList().IndexOf(cfgNode.Value);
-                    if (value == -1)
-                        new Exception2("Invalid / not supported value '" + cfgNode.Value + "'");
-                    fi.SetValue(cfg, Enum.Parse(fi.FieldType, fi.FieldType.GetEnumNames()[value]));
+                    fi.SetValue(cfg, Convert.ChangeType(cfgNode.Value, fi.FieldType));
                 }
-
-                if (fieldName == "ConfigurationType")
-                    ((Configuration)cfg).ConfigurationTypeUpdated();
-            }
-            else
-            {
-                fi.SetValue(cfg, Convert.ChangeType(cfgNode.Value, fi.FieldType));
-            }
+            } //foreach
         } //foreach
     } //extractGeneralCompileOptions
 
@@ -764,8 +783,13 @@ public class Project
                                 if (loadLevel == 1) continue;
                                 project.extractGeneralCompileOptions(node);
                                 break;
+
                             case "UserMacros":
                                 // What is it - does needs to be supported ?
+                                break;
+
+                            case "Locals":
+                                // GYP generator specific. What was it?
                                 break;
 
                             default:

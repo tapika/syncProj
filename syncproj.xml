@@ -227,6 +227,7 @@
             Extracts configuration name in readable form.
             Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" => "Debug|x64"
             </summary>
+            <returns>null if Condition node does not exists, configuration name otherwise</returns>
         </member>
         <member name="M:Project.ExtractCompileOptions(System.Xml.Linq.XElement,FileInfo,System.String)">
             <summary>
@@ -665,6 +666,11 @@
         <member name="F:CustomBuildRule.LinkObjects">
             <summary>
             Specify whether the inputs and outputs files with specific extension are passed to linker.
+            </summary>
+        </member>
+        <member name="F:CustomBuildRule.ExcludedFromBuild">
+            <summary>
+            Probably unused field. Added to satisfy code when loading project.
             </summary>
         </member>
         <member name="M:CustomBuildRule.ToString">

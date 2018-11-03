@@ -115,6 +115,22 @@
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4018;4389;4146;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="custom.txt">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">custom rule command (x32)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">custom rule command (x32)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">custom rule command (x64)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">custom rule command (x64)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">custom_output.txt</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">custom_output.txt</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">custom_output.txt</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">custom_output.txt</Outputs>
+    </CustomBuild>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
