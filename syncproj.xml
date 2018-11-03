@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>syncproj</name>
+    </assembly>
+    <members>
+        <member name="F:IncludeType.ClInclude">
+            <summary>
+            Header file (.h)
+            </summary>
+        </member>
+        <member name="F:IncludeType.CustomBuild">
+            <summary>
+            Any custom file with custom build step
+            </summary>
+        </member>
+        <member name="F:IncludeType.ClCompile">
+            <summary>
+            Source codes (.cpp) files
+            </summary>
+        </member>
+        <member name="F:IncludeType.None">
+            <summary>
+            .def / .bat
+            </summary>
+        </member>
+        <member name="F:IncludeType.Text">
+            <summary>
+            .txt files.
+            </summary>
+        </member>
+        <member name="F:IncludeType.ResourceCompile">
+            <summary>
+            .rc / resource files.
+            </summary>
+        </member>
+        <member name="F:IncludeType.Image">
+            <summary>
+            .ico files.
+            </summary>
+        </member>
+        <member name="F:FileInfo.phUse">
+            <summary>
+            Pre-configuration list.
+            </summary>
+        </member>
+        <member name="F:FileInfo.PreprocessorDefinitions">
+            <summary>
+            Pre-configuration list of defines. ';' separated strings. null if not used.
+            </summary>
+        </member>
+        <member name="F:FileInfo.AdditionalIncludeDirectories">
+            <summary>
+            Pre-configuration list of include directories;
+            </summary>
+        </member>
+        <member name="F:FileInfo.ObjectFileName">
+            <summary>
+            Pre-configuration list of output filename
+            </summary>
+        </member>
+        <member name="F:FileInfo.customBuildTool">
+            <summary>
+            null if not in use, non-null if custom build tool is in use.
+            </summary>
+        </member>
+        <member name="F:CustomBuildToolProperties.Command">
+            <summary>
+            Visual studio: Command line
+            </summary>
+        </member>
+        <member name="F:CustomBuildToolProperties.Message">
+            <summary>
+            Visual studio: description
+            </summary>
+        </member>
+        <member name="F:CustomBuildToolProperties.Outputs">
+            <summary>
+            Visual studio: outputs
+            </summary>
+        </member>
+        <member name="F:CustomBuildToolProperties.AdditionalInputs">
+            <summary>
+            Visual studio: additional dependencies
+            </summary>
+        </member>
+        <member name="F:Project.slnConfigurations">
+            <summary>
+            Same amount of configurations as in solution, this however lists project configurations, which correspond to solution configuration
+            using same index.
+            </summary>
+        </member>
+        <member name="F:Project.configurations">
+            <summary>
+            List of supported configuration|platform permutations, like "Debug|Win32", "Debug|x64" and so on.
+            </summary>
+        </member>
+        <member name="F:Project.build">
+            <summary>
+            true or false whether to build project or not.
+            </summary>
+        </member>
+        <member name="F:Project.deploy">
+            <summary>
+            true to deploy project, false - not, null - invalid. List is null if not used at all.
+            </summary>
+        </member>
+        <member name="F:Project.ProjectGuid">
+            <summary>
+            Project guid, for example "{65787061-7400-0000-0000-000000000000}"
+            </summary>
+        </member>
+        <member name="P:Project.ProjectDependencies">
+            <summary>
+            Project dependent guids.
+            </summary>
+        </member>
+        <member name="F:Project.files">
+            <summary>
+            This array includes all items from ItemGroup, independently whether it's include file or file to compile, because
+            visual studio is ordering them alphabetically - we keep same array to be able to sort files.
+            </summary>
+        </member>
+        <member name="M:Project.getConfiguration(System.Xml.Linq.XElement)">
+            <summary>
+            Extracts configuration name in readable form.
+            Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" => "Debug|x64"
+            </summary>
+        </member>
+        <member name="M:Project.ExtractCompileOptions(System.Xml.Linq.XElement,FileInfo)">
+            <summary>
+            Extracts compilation options for single cpp/cs file.
+            </summary>
+            <param name="clCompile">xml node from where to get</param>
+            <param name="file2compile">compiler options to fill out</param>
+        </member>
+        <member name="M:Project.LoadProject(Solution,System.String,Project)">
+            <summary>
+            Loads project. If project exists in solution, it's loaded in same instance.
+            </summary>
+            <param name="solution">Solution if any exists, null if not available.</param>
+        </member>
+        <member name="T:Solution">
+            <summary>
+            .sln loaded into class.
+            </summary>
+        </member>
+        <member name="M:Solution.LoadSolution(System.String)">
+            <summary>
+            Loads visual studio .sln solution
+            </summary>
+            <exception cref="T:System.IO.FileNotFoundException">The file specified in path was not found.</exception>
+        </member>
+        <member name="T:SolutionOrProject">
+            <summary>
+            Let's make system flexible enough that we can load projects and solutions independently of file format.
+            </summary>
+        </member>
+        <member name="T:SolutionProjectBuilder">
+            <summary>
+            Helper class for generating solution or projects.
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.solution(System.String)">
+            <summary>
+            Creates new solution.
+            </summary>
+            <param name="name">Solution name</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.platforms(System.String[])">
+            <summary>
+            Specify platform list to be used for your solution or project.
+                For example: platforms("x32", "x64");
+            </summary>
+            <param name="platformList">List of platforms to support</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.configurations(System.String[])">
+            <summary>
+            Specify which configurations to support. Typically "Debug" and "Release".
+            </summary>
+            <param name="configurationList">Configuration list to support</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.externalproject(System.String)">
+            <summary>
+            Add to solution reference to external project
+            </summary>
+            <param name="name">Project name</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.location(System.String)">
+            <summary>
+            The location function sets the destination directory for a generated solution or project file.
+            </summary>
+            <param name="path"></param>
+        </member>
+    </members>
+</doc>
