@@ -678,7 +678,11 @@ public class Project
 
         XDocument p = XDocument.Load(path);
 
-        String toolsVer = p.Root.Attribute("ToolsVersion").Value;
+        var toolsVerNode = p.Root.Attribute("ToolsVersion");
+        if (toolsVerNode == null)       // For example vs2008 projects.
+            throw new Exception("Project file format is not supported: '" + path + "'");
+
+        String toolsVer = toolsVerNode.Value;
         if(toolsVer != "")
             project.setToolsVersion(toolsVer);
 
