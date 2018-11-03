@@ -70,11 +70,11 @@ public class SolutionProjectBuilder
     /// <summary>
     /// Forces to save generated solution and projects.
     /// </summary>
-    public static void SaveGenerated()
+    public static void SaveGenerated( bool bForce = false )
     {
         try
         {
-            if (!bSaveGeneratedProjects)
+            if (!bSaveGeneratedProjects && !bForce)
                 return;
 
             UpdateInfo uinfo = new UpdateInfo();

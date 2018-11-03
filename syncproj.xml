@@ -1239,7 +1239,7 @@
             true if to save generated solutions or projects.
             </summary>
         </member>
-        <member name="M:SolutionProjectBuilder.SaveGenerated">
+        <member name="M:SolutionProjectBuilder.SaveGenerated(System.Boolean)">
             <summary>
             Forces to save generated solution and projects.
             </summary>
