@@ -1,3 +1,0 @@
-syncProj exited with no error
-MFCApplication1_sln.cs :
-5 files updated

@@ -106,6 +106,14 @@ partial class syncProj
         Console.Write("Self testing ");
         int nTestsPassed = 0;
 
+        var testCategoryToStart = dirs.Where(x => Path.GetFileName(x) == testToStart).FirstOrDefault();
+
+        if (testCategoryToStart != null )
+        {
+            dirs = new String[] { testCategoryToStart };
+            testToStart = null;
+        }
+
         //
         // Directory name will just highlight testing scope.
         //
@@ -213,7 +221,7 @@ partial class syncProj
                     {
                         // file which is expected to be generated
                         logAcceptedFile = file;
-                        logActualFile = file.Substring(0, file.Length - ext.Length) + ".actual_log.txt";
+                        logActualFile = file.Substring(0, file.Length - ext.Length);
                     }
                     else
                     {

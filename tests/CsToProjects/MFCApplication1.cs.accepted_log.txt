@@ -1,3 +1,0 @@
-syncProj exited with no error
-MFCApplication1.cs :
-2 files updated
