@@ -1,0 +1,37 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            project("out_testproj");
+                configurations(  "Debug","Release" );
+                platforms( "Win32","x64" );
+                uuid("74657374-7072-6F6A-0000-000000000000");
+                vsver(2015);
+                projectScript("out_testproj.cs");
+                kind("WindowedApp","windows");
+                symbols("off");
+                toolset("v140");
+                characterset("Unicode");
+                optimize("speed");
+                flags( "NoPch" );
+                files( 
+                    "test.c"
+                 );
+                filter ( "files:test.c"  );
+                    flags( "NoPch" );
+                filter ( "Debug", "files:test.c" );
+                    flags( "ExcludeFromBuild" );
+
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+

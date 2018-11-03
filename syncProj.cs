@@ -957,6 +957,12 @@ public class SolutionOrProject
 
         TagPchEntries(config, fileName, true);
 
+        ConfigationSpecificValue(proj, configList, "ExcludedFromBuild", lines2dump, (s) =>
+        {
+            if (s == "False" || fileName == "") return "";
+            return "flags" + arO + "\"ExcludeFromBuild\"" + arC;
+        });
+
         // For custom build type we dont have pchheader info
         if (includeType == IncludeType.ClCompile)
         {

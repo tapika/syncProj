@@ -446,6 +446,11 @@
             Precompile header - use or create.
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.ExcludedFromBuild">
+            <summary>
+            When set to true - disabled from build.
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.PreprocessorDefinitions">
             <summary>
             Defines, ';' separated list.

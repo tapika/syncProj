@@ -216,6 +216,11 @@ public class FileConfigurationInfo
     public EPrecompiledHeaderUse PrecompiledHeader = EPrecompiledHeaderUse.ProjectDefault;
 
     /// <summary>
+    /// When set to true - disabled from build.
+    /// </summary>
+    public bool ExcludedFromBuild = false;
+
+    /// <summary>
     /// Defines, ';' separated list.
     /// </summary>
     public String PreprocessorDefinitions = "";

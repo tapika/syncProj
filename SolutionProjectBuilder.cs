@@ -1635,6 +1635,12 @@ public class SolutionProjectBuilder
                             conf.PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
                         break;
 
+                    case "excludefrombuild":
+                    case "excludedfrombuild":
+                        foreach (var conf in getSelectedConfigurations(false))
+                            conf.ExcludedFromBuild = true;
+                        break;
+
                     default:
                         throw new Exception2("Flag '" + flag + "' is not supported");
                 } //switch 

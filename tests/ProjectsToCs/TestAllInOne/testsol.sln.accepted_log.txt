@@ -1,0 +1,2 @@
+syncProj exited with no error
+testsol.sln: 2 files updated

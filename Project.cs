@@ -383,10 +383,6 @@ public class Project
                 if (xmlNodeName == "FileType")
                     continue;
 
-                // Currently not interested in this tag. (Not 1:1 mapping)
-                if (xmlNodeName == "ExcludedFromBuild")
-                    continue;
-
                 if (Debugger.IsAttached) Debugger.Break();
                 continue;
             }
@@ -620,7 +616,9 @@ public class Project
 
         XDocument p = XDocument.Load(path);
 
-        project.setToolsVersion( p.Root.Attribute("ToolsVersion").Value );
+        String toolsVer = p.Root.Attribute("ToolsVersion").Value;
+        if(toolsVer != "")
+            project.setToolsVersion(toolsVer);
 
         foreach (XElement node in p.Root.Elements())
         {
@@ -785,6 +783,9 @@ public class Project
 
         if(conf.ShowIncludes)
             o.AppendLine("      <ShowIncludes" + sCond + ">true</ShowIncludes>");
+
+        if(conf.ExcludedFromBuild )
+            o.AppendLine("      <ExcludedFromBuild" + sCond + ">true</ExcludedFromBuild>");
     } //DumpConfiguration
 
 
@@ -1312,8 +1313,11 @@ public class Project
                     CustomBuildRule cbr = fi.fileConfig[iConf].customBuildRule;
 
                     if (cbr == null)
+                    {
+                        // If we don't have custom build rule defined, then disable custom build step.
+                        o.AppendLine("      <ExcludedFromBuild " + condition(confName) + ">true</ExcludedFromBuild>");
                         continue;
-                    
+                    }
                     o.AppendLine("      <Command " + condition(confName) + ">" + XmlEscape(cbr.Command) + "</Command>");
 
                     if (cbr.AdditionalInputs != "")
