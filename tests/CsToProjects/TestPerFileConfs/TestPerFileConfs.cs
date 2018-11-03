@@ -41,6 +41,7 @@ partial class Builder : SolutionProjectBuilder
             testProject( 2010, "Windows", "on" );
             testProject( 2010, "Windows", "off" );
             testProject( 2015, "Android", "off" );
+            testProject( 2017, "Windows", "on" );
 
         }
         catch (Exception ex)
