@@ -714,6 +714,8 @@ public class SolutionProjectBuilder
             conf.ConfigurationType = type;
             conf.SubSystem = subsystem;
         }
+
+        toolsetCheck();
     } //kind
 
     /// <summary>
@@ -728,9 +730,51 @@ public class SolutionProjectBuilder
     {
         foreach (var conf in getSelectedProjectConfigurations())
             conf.PlatformToolset = toolset;
+
+        toolsetCheck();
     }
 
-    
+    /// <summary>
+    /// Checks that we are specifying correct toolset suitable for given os.
+    /// </summary>
+    static void toolsetCheck()
+    {
+        String[] supportedToolsets = null;
+
+        if (m_project.Keyword == EKeyword.Android)
+            supportedToolsets = new String[] { "Gcc_4_9", "Clang_3_8" };
+
+        if (m_project.Keyword == EKeyword.Win32Proj || m_project.Keyword == EKeyword.MFCProj)
+            supportedToolsets = new String[] {
+                    "v90", "v100", "v110", "v110_xp", "v120", "v120_xp", "v140", "v140_xp", "v141", "v141_xp",
+                    // Theoretical vs2019 support :-)
+                    "v160", "v160_xp" 
+            };
+
+        if (supportedToolsets == null)  // Utility / Package projects does not have toolsets defined.
+            return;
+
+        for (int i = 0; i < m_project.configurations.Count; i++)
+        {
+            Configuration conf = m_project.projectConfig[i];
+            String toolset = conf.PlatformToolset;
+
+            if (toolset == null)    // Default, will be valid anyway.
+                continue;
+
+            if (!supportedToolsets.Contains(toolset))
+                throw new Exception2(
+                    "Your currently selected platform '" + m_project.getOs() + "' in configuration '" + 
+                    m_project.configurations[i] + "' does not support toolset '" + toolset + "'\r\n" +
+                    "supported toolsets are: " + String.Join(",", supportedToolsets) + "\r\n" +
+                    "Alternatively it's also possible that you need to specify os correctly in kind() function.\r\n",
+                    1 /*Called from parent function*/
+                );
+        } //for
+    } //toolsetCheck
+
+
+
     /// <summary>
     /// Sets current android api level. Default is "android-19".
     /// </summary>

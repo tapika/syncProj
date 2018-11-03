@@ -1259,6 +1259,11 @@
                 'v120' - for Visual Studio 2013.<para />
             </param>
         </member>
+        <member name="M:SolutionProjectBuilder.toolsetCheck">
+            <summary>
+            Checks that we are specifying correct toolset suitable for given os.
+            </summary>
+        </member>
         <member name="M:SolutionProjectBuilder.androidapilevel(System.String)">
             <summary>
             Sets current android api level. Default is "android-19".
