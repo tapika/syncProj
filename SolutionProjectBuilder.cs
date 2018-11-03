@@ -41,7 +41,7 @@ public class SolutionProjectBuilder
     /// </summary>
     public static String m_scriptRelativeDir = "";
     static List<String> m_platforms = new List<String>();
-    static List<String> m_configurations = new List<String>();
+    static List<String> m_configurations = new List<String>( new String[] { "Debug", "Release" } );
     static Project m_solutionRoot = new Project();
     static String m_groupPath = "";
     private static readonly Destructor Finalise = new Destructor();
@@ -621,7 +621,17 @@ public class SolutionProjectBuilder
             bFilterResultsAreEmpty = selectedConfigurations.Count == 0;
 
         if (bFilterResultsAreEmpty)
-            throw new Exception2("Specified filter did not select any of configurations, please check the filter");
+        {
+            String s = "Filtering was done:\r\n";
+
+            if (dFilt.ContainsKey("configurations"))
+                s += "* by configuration pattern '" + dFilt["configurations"] + "', project has only following configurations: " + String.Join(",", m_project.getConfigurationNames());
+
+            if (dFilt.ContainsKey("platforms"))
+                s += "* by platform pattern '" + dFilt["platforms"] + "', project has only following platforms: " + String.Join(",", m_project.getPlatforms());
+
+            throw new Exception2("Specified filter did not select any of configurations, please check the filter.\r\n" + s);
+        }
 
         if (!bLastSetFilterWasFileSpecific)
             selectedFilters = filters;
