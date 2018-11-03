@@ -54,137 +54,13 @@ public class SolutionProjectBuilder
                 
                 externalproject(null);
 
-                String slnPath = m_solution.path;
-                Console.Write("Writing solution '" + slnPath + "' ... ");
-                StringBuilder o = new StringBuilder();
-
-                o.AppendLine();
-                // For now hardcoded for vs2013, get rid of this hardcoding later on.
-                o.AppendLine("Microsoft Visual Studio Solution File, Format Version 12.00");
-                o.AppendLine("# Visual Studio 2013");
-                //o.AppendLine("VisualStudioVersion = 12.0.30501.0");
-                //o.AppendLine("MinimumVisualStudioVersion = 10.0.40219.1");
-
-                //
-                // Dump projects.
-                //
-                foreach (Project p in m_solution.projects)
-                {
-                    o.AppendLine("Project(\"" + p.ProjectHostGuid + "\") = \"" + p.ProjectName + "\", \"" + p.getRelativePath() + "\", \"" + p.ProjectGuid + "\"");
-
-                    //
-                    // Dump project dependencies.
-                    //
-                    if (p.ProjectDependencies != null)
-                    {
-                        o.AppendLine("	ProjectSection(ProjectDependencies) = postProject");
-                        foreach (String depProjName in p.ProjectDependencies)
-                        {
-                            Project dproj = m_solution.projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
-                            if (dproj != null)
-                                o.AppendLine("		" + dproj.ProjectGuid + " = " + dproj.ProjectGuid);
-                        }
-                        o.AppendLine("	EndProjectSection");
-                    } //if
-
-                    o.AppendLine("EndProject");
-                }
-
-                //
-                // Dump configurations.
-                //
-                o.AppendLine("Global");
-                o.AppendLine("	GlobalSection(SolutionConfigurationPlatforms) = preSolution");
-                foreach (String cfg in m_solution.configurations)
-                {
-                    o.AppendLine("		" + cfg + " = " + cfg);
-                }
-                o.AppendLine("	EndGlobalSection");
-
-
-                //
-                // Dump solution to project configuration mapping and whether or not to build specific project.
-                //
-                o.AppendLine("	GlobalSection(ProjectConfigurationPlatforms) = postSolution");
-                foreach (Project p in m_solution.projects)
-                {
-                    for (int iConf = 0; iConf < m_solution.configurations.Count; iConf++)
-                    {
-                        String conf = m_solution.configurations[iConf];
-                        String mappedConf = conf;
-
-                        if (p.slnConfigurations != null && iConf < p.slnConfigurations.Count)
-                            mappedConf = p.slnConfigurations[iConf];
-
-                        bool bPeformBuild = true;
-
-                        if (p.slnBuildProject != null && iConf < p.slnBuildProject.Count)
-                            bPeformBuild = p.slnBuildProject[iConf];
-
-
-                        o.AppendLine("		" + p.ProjectGuid + "." + conf + ".ActiveCfg = " + mappedConf);
-                        if (bPeformBuild)
-                            o.AppendLine("		" + p.ProjectGuid + "." + conf + ".Build.0 = " + mappedConf);
-
-                    } //for
-                } //foreach
-                o.AppendLine("	EndGlobalSection");
-                o.AppendLine("	GlobalSection(SolutionProperties) = preSolution");
-                o.AppendLine("		HideSolutionNode = FALSE");
-                o.AppendLine("	EndGlobalSection");
-
-                //
-                // Dump project dependency hierarchy.
-                //
-                Project root = m_solution.projects.FirstOrDefault();
-
-                if (root != null)
-                {
-                    while (root.parent != null) root = root.parent;
-                    o.AppendLine("	GlobalSection(NestedProjects) = preSolution");
-
-                    //
-                    // Flatten tree without recursion.
-                    //
-                    int treeIndex = 0;
-                    List<Project> projects2 = new List<Project>();
-                    projects2.AddRange(root.nodes);
-
-                    for (; treeIndex < projects2.Count; treeIndex++)
-                    {
-                        if (projects2[treeIndex].nodes.Count == 0)
-                            continue;
-                        projects2.AddRange(projects2[treeIndex].nodes);
-                    }
-
-                    foreach (Project p in projects2)
-                    {
-                        if (p.parent.parent == null)
-                            continue;
-                        o.AppendLine("		" + p.ProjectGuid + " = " + p.parent.ProjectGuid);
-                    }
-
-                    o.AppendLine("	EndGlobalSection");
-                } //if
-
-                o.AppendLine("EndGlobal");
-
-                String currentSln = "";
-                if (File.Exists(slnPath)) currentSln = File.ReadAllText(slnPath);
-
-                String newSln = o.ToString().Replace("\r\n", "\n");
-                //
-                // Save only if needed.
-                //
-                if (currentSln == newSln)
-                {
-                    Console.WriteLine("up-to-date.");
-                }
+                if (m_solution != null)
+                    m_solution.SaveSolution();
                 else
-                {
-                    File.WriteAllText(slnPath, newSln, Encoding.UTF8);
-                    Console.WriteLine("ok.");
-                } //if-else
+                    if (m_project != null)
+                        m_project.SaveProject();
+                    else
+                        Console.WriteLine("No solution or project defined. Use project() or solution() functions in script");
             }
             catch (Exception ex)
             {
@@ -300,7 +176,7 @@ public class SolutionProjectBuilder
         if (name == null)       // Will be used to "flush" last filled project.
             return;
 
-        m_project = new Project();
+        m_project = new Project() { solution = m_solution };
         m_project.ProjectName = name;
         m_project.language = "C++";
         m_project.RelativePath = Path.Combine(m_scriptRelativeDir, name);
@@ -314,7 +190,7 @@ public class SolutionProjectBuilder
             pathSoFar = pathSoFar + ((pathSoFar.Length != 0) ? "/" : "") + pathPart;
             if (p == null)
             {
-                p = new Project() { ProjectName = pathPart, RelativePath = pathPart, ProjectGuid = GenerateGuid(pathSoFar), bIsFolder = true };
+                p = new Project() { solution = m_solution, ProjectName = pathPart, RelativePath = pathPart, ProjectGuid = GenerateGuid(pathSoFar), bIsFolder = true };
                 m_solution.projects.Add(p);
                 parent.nodes.Add(p);
                 p.parent = parent;

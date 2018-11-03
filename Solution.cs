@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
@@ -70,7 +71,7 @@ public class Solution
 
         reProjects.Replace(slnTxt, new MatchEvaluator(m =>
         {
-            Project p = new Project();
+            Project p = new Project() { solution = s };
 
             foreach (String g in reProjects.GetGroupNames())
             {
@@ -192,5 +193,146 @@ public class Solution
 
         return s;
     } //LoadSolution
+
+
+    /// <summary>
+    /// Saves solution into .sln file. Where to save is defined by path.
+    /// </summary>
+    public void SaveSolution()
+    {
+        String slnPath = path;
+        Console.Write("Writing solution '" + slnPath + "' ... ");
+        StringBuilder o = new StringBuilder();
+
+        o.AppendLine();
+        // For now hardcoded for vs2013, get rid of this hardcoding later on.
+        o.AppendLine("Microsoft Visual Studio Solution File, Format Version 12.00");
+        o.AppendLine("# Visual Studio 2013");
+        //o.AppendLine("VisualStudioVersion = 12.0.30501.0");
+        //o.AppendLine("MinimumVisualStudioVersion = 10.0.40219.1");
+
+        //
+        // Dump projects.
+        //
+        foreach (Project p in projects)
+        {
+            o.AppendLine("Project(\"" + p.ProjectHostGuid + "\") = \"" + p.ProjectName + "\", \"" + p.getRelativePath() + "\", \"" + p.ProjectGuid + "\"");
+
+            //
+            // Dump project dependencies.
+            //
+            if (p.ProjectDependencies != null)
+            {
+                o.AppendLine("	ProjectSection(ProjectDependencies) = postProject");
+                foreach (String depProjName in p.ProjectDependencies)
+                {
+                    Project dproj = projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
+                    if (dproj != null)
+                        o.AppendLine("		" + dproj.ProjectGuid + " = " + dproj.ProjectGuid);
+                }
+                o.AppendLine("	EndProjectSection");
+            } //if
+
+            o.AppendLine("EndProject");
+        }
+
+        //
+        // Dump configurations.
+        //
+        o.AppendLine("Global");
+        o.AppendLine("	GlobalSection(SolutionConfigurationPlatforms) = preSolution");
+        foreach (String cfg in configurations)
+        {
+            o.AppendLine("		" + cfg + " = " + cfg);
+        }
+        o.AppendLine("	EndGlobalSection");
+
+
+        //
+        // Dump solution to project configuration mapping and whether or not to build specific project.
+        //
+        o.AppendLine("	GlobalSection(ProjectConfigurationPlatforms) = postSolution");
+        foreach (Project p in projects)
+        {
+            for (int iConf = 0; iConf < configurations.Count; iConf++)
+            {
+                String conf = configurations[iConf];
+                String mappedConf = conf;
+
+                if (p.slnConfigurations != null && iConf < p.slnConfigurations.Count)
+                    mappedConf = p.slnConfigurations[iConf];
+
+                bool bPeformBuild = true;
+
+                if (p.slnBuildProject != null && iConf < p.slnBuildProject.Count)
+                    bPeformBuild = p.slnBuildProject[iConf];
+
+
+                o.AppendLine("		" + p.ProjectGuid + "." + conf + ".ActiveCfg = " + mappedConf);
+                if (bPeformBuild)
+                    o.AppendLine("		" + p.ProjectGuid + "." + conf + ".Build.0 = " + mappedConf);
+
+            } //for
+        } //foreach
+        o.AppendLine("	EndGlobalSection");
+        o.AppendLine("	GlobalSection(SolutionProperties) = preSolution");
+        o.AppendLine("		HideSolutionNode = FALSE");
+        o.AppendLine("	EndGlobalSection");
+
+        //
+        // Dump project dependency hierarchy.
+        //
+        Project root = projects.FirstOrDefault();
+
+        if (root != null)
+        {
+            while (root.parent != null) root = root.parent;
+            o.AppendLine("	GlobalSection(NestedProjects) = preSolution");
+
+            //
+            // Flatten tree without recursion.
+            //
+            int treeIndex = 0;
+            List<Project> projects2 = new List<Project>();
+            projects2.AddRange(root.nodes);
+
+            for (; treeIndex < projects2.Count; treeIndex++)
+            {
+                if (projects2[treeIndex].nodes.Count == 0)
+                    continue;
+                projects2.AddRange(projects2[treeIndex].nodes);
+            }
+
+            foreach (Project p in projects2)
+            {
+                if (p.parent.parent == null)
+                    continue;
+                o.AppendLine("		" + p.ProjectGuid + " = " + p.parent.ProjectGuid);
+            }
+
+            o.AppendLine("	EndGlobalSection");
+        } //if
+
+        o.AppendLine("EndGlobal");
+
+        String currentSln = "";
+        if (File.Exists(slnPath)) currentSln = File.ReadAllText(slnPath);
+
+        String newSln = o.ToString().Replace("\r\n", "\n");
+        //
+        // Save only if needed.
+        //
+        if (currentSln == newSln)
+        {
+            Console.WriteLine("up-to-date.");
+        }
+        else
+        {
+            File.WriteAllText(slnPath, newSln, Encoding.UTF8);
+            Console.WriteLine("ok.");
+        } //if-else
+    } //SaveSolution
+
+
 } //class Solution
 

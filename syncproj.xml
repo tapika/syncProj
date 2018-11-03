@@ -196,6 +196,11 @@
             Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
             </summary>
         </member>
+        <member name="F:Project.solution">
+            <summary>
+            Solution where project is included from. null if project loaded as standalone.
+            </summary>
+        </member>
         <member name="F:Project.bIsFolder">
             <summary>
             true if it's folder (in solution), false if it's project. (default)
@@ -288,6 +293,11 @@
             </summary>
             <param name="solution">Solution if any exists, null if not available.</param>
         </member>
+        <member name="M:Project.SaveProject">
+            <summary>
+            Saves project if necessary.
+            </summary>
+        </member>
         <member name="T:Solution">
             <summary>
             .sln loaded into class.
@@ -304,6 +314,11 @@
             Loads visual studio .sln solution
             </summary>
             <exception cref="T:System.IO.FileNotFoundException">The file specified in path was not found.</exception>
+        </member>
+        <member name="M:Solution.SaveSolution">
+            <summary>
+            Saves solution into .sln file. Where to save is defined by path.
+            </summary>
         </member>
         <member name="T:SolutionProjectBuilder">
             <summary>

@@ -393,10 +393,6 @@ public class SolutionOrProject
             // ---------------------------------------------------------------------------------
             //  Building project
             // ---------------------------------------------------------------------------------
-            //o.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-            //o.AppendLine("<Project DefaultTargets=\"Build\" ToolsVersion=\"12.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
-            //o.AppendLine("  <ItemGroup Label=\"ProjectConfigurations\">");
-
             o.AppendLine(head + "project" + brO + "\"" + fileName + "\"" + brC);
 
             if (format == "lua")

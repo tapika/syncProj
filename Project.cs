@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -341,6 +342,11 @@ public class Configuration: FileConfigurationInfo
 public class Project
 {
     /// <summary>
+    /// Solution where project is included from. null if project loaded as standalone.
+    /// </summary>
+    public Solution solution;
+
+    /// <summary>
     /// true if it's folder (in solution), false if it's project. (default)
     /// </summary>
     public bool bIsFolder = false;
@@ -636,7 +642,7 @@ public class Project
             path = Path.GetDirectoryName(solution.path) + "\\" + project.RelativePath;
 
         if (project == null)
-            project = new Project();
+            project = new Project() { solution = solution };
 
         if (!File.Exists(path))
             return null;
@@ -739,5 +745,97 @@ public class Project
 
         return project;
     } //LoadProject
+
+    static String condition( String confName )
+    {
+        return "Condition=\"'$(Configuration)|$(Platform)'=='" + confName + "'\"";
+    }
+
+    /// <summary>
+    /// Saves project if necessary.
+    /// </summary>
+    public void SaveProject()
+    {
+        String projectPath;
+
+        if (solution == null)
+            projectPath = SolutionProjectBuilder.m_workPath;
+        else
+            projectPath = Path.GetDirectoryName(solution.path);
+        projectPath = Path.Combine(projectPath, getRelativePath());
+
+        StringBuilder o = new StringBuilder();
+        o.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+        o.AppendLine("<Project DefaultTargets=\"Build\" ToolsVersion=\"12.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
+        o.AppendLine("  <ItemGroup Label=\"ProjectConfigurations\">");
+
+        //
+        // Dump configuration list
+        //
+        foreach (String config in configurations)
+        {
+            String[] confPlatfom = config.Split('|');
+            o.AppendLine("    <ProjectConfiguration Include=\"" + config + "\">");
+            o.AppendLine("      <Configuration>" + confPlatfom[0] + "</Configuration>");
+            o.AppendLine("      <Platform>" + confPlatfom[1] + "</Platform>");
+            o.AppendLine("    </ProjectConfiguration>");
+        }
+        o.AppendLine("  </ItemGroup>");
+
+        o.AppendLine("  <PropertyGroup Label=\"Globals\">");
+        o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
+        o.AppendLine("    <Keyword>Win32Proj</Keyword>");
+        o.AppendLine("    <RootNamespace>" + ProjectName + "</RootNamespace>");
+        o.AppendLine("  </PropertyGroup>");
+        o.AppendLine("  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.Default.props\" />");
+
+        //
+        // Dump general information.
+        //
+        for ( int iConf = 0; iConf < configurations.Count; iConf++ )
+        {
+            String confName = configurations[iConf];
+            Configuration conf = projectConfig[iConf];
+
+            o.AppendLine("  <PropertyGroup " + condition(confName) + " Label=\"Configuration\">");
+            o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
+            o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
+            o.AppendLine("    <PlatformToolset>" + conf.PlatformToolset + "</PlatformToolset>");
+
+            if (conf.WholeProgramOptimization != EWholeProgramOptimization.NoWholeProgramOptimization)
+            {
+                String value = typeof(EWholeProgramOptimization).GetMember(conf.WholeProgramOptimization.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
+                o.AppendLine("    <WholeProgramOptimization>" + value + "</WholeProgramOptimization>");
+            }
+            o.AppendLine("    <CharacterSet>" + conf.CharacterSet.ToString() + "</CharacterSet>");
+            o.AppendLine("  </PropertyGroup>");
+        } //for
+
+
+
+
+
+        //
+        // Write project itself.
+        //
+        String currentPrj = "";
+        Console.Write("Writing project '" + projectPath + "' ... ");
+        if (File.Exists(projectPath)) currentPrj = File.ReadAllText(projectPath);
+
+        String newPrj = o.ToString();
+        //
+        // Save only if needed.
+        //
+        if (currentPrj == newPrj)
+        {
+            Console.WriteLine("up-to-date.");
+        }
+        else
+        {
+            File.WriteAllText(projectPath, newPrj, Encoding.UTF8);
+            Console.WriteLine("ok.");
+        } //if-else
+
+    } //SaveProject
 } //Project
 
