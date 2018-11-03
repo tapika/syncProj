@@ -166,7 +166,7 @@ public class CsScript
                 foreach (CompilerError error in results.Errors)
                 {
                     sb.AppendFormat("{0}({1},{2}): error {3}: {4}\r\n",
-                        Exception2.getPath(path), error.Line, error.Column, error.ErrorNumber, error.ErrorText
+                        Exception2.getPath(error.FileName), error.Line, error.Column, error.ErrorNumber, error.ErrorText
                     );
                 }
                 errors = sb.ToString();
