@@ -593,6 +593,9 @@ public class SolutionProjectBuilder
         else
             selectedConfigurations.Clear();
 
+        if (m_project.configurations.Count == 0)
+            throw new Exception2("You must specify configurations() and platforms() before using this function.");
+
         for ( int i = 0; i < m_project.configurations.Count; i++ )
         {
             if (reConfMatch.Match(m_project.configurations[i]).Success)
