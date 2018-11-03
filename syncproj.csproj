@@ -63,6 +63,8 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Project.cs" />
+    <Compile Include="Solution.cs" />
     <Compile Include="syncProj.cs" />
   </ItemGroup>
   <ItemGroup>
