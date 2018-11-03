@@ -209,7 +209,15 @@ public class CsScript
             }
         } //if
 
-        File.SetLastWriteTime(dllInfoFile, dllInfoTargetDate);
+        try
+        {
+            File.SetLastWriteTime(dllInfoFile, dllInfoTargetDate);
+        }
+        catch (Exception)
+        { 
+            // Visual studio can launch multiple instances of syncProj, and then each will try to compile it's own copy.
+            // Add here just some guard, let's check if this needs to be improved later on.
+        }
 
         if (bCompileOnly)
             return true;
