@@ -235,7 +235,9 @@ public class Project
                 continue;
             }
 
-            // PreprocessorDefinitions, AdditionalIncludeDirectories
+            //
+            // PreprocessorDefinitions, AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
+            //
             FieldInfo fi = typeof(FileInfo).GetField(fileProps.Name.LocalName);
             if (fi == null)
             {
@@ -599,3 +601,4 @@ class Script
         return 0;
     } //Main
 }
+
