@@ -149,6 +149,9 @@ partial class syncProj
                 verifyFiles.Insert(0, test + ".accepted_log.txt");
                 Dictionary<String, bool> testedFiles = new Dictionary<string, bool>();
 
+                //
+                //  Collect all information about which files syncProj tried to save or check if they are up-to-date.
+                //
                 if (UpdateInfo.lastUpdateInfo != null)
                 {
                     verifyFiles.AddRange(UpdateInfo.lastUpdateInfo.filesUpdated);
