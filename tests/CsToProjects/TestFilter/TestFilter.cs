@@ -33,6 +33,20 @@ partial class Builder : SolutionProjectBuilder
                 defines( "DELTA" );
             filter();
 
+
+            project("out_test_filter");
+            platforms("Win32");
+            configurations("Debug", "Release", "ReleaseDebug");
+
+                filter("Debug");
+                defines("_DEBUG");
+
+                filter("Release");
+                defines("NDEBUG");
+
+                filter("ReleaseDebug");
+                defines("NDEBUG2");
+
         }
         catch (Exception ex)
         {

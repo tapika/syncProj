@@ -868,7 +868,7 @@ public class SolutionProjectBuilder
 
         String confMatchPatten;
         if (dFilt.ContainsKey("configurations"))
-            confMatchPatten = dFilt["configurations"];
+            confMatchPatten = "^" + dFilt["configurations"];
         else
             confMatchPatten = ".*?";
 

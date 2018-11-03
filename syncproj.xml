@@ -1977,6 +1977,11 @@
             Last update information of files which were updated or planned to be updated.
             </summary>
         </member>
+        <member name="F:UpdateInfo.bTesting">
+            <summary>
+            true if testing is in progress
+            </summary>
+        </member>
         <member name="F:UpdateInfo.filesUpdated">
             <summary>
             Files which were updated.

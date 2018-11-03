@@ -1,3 +1,5 @@
 syncProj exited with no error
 TestFilter.cs :
-2 files updated
+File updated: out_test_windows.vcxproj.filters
+File updated: out_test_windows.vcxproj
+4 files updated

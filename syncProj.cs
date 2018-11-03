@@ -49,9 +49,22 @@ public class UpdateInfo
     /// </summary>
     static public UpdateInfo lastUpdateInfo = null;
 
+    /// <summary>
+    /// true if testing is in progress
+    /// </summary>
+    static public bool bTesting = false;
+
     public UpdateInfo()
     {
+        UpdateInfo alreadyUpdated = lastUpdateInfo;
         lastUpdateInfo = this;
+
+        //  If test is in progres, we collect all information into same class instance.
+        if (alreadyUpdated != null && bTesting)
+        {
+            lastUpdateInfo.filesUpdated.AddRange(alreadyUpdated.filesUpdated);
+            lastUpdateInfo.filesUpToDate.AddRange(alreadyUpdated.filesUpToDate);
+        }
     }
 
     public UpdateInfo(bool _immidiatePrint)

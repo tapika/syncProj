@@ -145,6 +145,7 @@ partial class syncProj
                     continue;
 
                 UpdateInfo.lastUpdateInfo = null;
+                UpdateInfo.bTesting = true;
 
                 //
                 // We launch test via direct Invoke currently - it's just simpler to debug if there is a problem,
