@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0 Solution Update", "0 Solution Update", "{577813D4-A675-0521-A0EE-F72297967CB2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0 Solution Update", "0 Solution Update", "{FD427EEB-9D76-7AEE-6728-1C9D80C6E0A0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MFCApplication1_sln", "MFCApplication1_sln.vcxproj", "{6EE87CA0-7360-5897-BC29-4A1EDCC09B06}"
 EndProject
@@ -40,6 +40,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{6EE87CA0-7360-5897-BC29-4A1EDCC09B06} = {577813D4-A675-0521-A0EE-F72297967CB2}
+		{6EE87CA0-7360-5897-BC29-4A1EDCC09B06} = {FD427EEB-9D76-7AEE-6728-1C9D80C6E0A0}
 	EndGlobalSection
 EndGlobal

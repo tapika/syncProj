@@ -224,8 +224,9 @@ public class Project
         if (solution == null)
             dir = SolutionProjectBuilder.m_workPath;
         else
-            dir = Path.Combine(Path.GetDirectoryName(solution.path), Path.GetDirectoryName(RelativePath));
+            dir = Path.GetDirectoryName(solution.path);
 
+        dir = Path.Combine(dir, Path.GetDirectoryName(RelativePath));
         return dir;
     }
 

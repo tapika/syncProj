@@ -12,6 +12,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Helper class for generating solution or projects.
@@ -57,7 +58,7 @@ public class SolutionProjectBuilder
         }
 
         if (!Path.IsPathRooted(path))
-            path = Path.Combine(getExecutingScript(), path);
+            path = Path.GetFullPath(Path.Combine(getExecutingScript(), path));
 
         if (!Directory.Exists(path))
             throw new Exception2("Path '" + Exception2.getPath(path) + "' does not exists", 1);
@@ -110,6 +111,30 @@ public class SolutionProjectBuilder
             return Path.GetFileName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
 
         return Path.GetFileNameWithoutExtension( SolutionProjectBuilder.m_currentlyExecutingScriptPath );
+    }
+
+    /// <summary>
+    /// Gets currently executing C# script directory
+    /// </summary>
+    public static String getCsPath( [CallerFilePath] string path = "" )
+    {
+        return path;
+    }
+
+    /// <summary>
+    /// Gets currently executing C# script directory
+    /// </summary>
+    public static String getCsDir( [CallerFilePath] string path = "" )
+    {
+        return Path.GetDirectoryName( path );
+    }
+
+    /// <summary>
+    /// Gets currently executing C# script filename
+    /// </summary>
+    public static String getCsFileName( [CallerFilePath] string path = "" )
+    {
+        return Path.GetFileName( path );
     }
 
     /// <summary>
@@ -387,7 +412,8 @@ public class SolutionProjectBuilder
                 pathSoFar = pathSoFar + ((pathSoFar.Length != 0) ? "/" : "") + pathPart;
                 if (p == null)
                 {
-                    p = new Project() { solution = m_solution, ProjectName = pathPart, RelativePath = pathPart, ProjectGuid = GenerateGuid(pathSoFar), bIsFolder = true };
+                    // GenerateGuid uses extra garbage so group name and project name uuid's won't collide.
+                    p = new Project() { solution = m_solution, ProjectName = pathPart, RelativePath = pathPart, ProjectGuid = GenerateGuid("!#¤%!#¤%" + pathSoFar), bIsFolder = true };
                     m_solution.projects.Add(p);
                     parent.nodes.Add(p);
                     p.parent = parent;
@@ -487,9 +513,8 @@ public class SolutionProjectBuilder
             if (!Path.IsPathRooted(_path))
                 absPath = Path.Combine(m_project.getProjectFolder(), _path);
 
-            // Building only project, save current work path as well.
-            if (m_project.solution == null)
-                setWorkPath(_path);
+            if( !Directory.Exists( absPath ) )
+                throw new Exception2( "Path '" + _path + "' does not exists");
 
             // Measure relative path against solution path if that one is present or against working path.
             String solPath = m_workPath;

@@ -1,0 +1,8 @@
+syncProj exited with no error
+TestPathJump.cs :
+This script ran from: subdir
+Script name: _inSubDir.cs
+This script ran from: subdir
+Script name: _inSubDir2.cs
+No solution or project defined. Use project() or solution() functions in script
+0 files updated

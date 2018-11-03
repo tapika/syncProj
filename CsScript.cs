@@ -335,6 +335,11 @@ public class CsScript
         SolutionProjectBuilder.m_scriptRelativeDir = scriptSubPath;
         String oldScriptPath = SolutionProjectBuilder.m_currentlyExecutingScriptPath;
         SolutionProjectBuilder.m_currentlyExecutingScriptPath = _path;
+        String oldDir = Environment.CurrentDirectory;
+        //
+        // We set current directory to where script is, just so script can use Directory.GetFiles without specifying directory.
+        //
+        Directory.SetCurrentDirectory( Path.GetDirectoryName(_path) );
 
         // ----------------------------------------------------------------
         //  Run script
@@ -342,11 +347,13 @@ public class CsScript
         try
         {
             entry.Invoke(null, new object[] { args });
+            Directory.SetCurrentDirectory( oldDir );
             SolutionProjectBuilder.m_scriptRelativeDir = oldScriptRelativeDir;
             SolutionProjectBuilder.m_currentlyExecutingScriptPath = oldScriptPath;
         }
         catch ( Exception ex )
         {
+            Directory.SetCurrentDirectory( oldDir );
             SolutionProjectBuilder.m_scriptRelativeDir = oldScriptRelativeDir;
             SolutionProjectBuilder.m_currentlyExecutingScriptPath = oldScriptPath;
             Exception2 ex2 = ex.InnerException as Exception2;
@@ -433,7 +440,8 @@ public class CsScript
                         fileFullPath = Path.Combine(Path.GetDirectoryName(csPath), file);
 
                     if (!File.Exists(fileFullPath))
-                        throw new FileSpecificException("Include file specified in '" + fileFullPath + "' was not found (Included from '" + csPath + "')", csPath, iLine);
+                        throw new FileSpecificException("Include file specified in '" + Exception2.getPath(fileFullPath) + 
+                            "' was not found (Included from '" + Exception2.getPath(csPath) + "')", csPath, iLine);
 
                     bool bContains = false;
                     String fPath;

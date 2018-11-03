@@ -1484,7 +1484,7 @@ public class FileSpecificException : Exception2
     /// </summary>
     override public String getThrowLocation()
     {
-        return file + "(" + line + "): ";
+        return Exception2.getPath(file) + "(" + line + "): ";
     }
 };
 

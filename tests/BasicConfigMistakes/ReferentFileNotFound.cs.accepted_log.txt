@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+ReferentFileNotFound.cs :
+ReferentFileNotFound.cs(1): error: Include file specified in 'ThisFileDoesNotExists.cs' was not found (Included from 'ReferentFileNotFound.cs')

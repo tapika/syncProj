@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+NoPlatforms2.cs :
+error: You must use platforms() or configurations() before you start to configure project using other functions

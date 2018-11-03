@@ -1440,6 +1440,21 @@
             </summary>
             <returns>Empty string if no script is yet executing</returns>
         </member>
+        <member name="M:SolutionProjectBuilder.getCsPath(System.String)">
+            <summary>
+            Gets currently executing C# script directory
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.getCsDir(System.String)">
+            <summary>
+            Gets currently executing C# script directory
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.getCsFileName(System.String)">
+            <summary>
+            Gets currently executing C# script filename
+            </summary>
+        </member>
         <member name="F:SolutionProjectBuilder.m_scriptRelativeDir">
             <summary>
             Relative directory from solution. Set by RunScript.
