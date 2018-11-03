@@ -1490,7 +1490,9 @@ public class FileSpecificException : Exception2
 
 
 
-
+/// <summary>
+/// Path helper class.
+/// </summary>
 public class Path2
 {
     /// <summary>

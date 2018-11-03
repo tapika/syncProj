@@ -1,0 +1,4 @@
+syncProj exited with ERROR: -2
+InvalidCssRef.cs :
+InvalidCssRef.cs(1,1): error CS0006: Metadata file 'MystiqueDll.dll' could not be found
+

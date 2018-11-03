@@ -1,0 +1,7 @@
+syncProj exited with no error
+TestCssRef.cs :
+S: Hello, world.
+I: 4711
+L: 1, 2, 3
+No solution or project defined. Use project() or solution() functions in script
+0 files updated

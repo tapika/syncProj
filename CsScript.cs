@@ -109,7 +109,6 @@ public class CsScript
         CsScriptInfo csInfo = getCsFileInfo(filesToCompile[0], true);
         filesToCompile.AddRange(csInfo.csFiles);
 
-
         bool bCompileDll = false;
 
         //---------------------------------------------------------------------------------------------------
@@ -125,6 +124,16 @@ public class CsScript
         // I have made such logic that scripts will be compiled if date / time of main script or any sub-script is changed.
         //---------------------------------------------------------------------------------------------------
         List<long> times = filesToCompile.Select(x => File.GetLastWriteTime(x).Ticks).ToList();
+
+        //
+        // If we are referencing any local .dll file, add it's time into calculation scheme.
+        //
+        foreach (String refDll in csInfo.refFiles)
+        {
+            if (File.Exists(refDll))
+                times.Add(File.GetLastAccessTime(refDll).Ticks);
+        }
+
         times.Sort();
 
         //---------------------------------------------------------------------------------------------------
@@ -203,6 +212,8 @@ public class CsScript
                 refAssemblies = assemblies.ToArray();
             }
             compilerparams.ReferencedAssemblies.AddRange(refAssemblies);
+            foreach( var f in csInfo.refFiles)
+                compilerparams.ReferencedAssemblies.Add(f);
 
             // ----------------------------------------------------------------
             //  If compile errors - report and exit.
@@ -214,9 +225,21 @@ public class CsScript
                 StringBuilder sb = new StringBuilder();
                 foreach (CompilerError error in results.Errors)
                 {
-                    sb.AppendFormat("{0}({1},{2}): error {3}: {4}\r\n",
-                        Exception2.getPath(error.FileName), error.Line, error.Column, error.ErrorNumber, error.ErrorText
-                    );
+                    // Missing reference file will not give any file or line information, we just use compilation
+                    // script filename, and first line position. (Not exactly right, but something at least).
+
+                    if (error.FileName == "")
+                        sb.Append(Exception2.getPath(filesToCompile[0]));
+                    else
+                        sb.Append(Exception2.getPath(error.FileName));
+
+                    if (error.Line == 0)
+                        // error CS0006: Metadata file 'MystiqueDll.dll' could not be found
+                        sb.Append("(1,1)");
+                    else
+                        sb.Append("(" + error.Line + "," + error.Column + ")");
+
+                    sb.AppendFormat(": error {0}: {1}\r\n", error.ErrorNumber, error.ErrorText );
                 }
                 errors = sb.ToString();
                 if (bAllowThrow)
@@ -246,7 +269,7 @@ public class CsScript
         // (Can be edited by C# script)
         //
         //------------------------------------------------------------------------------------------------------
-        Regex reCssRef = new Regex("^ *//css_ref  *(.*);?([\r\n]+|$)", RegexOptions.Multiline);
+        Regex reCssRef = new Regex("^ *//css_ref  *(.*syncproj\\.exe);?([\r\n]+|$)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
         bool bUpdateScriptPath = false;
         String targetCsPath = "";
 
@@ -405,14 +428,16 @@ public class CsScript
 
         if(!exceptFiles.Contains(csPath) )
             exceptFiles.Add(csPath);
-        
+
         // ----------------------------------------------------------------
         //  Using C# kind of syntax - like this:
         //      //css_include <file.cs>;
         // ----------------------------------------------------------------
-        Regex reIsCommentUsingEmptyLine = new Regex("^ *(//|using|$)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        Regex reCssImport = new Regex("^ *//css_include +(.*?);?$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        Regex reDebug = new Regex("^ *//css_debug", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        var regexOpt = RegexOptions.Multiline | RegexOptions.IgnoreCase;
+        Regex reIsCommentUsingEmptyLine = new Regex("^ *(//|using|$)", regexOpt);
+        Regex reCssImport = new Regex("^ *//css_include +(.*?);?$", regexOpt);
+        Regex reDebug = new Regex("^ *//css_debug", regexOpt);
+        Regex reCssRef = new Regex("^ *//css_ref +(.*?);?$", regexOpt);
 
         int iLine = 1;
 
@@ -429,6 +454,29 @@ public class CsScript
                 // If we have any comments, or using namespace or empty line, we continue scanning, otherwise aborting (class, etc...)
                 if (!reIsCommentUsingEmptyLine.Match(line).Success)
                     break;
+
+                // Pick up .dll filename from //css_ref <dll filename> file line.
+                var rasm = reCssRef.Match(line);
+                if (rasm.Success)
+                {
+                    // Not interested in ourselves, we are added automatically as reference .dll
+                    if (line.EndsWith("syncproj.exe", StringComparison.CurrentCultureIgnoreCase))
+                        continue;
+
+                    // Allow end user to use %SystemRoot%\....dll environment variables.
+                    String file = Environment.ExpandEnvironmentVariables(rasm.Groups[1].Value);
+
+                    // If assembly file exists near script, use it.
+                    if (bUseAbsolutePaths)
+                    { 
+                        String fileFullPath = Path.Combine(Path.GetDirectoryName(csPath), file);
+                        if (File.Exists(fileFullPath))
+                            file = fileFullPath;
+                    } //if
+
+                    csInfo.refFiles.Add(file);
+                    continue;
+                }
 
                 var rem = reCssImport.Match(line);
                 if (rem.Success)
@@ -470,6 +518,10 @@ public class CsScript
                         foreach (String subFile in subCsInfo.csFiles)
                             if (!csInfo.csFiles.Contains(subFile))
                                 csInfo.csFiles.Add(subFile);
+
+                        foreach (String refFile in subCsInfo.refFiles)
+                            if (!csInfo.refFiles.Contains(refFile))
+                                csInfo.refFiles.Add(refFile);
                     } //if
 
                 } //if
@@ -493,6 +545,11 @@ public class CsScriptInfo
     /// Referred .cs files to include into compilation
     /// </summary>
     public List<String> csFiles = new List<string>();
+
+    /// <summary>
+    /// Referred .dll's and assembly names, which must be included as reference assemblies when compiling.
+    /// </summary>
+    public List<String> refFiles = new List<string>();
 
     /// <summary>
     /// Just additional //css_debug for compile troubleshooting in this code

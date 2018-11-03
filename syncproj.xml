@@ -42,6 +42,11 @@
             Referred .cs files to include into compilation
             </summary>
         </member>
+        <member name="F:CsScriptInfo.refFiles">
+            <summary>
+            Referred .dll's and assembly names, which must be included as reference assemblies when compiling.
+            </summary>
+        </member>
         <member name="F:CsScriptInfo.bCsDebug">
             <summary>
             Just additional //css_debug for compile troubleshooting in this code
@@ -2137,6 +2142,11 @@
         <member name="M:FileSpecificException.getThrowLocation">
             <summary>
             Gets source code location from where error came from
+            </summary>
+        </member>
+        <member name="T:Path2">
+            <summary>
+            Path helper class.
             </summary>
         </member>
         <member name="M:Path2.GetScriptPath(System.Int32)">
