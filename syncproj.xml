@@ -1172,6 +1172,11 @@
             </summary>
             <param name="name">Project name</param>
         </member>
+        <member name="M:SolutionProjectBuilder.checkProjectToolset">
+            <summary>
+            Checks default toolset after vsver or kind project definition.
+            </summary>
+        </member>
         <member name="M:SolutionProjectBuilder.vsver(System.Int32)">
             <summary>
             Sets Visual Studio file format version to be used.

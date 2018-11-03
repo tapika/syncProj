@@ -82,6 +82,7 @@ public class Project
     /// <param name="ver">Visual studio version number</param>
     public void SetFileFormatVersion( int ver )
     {
+        fileFormatVersion = ver;
         switch (ver)
         {
             case 2010:

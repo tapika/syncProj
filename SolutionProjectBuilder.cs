@@ -135,6 +135,9 @@ public class SolutionProjectBuilder
         else {
             requireProjectSelected();
 
+            if (m_project.projectConfig.Count != 0)
+                throw new Exception2("You must use platforms() or configurations() before you start to configure project using other functions", 1);
+
             m_project.configurations.Clear();
 
             foreach (String platform in m_platforms)
@@ -293,6 +296,32 @@ public class SolutionProjectBuilder
             m_project.bDefinedAsExternal = false;
     }
 
+
+    /// <summary>
+    /// Checks default toolset after vsver or kind project definition.
+    /// </summary>
+    static void checkProjectToolset()
+    {
+        if (m_project.Keyword == EKeyword.Win32Proj || m_project.Keyword == EKeyword.MFCProj)
+        {
+            using (new UsingSyncProj(4))
+            {
+                switch (m_project.fileFormatVersion)
+                {
+                    case 2010: toolset("v100"); break;
+                    case 2012: toolset("v110"); break;
+                    case 2013: toolset("v120"); break;
+                    case 2015: toolset("v140"); break;
+                    case 2017: toolset("v141"); break;
+                    default:
+                        // Try to guess the future. 2019 => "v160" ?
+                        toolset("v" + (((m_project.fileFormatVersion - 2019) + 16) * 10).ToString());
+                        break;
+                } //switch
+            } //using
+        } //if
+    }
+
     /// <summary>
     /// Sets Visual Studio file format version to be used.
     /// </summary>
@@ -305,22 +334,6 @@ public class SolutionProjectBuilder
         if (m_project != null)
         {
             m_project.SetFileFormatVersion(vsVersion);
-
-            using (new UsingSyncProj(4))
-            {
-                switch (vsVersion)
-                {
-                    case 2010: toolset("v100");  break;
-                    case 2012: toolset("v110");  break;
-                    case 2013: toolset("v120");  break;
-                    case 2015: toolset("v140");  break;
-                    case 2017: toolset("v141");  break;
-                    default:
-                        // Try to guess the future. 2019 => "v160" ?
-                        toolset("v" + (((vsVersion - 2019) + 16) * 10).ToString());
-                        break;
-                } //switch
-            } //using
         }
         else 
         {
@@ -723,7 +736,9 @@ public class SolutionProjectBuilder
             default:
                 throw new Exception2("os value is not supported '" + os + "' - supported values are: windows, android, package");
         }
-        
+
+        checkProjectToolset();
+
 
         EConfigurationType type;
         var enums = Enum.GetValues(typeof(EConfigurationType)).Cast<EConfigurationType>();
