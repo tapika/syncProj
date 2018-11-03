@@ -55,15 +55,33 @@
             Made as a property so can be set over reflection.
             </summary>
         </member>
+        <member name="F:Project.fileFormatVersion">
+            <summary>
+            Visual studio file format version, e.g. 2010, 2012, ...
+            </summary>
+        </member>
+        <member name="M:Project.SetFileFormatVersion(System.Int32)">
+            <summary>
+            Sets project file format version
+            </summary>
+            <param name="ver">Visual studio version number</param>
+        </member>
         <member name="F:Project.ToolsVersion">
             <summary>
             "4.0" for vs2010/vs2012, "12.0" for vs2013, "14.0" for vs2015
             </summary>
         </member>
-        <member name="M:Project.setOsBase(System.String)">
+        <member name="M:Project.setToolsVersion(System.String)">
             <summary>
-            Sets os base, returns false if not supported.
+            Sets tools version, also tried to detect file format version
             </summary>
+            <param name="ver"></param>
+        </member>
+        <member name="M:Project.getOs">
+            <summary>
+            Gets target OS based on keyword.
+            </summary>
+            <returns></returns>
         </member>
         <member name="F:Project.WindowsTargetPlatformVersion">
             <summary>
@@ -151,6 +169,12 @@
             <param name="clCompile">xml node from where to get</param>
             <param name="file2compile">compiler options to fill out</param>
             <param name="subField">Into which field to enter if non null</param>
+        </member>
+        <member name="M:Project.CopyField(System.Object,System.String,System.Xml.Linq.XElement)">
+            <summary>
+            Copies field by "field" - name, from node.
+            </summary>
+            <returns>false if fails (value does not exists(</returns>
         </member>
         <member name="M:Project.LoadProject(Solution,System.String,Project)">
             <summary>
@@ -417,6 +441,11 @@
             Optimization level
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.RuntimeLibrary">
+            <summary>
+            Run-time library
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.FunctionLevelLinking">
             <summary>
             Allows the compiler to package individual functions in the form of packaged functions (COMDATs).
@@ -479,7 +508,8 @@
         </member>
         <member name="F:FileInfo.fileConfig">
             <summary>
-            Per configuration specific file configuration.
+            Per configuration specific file configuration. It's acceptable for this list to have 0 entries if no file specific configuration
+            is introduced.
             </summary>
         </member>
         <member name="T:CustomBuildRule">
@@ -505,6 +535,11 @@
         <member name="F:CustomBuildRule.AdditionalInputs">
             <summary>
             Visual studio: additional dependencies
+            </summary>
+        </member>
+        <member name="F:CustomBuildRule.LinkObjects">
+            <summary>
+            Specify whether the inputs and outputs files with specific extension are passed to linker.
             </summary>
         </member>
         <member name="M:CustomBuildRule.ToString">
@@ -537,6 +572,11 @@
         <member name="F:EConfigurationType.StaticLibrary">
             <summary>
             .lib or .a
+            </summary>
+        </member>
+        <member name="F:EConfigurationType.Utility">
+            <summary>
+            Utility project
             </summary>
         </member>
         <member name="T:ECharacterSet">
@@ -602,6 +642,36 @@
         <member name="F:EOptimization.Full">
             <summary>
             Full Optimization
+            </summary>
+        </member>
+        <member name="T:ERuntimeLibrary">
+            <summary>
+            Run-time library
+            </summary>
+        </member>
+        <member name="F:ERuntimeLibrary.NotSet">
+            <summary>
+            Just artificial value to tell that value was not initialized.
+            </summary>
+        </member>
+        <member name="F:ERuntimeLibrary.MultiThreaded">
+            <summary>
+            Multi-threaded (/MT)
+            </summary>
+        </member>
+        <member name="F:ERuntimeLibrary.MultiThreadedDebug">
+            <summary>
+            Multi-threaded Debug (/MTd)
+            </summary>
+        </member>
+        <member name="F:ERuntimeLibrary.MultiThreadedDLL">
+            <summary>
+            Multi-threaded (/MT)
+            </summary>
+        </member>
+        <member name="F:ERuntimeLibrary.MultiThreadedDebugDLL">
+            <summary>
+            Multi-threaded Debug DLL (/MDd)
             </summary>
         </member>
         <member name="T:EGenerateDebugInformation">
@@ -737,6 +807,7 @@
             For example:
                 null - default
                 'Clang_3_8'     - Clang 3.8
+                'v141'          - for Visual Studio 2017.
                 'v140'          - for Visual Studio 2015.
                 'v120'          - for Visual Studio 2013.
             </summary>
@@ -907,6 +978,11 @@
             Use MFC in a Shared DLL
             </summary>
         </member>
+        <member name="F:EUseOfMfc._false">
+            <summary>
+            Use Standard Windows Libraries (No MFC), can be serialized for Utility project type.
+            </summary>
+        </member>
         <member name="T:Solution">
             <summary>
             .sln loaded into class.
@@ -917,7 +993,7 @@
             File path from where solution was loaded.
             </summary>
         </member>
-        <member name="F:Solution.visualStudioFormatTag">
+        <member name="F:Solution.fileFormatVersion">
             <summary>
             Visual studio version information used for generation, for example 2010, 2012, 2015 and so on...
             </summary>
@@ -984,6 +1060,11 @@
             Currently selected active project on which all function below operates upon. null if not selected yet.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.solutionUpdateProject">
+            <summary>
+            project which perform update of solution, all newly added projects must be dependent on it.
+            </summary>
+        </member>
         <member name="F:SolutionProjectBuilder.m_workPath">
             <summary>
             Path where we are building solution / project at. By default same as script is started from.
@@ -1009,12 +1090,6 @@
             Creates new solution.
             </summary>
             <param name="name">Solution name</param>
-        </member>
-        <member name="M:SolutionProjectBuilder.vsver(System.Int32)">
-            <summary>
-            Specifies Visual studio version upon which given solution is targetted.
-            </summary>
-            <param name="vsVersionNumber"></param>
         </member>
         <member name="M:SolutionProjectBuilder.platforms(System.String[])">
             <summary>
@@ -1051,12 +1126,11 @@
             </summary>
             <param name="name">Project name</param>
         </member>
-        <member name="M:SolutionProjectBuilder.osbase(System.String)">
+        <member name="M:SolutionProjectBuilder.vsver(System.Int32)">
             <summary>
-            Specifies IDE / OS where project is targetted upon.
-            This function also sets default toolset, so if you want to override default toolset, specify it manually after this function call.
+            Sets Visual Studio file format version to be used.
             </summary>
-            <param name="osBase">One of following: vs2010, vs2012, vs2015, android, package</param>
+            <param name="vsVersion">2010, 2012, 2013, ...</param>
         </member>
         <member name="M:SolutionProjectBuilder.location(System.String)">
             <summary>
@@ -1128,7 +1202,7 @@
                 or by file name, for example: "files:my.cpp"
             </param>
         </member>
-        <member name="M:SolutionProjectBuilder.kind(System.String)">
+        <member name="M:SolutionProjectBuilder.kind(System.String,System.String)">
             <summary>
             Specifies application type, one of following: 
             </summary>
@@ -1136,8 +1210,9 @@
             WindowedApp, Application    - Window application<para />
             DynamicLibrary, SharedLib   - .dll<para />
             </param>
+            <param name="os">"windows" (default), "android" or "package"</param>
         </member>
-        <member name="M:SolutionProjectBuilder.toolset(System.String,System.Int32)">
+        <member name="M:SolutionProjectBuilder.toolset(System.String)">
             <summary>
             Selects the compiler, linker, etc. which are used to build a project or configuration.
             </summary>
@@ -1146,7 +1221,6 @@
                 'v140' - for Visual Studio 2015.<para />
                 'v120' - for Visual Studio 2013.<para />
             </param>
-            <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
         </member>
         <member name="M:SolutionProjectBuilder.androidapilevel(System.String)">
             <summary>
@@ -1260,6 +1334,14 @@
         <member name="M:SolutionProjectBuilder.projectScript(System.String,System.String,System.String)">
             <summary>
             Configures project rebuild step.
+            </summary>
+            <param name="script2include">Script to include into project</param>
+            <param name="script2compile">Script which shall be compiled once script2include is changed</param>
+            <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.solutionScript(System.String,System.String,System.String)">
+            <summary>
+            Configures solution rebuild step.
             </summary>
             <param name="script2include">Script to include into project</param>
             <param name="script2compile">Script which shall be compiled once script2include is changed</param>
@@ -1381,6 +1463,7 @@
         <member name="M:SolutionOrProject.tabbedLine(System.String,System.String)">
             <summary>
             Adds heading (tab) before each line - s is multiline string.
+            This code is also detects multiline string start, then heading is not appended.
             </summary>
         </member>
         <member name="M:SolutionOrProject.WriteLinesToDump(System.Text.StringBuilder,Dictionary2{System.String,System.Collections.Generic.List{System.String}},System.Boolean@,System.String)">

@@ -390,10 +390,11 @@ public class SolutionOrProject
             //  Building solution
             // ---------------------------------------------------------------------------------
             o.AppendLine(head + "solution" + brO + "\"" + fileName + "\"" + brC);
-            o.AppendLine(head + "    " + ((format == "lua") ? comment : "") + "vsver" + brO + sln.visualStudioFormatTag + brC);
+            o.AppendLine(head + "    " + ((format == "lua") ? comment : "") + "vsver" + brO + sln.fileFormatVersion + brC);
 
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
+            o.AppendLine(head + "    solutionScript(\"" + fileName + ".cs" + "\", null, \"" + pathToSyncProjExe.Replace("\\", "\\\\") + "\");");
 
             String wasInSubGroup = "";
             List<String> groupParts = new List<string>();
@@ -482,18 +483,21 @@ public class SolutionOrProject
 
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
-            o.AppendLine(head + "    " + ((format == "lua") ? comment : "") + "osbase" + brO + "\"" + proj.getOsBase() + "\"" + brC);
             o.AppendLine(head + "    uuid" + brO + "\"" + proj.ProjectGuid.Substring(1, proj.ProjectGuid.Length - 2) + "\"" + brC);
+            o.AppendLine(head + "    vsver" + brO + proj.fileFormatVersion + brC);
             
             // Packaging projects cannot have custom build step.
             if( bCsScript && proj.Keyword != EKeyword.Package)
                 o.AppendLine(head + "    projectScript(\"" + fileName + ".cs" + "\", null, \"" + pathToSyncProjExe.Replace("\\", "\\\\") + "\");");
 
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
-
+            
             ConfigationSpecificValue(proj, proj.projectConfig, "ConfigurationType", lines2dump, (s) => {
                     String r = typeof(EConfigurationType).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
-                    return "kind" + brO + "\"" + r + "\"" + brC;
+                    if( format == "lua" )
+                        return "kind" + brO + "\"" + r + "\"" + brC;
+                    else
+                        return "kind" + brO + "\"" + r + "\",\"" + proj.getOs() + "\"" + brC;
             } );
 
             ConfigationSpecificValue(proj, proj.projectConfig, "UseDebugLibraries", lines2dump, (s) => {
@@ -700,6 +704,27 @@ public class SolutionOrProject
         }
     } //TagPchEntries
 
+    static String csQuoteString(String s)
+    {
+        s = Regex.Replace(s, @"\r\n|\n\r|\n|\r", "\n");     // Linefeed normalize, take 1.
+        bool bUseMultilineQuotation = s.Contains('\n');
+
+        if (!bUseMultilineQuotation)
+        {
+            int backSlashes = s.Count(x => x == '\\');
+            bUseMultilineQuotation = backSlashes > 5;
+        }
+
+        if (bUseMultilineQuotation)
+        {
+            return "@\"" + s.Replace("\"", "\"\"") + "\"";
+        }
+        else
+        { 
+            return "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        }
+    }
+
 
     /// <param name="proj"></param>
     /// <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
@@ -779,8 +804,17 @@ public class SolutionOrProject
                     r = "buildrule" + arO + "new CustomBuildRule() {" + lf;
                     if( cbp.Message != "" )
                         r += "    Message = \"" + cbp.Message + "\", " + lf;
-                    r += "    Command = \"" + cbp.Command + "\", " + lf;
-                    r += "    Outputs = \"" + cbp.Outputs + "\"" + lf;
+                    r += "    Command = " + csQuoteString(cbp.Command) + ", " + lf;
+                    r += "    Outputs = " + csQuoteString(cbp.Outputs);
+
+                    if( cbp.AdditionalInputs != "" )
+                        r += "," + lf + "    AdditionalInputs = " + csQuoteString(cbp.AdditionalInputs);
+
+                    if ( cbp.LinkObjects )
+                        r += lf;
+                    else
+                        r += "," + lf + "    LinkObjects = false" + lf;
+                    
                     r += "});";
                 }
                 else
@@ -820,8 +854,11 @@ public class SolutionOrProject
 
             FieldInfo fi = typeof(FileConfigurationInfo).GetField(commaField);
 
-            if (fi == null)
+            if (fi == null && configList.Count != 0 && configList.First().GetType() == typeof(Configuration))
                 fi = typeof(Configuration).GetField(commaField);
+
+            if (fi == null)     // E.g. IncludePath does not exists in FileConfigurationInfo.
+                continue;
 
             List<List<String>> items = new List<List<string>>();
             List<String> origValues = new List<string>();               // To be able to restore model back for new format.
@@ -925,15 +962,35 @@ public class SolutionOrProject
 
     } //UpdateConfigurationEntries
 
+    static Regex reEndOfMuiltLineString = new Regex("([^\"]|^)\"([^\"]|$)");
     /// <summary>
     /// Adds heading (tab) before each line - s is multiline string.
+    /// This code is also detects multiline string start, then heading is not appended.
     /// </summary>
     static String tabbedLine(String tab, String s)
     {
         String r = "";
+        s = Regex.Replace(s, @"\r\n|\n\r|\n|\r", "\r\n");     // Linefeed normalize, take 2.
+        bool multiLineQuotedString = false;
 
-        foreach (String i in s.Split(new String[] { lf }, StringSplitOptions.None))
-            r += tab + i + lf;
+        foreach (String line in s.Split(new String[] { lf }, StringSplitOptions.None))
+        {
+            int pos = 0;
+
+            if(!multiLineQuotedString )
+                r += tab;
+
+            r += line + lf;
+
+            if (!multiLineQuotedString)
+                pos = line.IndexOf("@\"");
+
+            if (pos != -1 && !multiLineQuotedString)
+                multiLineQuotedString = true;
+
+            if(multiLineQuotedString && reEndOfMuiltLineString.Match(line, pos + 2, line.Length - pos - 2).Success )
+                multiLineQuotedString = false;
+        } //forach
 
         return r;
     }

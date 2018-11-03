@@ -25,7 +25,12 @@ public class SolutionProjectBuilder
     /// Currently selected active project on which all function below operates upon. null if not selected yet.
     /// </summary>
     public static Project m_project = null;
-    
+
+    /// <summary>
+    /// project which perform update of solution, all newly added projects must be dependent on it.
+    /// </summary>
+    static String solutionUpdateProject = "";
+
     /// <summary>
     /// Path where we are building solution / project at. By default same as script is started from.
     /// </summary>
@@ -106,16 +111,6 @@ public class SolutionProjectBuilder
     {
         if (m_solution == null)
             throw new Exception2("Solution not specified (Use solution(\"name\" to specify new solution)");
-    }
-
-    /// <summary>
-    /// Specifies Visual studio version upon which given solution is targetted.
-    /// </summary>
-    /// <param name="vsVersionNumber"></param>
-    static public void vsver(int vsVersionNumber)
-    { 
-        requireSolutionSelected();
-        m_solution.visualStudioFormatTag = vsVersionNumber;
     }
 
     static void requireProjectSelected()
@@ -208,11 +203,14 @@ public class SolutionProjectBuilder
         if (m_project != null)
         {
             if (m_solution != null)
-                m_solution.projects.Add(m_project);
+            {
+                if(!m_solution.projects.Contains(m_project) )
+                    m_solution.projects.Add(m_project);
+            }
             else
                 // We are collecting projects only (no solution) and this is not last project
-                if( name != null )
-                    m_project.SaveProject();
+                if (name != null)
+                m_project.SaveProject();
         }
 
         // Release active project
@@ -224,7 +222,20 @@ public class SolutionProjectBuilder
             return;
         }
 
+        if (m_solution != null)
+        {
+            m_project = m_solution.projects.Where(x => x.ProjectName == name).FirstOrDefault();
+
+            // Selecting already specified project.
+            if (m_project != null)
+                return;
+        }
+
         m_project = new Project() { solution = m_solution };
+
+        if (solutionUpdateProject != "")
+            dependson(solutionUpdateProject);
+
         m_project.ProjectName = name;
         m_project.language = "C++";
         m_project.RelativePath = Path.Combine(m_scriptRelativeDir, name);
@@ -276,24 +287,39 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
-    /// Specifies IDE / OS where project is targetted upon.
-    /// This function also sets default toolset, so if you want to override default toolset, specify it manually after this function call.
+    /// Sets Visual Studio file format version to be used.
     /// </summary>
-    /// <param name="osBase">One of following: vs2010, vs2012, vs2015, android, package</param>
-    static public void osbase(String osBase)
+    /// <param name="vsVersion">2010, 2012, 2013, ...</param>
+    static public void vsver(int vsVersion)
     {
-        requireProjectSelected();
+        if (m_solution == null && m_project == null)
+            requireSolutionSelected();
 
-        if( !m_project.setOsBase(osBase) )
-            throw new Exception2("osbase not supported '" + osBase + "' - supported bases are: vs2010, vs2012, vs2015, android, package");
-
-        // Let's try to specify toolset to use automatically.
-        switch (osBase)
+        if (m_project != null)
         {
-            case "vs2013": toolset("v120", 1); break;
-            case "vs2012": toolset("v110", 1); break;
+            m_project.SetFileFormatVersion(vsVersion);
+
+            using (new UsingSyncProj(1))
+            {
+                switch (vsVersion)
+                {
+                    case 2010: toolset("v100");  break;
+                    case 2012: toolset("v110");  break;
+                    case 2013: toolset("v120");  break;
+                    case 2015: toolset("v140");  break;
+                    case 2017: toolset("v141");  break;
+                    default:
+                        // Try to guess the future. 2019 => "v160" ?
+                        toolset("v" + (((vsVersion - 2019) + 16) * 10).ToString());
+                        break;
+                } //switch
+            } //using
         }
-    }
+        else 
+        {
+            m_solution.fileFormatVersion = vsVersion;
+        }
+    } //vsver
 
     /// <summary>
     /// The location function sets the destination directory for a generated solution or project file.
@@ -440,8 +466,8 @@ public class SolutionProjectBuilder
         String errors = "";
         String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, path);
 
-        if (!CsScript.RunScript(fullPath, true, true, out errors, "no_exception_handling"))
-            throw new Exception(errors);
+        if (!CsScript.RunScript(fullPath, true, false, out errors, "no_exception_handling"))
+            throw new Exception2(errors);
     }
 
 
@@ -604,8 +630,25 @@ public class SolutionProjectBuilder
     /// WindowedApp, Application    - Window application<para />
     /// DynamicLibrary, SharedLib   - .dll<para />
     /// </param>
-    static public void kind(String _kind)
+    /// <param name="os">"windows" (default), "android" or "package"</param>
+    static public void kind(String _kind, String os = null)
     {
+        requireProjectSelected();
+
+        if (os == null) os = "windows";
+        switch (os.ToLower())
+        {
+            case "windows": 
+                if(m_project.Keyword == EKeyword.None)      // flags ("MFC") can also set this
+                    m_project.Keyword = EKeyword.Win32Proj; 
+                break;
+            case "android": m_project.Keyword = EKeyword.Android; break;
+            case "package": m_project.Keyword = EKeyword.Package; break;
+            default:
+                throw new Exception2("os value is not supported '" + os + "' - supported values are: windows, android, package");
+        }
+        
+
         EConfigurationType type;
         var enums = Enum.GetValues(typeof(EConfigurationType)).Cast<EConfigurationType>();
         ESubSystem subsystem = ESubSystem.Windows;
@@ -618,9 +661,13 @@ public class SolutionProjectBuilder
             case "SharedLib":           type = EConfigurationType.DynamicLibrary; break;
             case "DynamicLibrary":      type = EConfigurationType.DynamicLibrary; break;
             case "StaticLib":           type = EConfigurationType.StaticLibrary; break;
+            case "Utility":             type = EConfigurationType.Utility; m_project.Keyword = EKeyword.None; break;
             default:
                 throw new Exception2("kind value is not supported '" + _kind + "' - supported values are: " + String.Join(",", enums.Select(x => x.ToString()) ));
         }
+
+        if (type == EConfigurationType.Utility && m_project.getPlatforms().Contains("x86"))
+            throw new Exception("Utility projects can use only 'Win32' as a platform, not 'x86'");
 
         foreach (var conf in getSelectedProjectConfigurations())
         {
@@ -637,8 +684,7 @@ public class SolutionProjectBuilder
     ///     'v140' - for Visual Studio 2015.<para />
     ///     'v120' - for Visual Studio 2013.<para />
     /// </param>
-    /// <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
-    static public void toolset(String toolset, int callerFrame = 0)
+    static public void toolset(String toolset)
     {
         foreach (var conf in getSelectedProjectConfigurations())
             conf.PlatformToolset = toolset;
@@ -1051,18 +1097,13 @@ public class SolutionProjectBuilder
             conf.customBuildRule = cbt;
     } //buildrule
 
-    /// <summary>
-    /// Configures project rebuild step.
-    /// </summary>
-    /// <param name="script2include">Script to include into project</param>
-    /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
-    /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
-    static public void projectScript(String script2include, String script2compile, String pathToSyncProjExe )
+
+    static void selfCompileScript(String script2include, String script2compile, String pathToSyncProjExe)
     {
         if (script2compile == null)
             script2compile = script2include;
 
-        using (new UsingSyncProj(1))
+        using (new UsingSyncProj(2 /*called from projectScript & solutionScript - 2 frames in call stack */))
         {
             files(script2include);
             filter("files:" + script2include);
@@ -1082,6 +1123,50 @@ public class SolutionProjectBuilder
         }
     }
 
+    /// <summary>
+    /// Configures project rebuild step.
+    /// </summary>
+    /// <param name="script2include">Script to include into project</param>
+    /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
+    /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
+    static public void projectScript(String script2include, String script2compile, String pathToSyncProjExe )
+    {
+        selfCompileScript(script2include, script2compile, pathToSyncProjExe);
+    }
+
+    /// <summary>
+    /// Configures solution rebuild step.
+    /// </summary>
+    /// <param name="script2include">Script to include into project</param>
+    /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
+    /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
+    static public void solutionScript(String script2include, String script2compile, String pathToSyncProjExe)
+    {
+        if (script2compile == null)
+            script2compile = script2include;
+
+        requireSolutionSelected();
+        String projectName = Path.GetFileNameWithoutExtension(script2compile);
+
+        using (new UsingSyncProj(1))
+        {
+            group("0 Solution Update");
+            project(projectName);
+                // Utility projects allow only 'Win32' as a platform
+                var lplatforms = m_platforms.Select(x => (x == "x86") ? "Win32" : x).ToArray();
+                // Same platforms and configurations as in solution.
+                platforms(lplatforms);
+                
+                configurations(m_configurations.ToArray());
+                kind("Utility");
+                // Redirect so would not conflict with existing projects.
+                objdir("obj/" + projectName + "_temp");
+        }
+
+        selfCompileScript(script2include, script2compile, pathToSyncProjExe);
+        group("");
+        solutionUpdateProject = projectName;
+    }
 
     /// <summary>
     /// Enables certain flags for specific configurations.

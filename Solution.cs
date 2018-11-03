@@ -23,7 +23,7 @@ public class Solution
     /// <summary>
     /// Visual studio version information used for generation, for example 2010, 2012, 2015 and so on...
     /// </summary>
-    public int visualStudioFormatTag;
+    public int fileFormatVersion;
 
     /// <summary>
     /// null for old visual studio's
@@ -82,9 +82,9 @@ public class Solution
 
         int vsNumber = Int32.Parse(Regex.Match(slnTxt, "^\\# Visual Studio ([0-9]+)[\r\n]+", RegexOptions.Multiline).Groups[1].Value);
         if (vsNumber > 2000)
-            s.visualStudioFormatTag = vsNumber;
+            s.fileFormatVersion = vsNumber;
         else
-            s.visualStudioFormatTag = vsNumber - 14 + 2015;     // Visual Studio 14 => vs2015, formula might not be applicable for future vs versions.
+            s.fileFormatVersion = vsNumber - 14 + 2015;     // Visual Studio 14 => vs2015, formula might not be applicable for future vs versions.
 
         foreach (String line in new String[] { "VisualStudioVersion", "MinimumVisualStudioVersion" })
         {
@@ -253,7 +253,7 @@ public class Solution
 
         o.AppendLine();
 
-        int verTag = visualStudioFormatTag;
+        int verTag = fileFormatVersion;
 
         if (verTag == 0)
             verTag = 2015;
@@ -270,8 +270,16 @@ public class Solution
 
         o.AppendLine("# Visual Studio " + verTag.ToString());
 
+        // For some reason must be specified, otherwise Visual studio will try to save project after load.
+        if (verTag >= 2015)
+        {
+            String ver = MinimumVisualStudioVersion;
+            if( ver == null ) ver = "10.0.40219.1";
+            o.AppendLine("MinimumVisualStudioVersion = " + ver);
+        }
+
         // Visual studio 2015 itself dumps also VisualStudioVersion & MinimumVisualStudioVersion - but we cannot support it, as it's targetted per visual studio toolset version.
-        
+
         //
         // Dump projects.
         //
@@ -321,13 +329,36 @@ public class Solution
             if (p.IsSubFolder() )       // If sub-folder no need to list it here.
                 continue;
 
+            List<String> projConfs = p.getConfigurationNames();
+            List<String> projPlatforms = p.getPlatforms();
+
             foreach( String conf in sortedConfs )
             {
                 int iConf = configurations.IndexOf(conf);
                 String mappedConf = conf;
 
                 if (p.slnConfigurations != null && iConf < p.slnConfigurations.Count)
+                {
+                    // Mapped configuration item is specified.
                     mappedConf = p.slnConfigurations[iConf];
+                }
+                else {
+                    //
+                    // Try to map configuration by ourselfs. Map x86 to Win32 automatically.
+                    //
+                    if (!p.configurations.Contains(conf))
+                    {
+                        String[] confPlat = conf.Split('|');
+
+                        if (!projConfs.Contains(confPlat[0]))
+                            continue;
+
+                        if (confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
+                            mappedConf = confPlat[0] + '|' + "Win32";
+                        else
+                            continue;
+                    } //if
+                }
 
                 bool bPeformBuild = true;
                 bool? bPerformDeploy = null;

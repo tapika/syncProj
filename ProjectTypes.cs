@@ -253,6 +253,11 @@ public class FileConfigurationInfo
     public EOptimization Optimization = EOptimization.MaxSpeed;
 
     /// <summary>
+    /// Run-time library
+    /// </summary>
+    public ERuntimeLibrary RuntimeLibrary = ERuntimeLibrary.NotSet;
+
+    /// <summary>
     /// Allows the compiler to package individual functions in the form of packaged functions (COMDATs).
     /// </summary>
     public bool FunctionLevelLinking = false;
@@ -317,7 +322,8 @@ public class FileInfo
     public String Project;
 
     /// <summary>
-    /// Per configuration specific file configuration.
+    /// Per configuration specific file configuration. It's acceptable for this list to have 0 entries if no file specific configuration
+    /// is introduced.
     /// </summary>
     public List<FileConfigurationInfo> fileConfig = new List<FileConfigurationInfo>();
 }
@@ -344,6 +350,10 @@ public class CustomBuildRule
     /// Visual studio: additional dependencies
     /// </summary>
     public String AdditionalInputs = "";
+    /// <summary>
+    /// Specify whether the inputs and outputs files with specific extension are passed to linker.
+    /// </summary>
+    public bool LinkObjects = true;
 
     /// <summary>
     /// Gets class instance as one xml string.
@@ -395,7 +405,13 @@ public enum EConfigurationType
     /// .lib or .a
     /// </summary>
     [FunctionName("StaticLib")]
-    StaticLibrary
+    StaticLibrary,
+
+    /// <summary>
+    /// Utility project
+    /// </summary>
+    [FunctionName("Utility")]
+    Utility
 };
 
 /// <summary>
@@ -497,6 +513,38 @@ public enum EOptimization
     [FunctionName("on")]
     Full
 }
+
+/// <summary>
+/// Run-time library
+/// </summary>
+public enum ERuntimeLibrary
+{
+    /// <summary>
+    /// Just artificial value to tell that value was not initialized.
+    /// </summary>
+    NotSet,
+
+    /// <summary>
+    /// Multi-threaded (/MT)
+    /// </summary>
+    MultiThreaded,
+
+    /// <summary>
+    /// Multi-threaded Debug (/MTd)
+    /// </summary>
+    MultiThreadedDebug,
+
+    /// <summary>
+    /// Multi-threaded (/MT)
+    /// </summary>
+    MultiThreadedDLL,
+
+    /// <summary>
+    /// Multi-threaded Debug DLL (/MDd)
+    /// </summary>
+    MultiThreadedDebugDLL
+}
+
 
 /// <summary>
 /// Generate debug information
@@ -667,6 +715,7 @@ public class Configuration : FileConfigurationInfo
     /// For example:
     ///     null - default
     ///     'Clang_3_8'     - Clang 3.8
+    ///     'v141'          - for Visual Studio 2017.
     ///     'v140'          - for Visual Studio 2015.
     ///     'v120'          - for Visual Studio 2013.
     /// </summary>
@@ -904,7 +953,12 @@ public enum EUseOfMfc
     /// <summary>
     /// Use MFC in a Shared DLL
     /// </summary>
-    Dynamic
+    Dynamic,
+
+    /// <summary>
+    /// Use Standard Windows Libraries (No MFC), can be serialized for Utility project type.
+    /// </summary>
+    _false
 }
 
 

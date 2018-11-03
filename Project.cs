@@ -72,12 +72,72 @@ public class Project
     }
 
     /// <summary>
+    /// Visual studio file format version, e.g. 2010, 2012, ...
+    /// </summary>
+    public int fileFormatVersion;
+
+    /// <summary>
+    /// Sets project file format version
+    /// </summary>
+    /// <param name="ver">Visual studio version number</param>
+    public void SetFileFormatVersion( int ver )
+    {
+        switch (ver)
+        {
+            case 2010:
+            case 2012:
+                ToolsVersion = "4.0";
+                break;
+            case 2013:
+                ToolsVersion = "12.0";
+                break;
+            case 2015:
+                ToolsVersion = "14.0";
+                break;
+            case 2017:
+                ToolsVersion = "15.0";
+                break;
+            default:
+                // Try to predict the future here. :-)
+                ToolsVersion = (((ver - 2017) / 2) + 15).ToString() + ".0";
+                break;
+        } //switch
+    } //SetFileFormatVersion
+
+
+    /// <summary>
     /// "4.0" for vs2010/vs2012, "12.0" for vs2013, "14.0" for vs2015
     /// </summary>
     public String ToolsVersion;
-    public EKeyword Keyword;
 
-    public String getOsBase()
+    /// <summary>
+    /// Sets tools version, also tried to detect file format version
+    /// </summary>
+    /// <param name="ver"></param>
+    public void setToolsVersion(String ver)
+    {
+        ToolsVersion = ver;
+        double dVer = Double.Parse(ver, CultureInfo.InvariantCulture);
+
+        if (dVer <= 4.0)
+            fileFormatVersion = 2010;
+        else if(dVer <= 12.0)
+            fileFormatVersion = 2012;
+        else if (dVer <= 14.0)
+            fileFormatVersion = 2015;
+        else if (dVer <= 15.0)
+            fileFormatVersion = 2017;
+        else 
+            fileFormatVersion = 2017 + ((int)(dVer) * 2);
+    } //setToolsVersion
+
+    public EKeyword Keyword = EKeyword.None;
+
+    /// <summary>
+    /// Gets target OS based on keyword.
+    /// </summary>
+    /// <returns></returns>
+    public String getOs()
     {
         switch (Keyword)
         {
@@ -86,51 +146,9 @@ public class Project
             case EKeyword.Package:
                 return "package";
             default:
-            case EKeyword.Win32Proj:
-                if (Double.Parse(ToolsVersion, CultureInfo.InvariantCulture) <= 4.0)
-                    return "vs2012";
-                if (Double.Parse(ToolsVersion, CultureInfo.InvariantCulture) <= 12.0)
-                    return "vs2013";
-                return "vs2015";
+                return "windows";
         }
-    } //getOsBase
-
-
-    /// <summary>
-    /// Sets os base, returns false if not supported.
-    /// </summary>
-    public bool setOsBase(String osBase)
-    {
-        switch (osBase.ToLower())
-        {
-            case "package":
-                bIsPackagingProject = true;
-                ToolsVersion = "14.0";
-                Keyword = EKeyword.Package;
-                break;
-            case "vs2010":
-            case "vs2012":
-                ToolsVersion = "4.0";
-                Keyword = EKeyword.Win32Proj;
-                break;
-            case "vs2013":
-                ToolsVersion = "12.0";
-                Keyword = EKeyword.Win32Proj;
-                break;
-            case "vs2015":
-                ToolsVersion = "14.0";
-                Keyword = EKeyword.Win32Proj;
-                break;
-            case "android":
-                ToolsVersion = "12.0";
-                Keyword = EKeyword.Android;
-                break;
-            default:
-                return false;
-        }
-
-        return true;
-    } //setOsBase
+    } //getOs
 
     /// <summary>
     /// Target Platform Version, e.g. "8.1" or "10.0.14393.0"
@@ -220,7 +238,7 @@ public class Project
     /// </summary>
     public List<String> getConfigurationNames()
     {
-        return configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct().ToList();
+        return configurations.Select(x => x.Split('|')[0]).Distinct().ToList();
     }
 
     /// <summary>
@@ -228,7 +246,7 @@ public class Project
     /// </summary>
     public List<String> getPlatforms()
     {
-        return configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct().ToList();
+        return configurations.Select(x => x.Split('|')[1]).Distinct().ToList();
     }
 
 
@@ -372,24 +390,46 @@ public class Project
             else
                 oValue = Convert.ChangeType(fileProps.Value, fi.FieldType);
 
+            if (xmlNodeName == "AdditionalInputs")
+                oValue = oValue.ToString().Replace(";%(AdditionalInputs)", "");     //No need for this extra string.
+
             fi.SetValue(o2set, oValue);
         } //foreach
     } //ExtractCompileOptions
 
-    static void CopyField(object o2set, String field, XElement node)
+    /// <summary>
+    /// Copies field by "field" - name, from node.
+    /// </summary>
+    /// <returns>false if fails (value does not exists(</returns>
+    static bool CopyField(object o2set, String field, XElement node)
     {
         FieldInfo fi = o2set.GetType().GetField(field);
-        Object oValue = node.Element(node.Document.Root.Name.Namespace + field)?.Value;
+        Object oValue = null;
+
+        while (true)
+        {
+            oValue = node.Element(node.Document.Root.Name.Namespace + field)?.Value;
+            if (oValue != null)
+                break;
+
+            if (field == "ProjectGuid")     // Utility projects can have such odd nodes naming.
+            {
+                field = "ProjectGUID";
+                continue;
+            }
+            break;
+        }
+
 
         if (fi.FieldType == typeof(EKeyword))
         {
             if (oValue == null)
-                oValue = EKeyword.Package;
-            else
-                oValue = Enum.Parse(typeof(EKeyword), (String)oValue);
+                return false;
+            oValue = Enum.Parse(typeof(EKeyword), (String)oValue);
         }
 
         fi.SetValue(o2set, oValue);
+        return true;
     }
 
     void extractGeneralCompileOptions(XElement node)
@@ -440,7 +480,10 @@ public class Project
             {
                 if (fi.FieldType.GetCustomAttribute<DescriptionAttribute>() == null )
                 {
-                    fi.SetValue(cfg, Enum.Parse(fi.FieldType, cfgNode.Value));
+                    if (fi.FieldType == typeof(EUseOfMfc) && cfgNode.Value == "false" )
+                        fi.SetValue(cfg, EUseOfMfc._false);
+                    else
+                        fi.SetValue(cfg, Enum.Parse(fi.FieldType, cfgNode.Value));
                 }
                 else
                 {
@@ -480,7 +523,7 @@ public class Project
 
         XDocument p = XDocument.Load(path);
 
-        project.ToolsVersion = p.Root.Attribute("ToolsVersion").Value;
+        project.setToolsVersion( p.Root.Attribute("ToolsVersion").Value );
 
         foreach (XElement node in p.Root.Elements())
         {
@@ -525,7 +568,14 @@ public class Project
                         {
                             case "Globals":
                                 foreach (String field in new String[] { "ProjectGuid", "Keyword", "WindowsTargetPlatformVersion" /*, "RootNamespace"*/ })
-                                    CopyField(project, field, node);
+                                {
+                                    if (!CopyField(project, field, node) && field == "Keyword")
+                                    {
+                                        if (Path.GetExtension(path).ToLower() == ".androidproj")
+                                            // Android packaging projects does not have Keyword
+                                            project.Keyword = EKeyword.Package;
+                                    } //if
+                                }
                                 break;
 
                             case null:                  // Non tagged node contains rest of configurations like 'LinkIncremental', 'OutDir', 'IntDir', 'TargetName', 'TargetExt'
@@ -1113,11 +1163,24 @@ public class Project
 
                     if (cbr == null)
                         continue;
+                    
+                    o.AppendLine("      <Command " + condition(confName) + ">" + XmlEscape(cbr.Command) + "</Command>");
 
-                    o.AppendLine("      <Command " + condition(confName) + ">" + cbr.Command + "</Command>");
+                    if (cbr.AdditionalInputs != "")
+                        o.AppendLine("      <AdditionalInputs " + condition(confName) + ">" + XmlEscape(cbr.AdditionalInputs) + ";%(AdditionalInputs)</AdditionalInputs>");
+
                     o.AppendLine("      <Outputs " + condition(confName) + ">" + cbr.Outputs + "</Outputs>");
                     if (cbr.Message != "Performing Custom Build Tools")
                         o.AppendLine("      <Message " + condition(confName) + ">" + cbr.Message + "</Message>");
+                } //foreach
+
+                foreach (String confName in getSortedConfigurations(false))
+                {
+                    int iConf = configurations.IndexOf(confName);
+                    CustomBuildRule cbr = fi.fileConfig[iConf].customBuildRule;
+
+                    if (!cbr.LinkObjects)
+                        o.AppendLine("      <LinkObjects " + condition(confName) + ">false</LinkObjects>");
                 } //foreach
 
                 o.AppendLine("    </CustomBuild>");
