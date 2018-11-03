@@ -225,7 +225,7 @@
         </member>
         <member name="F:FileConfigurationInfo.ObjectFileName">
             <summary>
-            Output filename
+            Output filename (.obj file)
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.PrecompiledHeaderFile">
@@ -734,10 +734,23 @@
             <param name="bCompareConfigNameFirst">true if compare config name first</param>
             <returns></returns>
         </member>
+        <member name="M:Project.XmlEscape(System.String)">
+            <summary>
+            Escapes xml special characters. http://weblogs.sqlteam.com/mladenp/archive/2008/10/21/Different-ways-how-to-escape-an-XML-string-in-C.aspx
+            </summary>
+        </member>
         <member name="M:Project.SaveProject">
             <summary>
             Saves project if necessary.
             </summary>
+        </member>
+        <member name="M:Project.UpdateFile(System.String,System.String,System.Boolean)">
+            <summary>
+            Save file contents if file were updated.
+            </summary>
+            <param name="path">Path to save</param>
+            <param name="force">true if force to save file</param>
+            <returns>true if file was updated.</returns>
         </member>
         <member name="T:Solution">
             <summary>

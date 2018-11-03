@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -231,7 +232,7 @@ public class FileConfigurationInfo
     public String AdditionalLibraryDirectories = "";
 
     /// <summary>
-    /// Output filename
+    /// Output filename (.obj file)
     /// </summary>
     public String ObjectFileName;
     public String XMLDocumentationFileName;
@@ -1281,6 +1282,9 @@ public class Project
         if (confName != null)
             sCond = " " + condition(confName);
 
+        if( conf.ObjectFileName != null )
+            o.AppendLine("      <ObjectFileName" + sCond + ">" + conf.ObjectFileName + "</ObjectFileName>");
+
         if (conf.PreprocessorDefinitions.Length != 0)
         {
             String defines = conf.PreprocessorDefinitions;
@@ -1379,6 +1383,13 @@ public class Project
         }
     }
 
+    /// <summary>
+    /// Escapes xml special characters. http://weblogs.sqlteam.com/mladenp/archive/2008/10/21/Different-ways-how-to-escape-an-XML-string-in-C.aspx
+    /// </summary>
+    static String XmlEscape(String s)
+    {
+        return SecurityElement.Escape(s);
+    }
 
 
     /// <summary>
@@ -1396,6 +1407,30 @@ public class Project
             SolutionProjectBuilder.uuid(ProjectName);
             SolutionProjectBuilder.m_project = null;
         }
+
+        //
+        //  Reassign unique object filenames so linker would not conflict
+        //
+        Dictionary<String, int> objFileNames = new Dictionary<string, int>();
+        foreach (FileInfo fi in files)
+        {
+            if (fi.includeType != IncludeType.ClCompile)
+                continue;
+
+            String fileBase = Path.GetFileNameWithoutExtension(fi.relativePath.Replace("/", "\\"));
+
+            if (objFileNames.ContainsKey(fileBase))
+            {
+                String objFilename = "$(IntDir)\\" + fileBase + objFileNames[fileBase] + ".obj";
+                // Add file specific configurations if list is empty.
+                while (configurations.Count > fi.fileConfig.Count) fi.fileConfig.Add(new FileConfigurationInfo());
+                fi.fileConfig.ForEach(x => x.ObjectFileName = objFilename);
+                objFileNames[fileBase]++;
+            } else
+            {
+                objFileNames[fileBase] = 1;
+            }
+        } //foreach
 
         String projectPath;
 
@@ -1424,10 +1459,10 @@ public class Project
         o.AppendLine("  </ItemGroup>");
 
         o.AppendLine("  <PropertyGroup Label=\"Globals\">");
-        
+
         bool bIsPackagingProject = Keyword == EKeyword.Package;
-        
-        if(!bIsPackagingProject)
+
+        if (!bIsPackagingProject)
             o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
 
         //
@@ -1435,10 +1470,10 @@ public class Project
         // of spurious warnings when the same filename is present in different
         // configurations.
         //
-        if(!bIsPackagingProject)
+        if (!bIsPackagingProject)
             o.AppendLine("    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>");
-        
-        if( Keyword != EKeyword.Package )
+
+        if (Keyword != EKeyword.Package)
             o.AppendLine("    <Keyword>" + Keyword + "</Keyword>");
 
         String rootNamespace = ProjectName;
@@ -1453,7 +1488,7 @@ public class Project
 
         if (bIsAndroidProject || bIsPackagingProject)
             o.AppendLine("    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>");
-        
+
         if (bIsPackagingProject)
             o.AppendLine("    <ProjectVersion>1.0</ProjectVersion>");
 
@@ -1462,7 +1497,7 @@ public class Project
 
         if (bIsAndroidProject)
             o.AppendLine("    <ApplicationType>Android</ApplicationType>");
-        
+
         if (bIsAndroidProject)
             o.AppendLine("    <ApplicationTypeRevision>2.0</ApplicationTypeRevision>");
 
@@ -1474,12 +1509,12 @@ public class Project
         if (Keyword == EKeyword.Package)
             propsPath = "$(AndroidTargetsPath)\\Android";
 
-        o.AppendLine("  <Import Project=\""+ propsPath + ".Default.props\" />");
+        o.AppendLine("  <Import Project=\"" + propsPath + ".Default.props\" />");
 
         //
         // Dump general information.
         //
-        foreach ( String confName in getSortedConfigurations( Keyword == EKeyword.Android ))
+        foreach (String confName in getSortedConfigurations(Keyword == EKeyword.Android))
         {
             int iConf = configurations.IndexOf(confName);
             Configuration conf = projectConfig[iConf];
@@ -1493,7 +1528,8 @@ public class Project
                 if (conf.AndroidAPILevel != null && conf.AndroidAPILevel != Configuration.getAndroidAPILevelDefault(confName))
                     o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
             }
-            else {
+            else
+            {
                 o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
                 o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
             }
@@ -1513,7 +1549,7 @@ public class Project
                 String value = typeof(EWholeProgramOptimization).GetMember(conf.WholeProgramOptimization.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
                 o.AppendLine("    <WholeProgramOptimization>" + value + "</WholeProgramOptimization>");
             }
-            if( Keyword == EKeyword.Win32Proj )
+            if (Keyword == EKeyword.Win32Proj)
                 o.AppendLine("    <CharacterSet>" + conf.CharacterSet.ToString() + "</CharacterSet>");
             o.AppendLine("  </PropertyGroup>");
         } //for
@@ -1536,13 +1572,13 @@ public class Project
             o.AppendLine("  </ImportGroup>");
         }
         else if (Keyword == EKeyword.Package)
-        { 
+        {
             o.AppendLine("  <ImportGroup Label=\"Shared\" />");
         }
 
-        if( !bIsPackagingProject )
+        if (!bIsPackagingProject)
             foreach (String confName in getSortedConfigurations(true))
-            { 
+            {
                 o.AppendLine("  <ImportGroup Label=\"PropertySheets\" Condition=\"'$(Configuration)|$(Platform)'=='" + confName + "'\">");
                 o.AppendLine("    <Import Project=\"$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props\" Condition=\"exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')\" Label=\"LocalAppDataPlatform\" />");
                 o.AppendLine("  </ImportGroup>");
@@ -1556,7 +1592,7 @@ public class Project
         if (bIsPackagingProject)
             o.AppendLine("  <PropertyGroup />");
 
-        if ( !bIsPackagingProject )
+        if (!bIsPackagingProject)
             foreach (String confName in getSortedConfigurations(false))
             {
                 int iConf = configurations.IndexOf(confName);
@@ -1570,26 +1606,26 @@ public class Project
 
                 // Empty node.
                 if (!(bAppendLinkIncremental || bAppendOutDir || bAppendIntDir || bAppendTargetName || bAppendTargetExt))
-                { 
+                {
                     o.AppendLine("  <PropertyGroup " + condition(confName) + " />");
                     continue;
                 }
 
                 o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
-                
+
                 if (bAppendLinkIncremental)
                     o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
-            
-                if(bAppendOutDir)
+
+                if (bAppendOutDir)
                     o.AppendLine("    <OutDir>" + conf.OutDir + "</OutDir>");
 
-                if(bAppendIntDir) 
+                if (bAppendIntDir)
                     o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
-            
-                if (bAppendTargetName) 
+
+                if (bAppendTargetName)
                     o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
-            
-                if(bAppendTargetExt)
+
+                if (bAppendTargetExt)
                     o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
 
                 o.AppendLine("  </PropertyGroup>");
@@ -1612,25 +1648,25 @@ public class Project
 
             o.AppendLine("    <ClCompile>");
             o.AppendLine("      <PrecompiledHeader>" + conf.PrecompiledHeader.ToString() + "</PrecompiledHeader>");
-            
+
             // No need to specify if it's default header file.
             if (conf.PrecompiledHeader == EPrecompiledHeaderUse.Use && conf.PrecompiledHeaderFile != "stdafx.h")
                 o.AppendLine("      <PrecompiledHeaderFile>" + conf.PrecompiledHeaderFile + "</PrecompiledHeaderFile>");
 
-            if( Keyword == EKeyword.Android )
+            if (Keyword == EKeyword.Android)
                 o.AppendLine("      <CompileAs>CompileAsCpp</CompileAs>");
 
             // No need to specify as it's Visual studio default.
-            if (conf.WarningLevel != EWarningLevel.Level1 )
+            if (conf.WarningLevel != EWarningLevel.Level1)
                 o.AppendLine("      <WarningLevel>" + conf.WarningLevel + "</WarningLevel>");
-            
+
             o.AppendLine("      <Optimization>" + conf.Optimization + "</Optimization>");
-            
-            if(conf.FunctionLevelLinking)   //premake5 is not generating those, I guess disabled if it's value is false.
+
+            if (conf.FunctionLevelLinking)   //premake5 is not generating those, I guess disabled if it's value is false.
                 o.AppendLine("      <FunctionLevelLinking>true</FunctionLevelLinking>");
-            if(conf.IntrinsicFunctions && Keyword != EKeyword.Android )
+            if (conf.IntrinsicFunctions && Keyword != EKeyword.Android)
                 o.AppendLine("      <IntrinsicFunctions>true</IntrinsicFunctions>");
-            if(conf.EnableCOMDATFolding)
+            if (conf.EnableCOMDATFolding)
                 o.AppendLine("      <EnableCOMDATFolding>true</EnableCOMDATFolding>");
             if (conf.OptimizeReferences)
                 o.AppendLine("      <OptimizeReferences>true</OptimizeReferences>");
@@ -1640,8 +1676,8 @@ public class Project
             o.AppendLine("    </ClCompile>");
 
             o.AppendLine("    <Link>");
-            
-            if( Keyword != EKeyword.Android )
+
+            if (Keyword != EKeyword.Android)
                 o.AppendLine("      <SubSystem>" + conf.SubSystem + "</SubSystem>");
 
             if (Keyword != EKeyword.Android)
@@ -1682,7 +1718,7 @@ public class Project
 
             if (conf.AdditionalLibraryDirectories.Length != 0)
                 o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + "</AdditionalLibraryDirectories>");
-            
+
             // OutputFile ?
             o.AppendLine("    </Link>");
             o.AppendLine("  </ItemDefinitionGroup>");
@@ -1702,8 +1738,8 @@ public class Project
                 fi.includeType = IncludeType.CustomBuild;
 
             if (simplifyForGroupReopen(inctype) != simplifyForGroupReopen(fi.includeType))
-            { 
-                if( bItemGroupOpened )
+            {
+                if (bItemGroupOpened)
                     o.AppendLine("  </ItemGroup>");
 
                 o.AppendLine("  <ItemGroup>");
@@ -1714,7 +1750,7 @@ public class Project
             o.Append("    <" + fi.includeType + " Include=\"" + fi.relativePath.Replace("/", "\\") + "\"");
 
             if (fi.includeType == IncludeType.ProjectReference)
-            { 
+            {
                 o.AppendLine(">");
                 o.AppendLine("      <Project>" + fi.Project + "</Project>");
                 o.AppendLine("    </ProjectReference>");
@@ -1722,7 +1758,7 @@ public class Project
             }
 
             if (fi.includeType == IncludeType.CustomBuild)
-            { 
+            {
                 o.AppendLine(">");
 
                 foreach (String confName in getSortedConfigurations(false))
@@ -1735,7 +1771,7 @@ public class Project
 
                     o.AppendLine("      <Command " + condition(confName) + ">" + cbr.Command + "</Command>");
                     o.AppendLine("      <Outputs " + condition(confName) + ">" + cbr.Outputs + "</Outputs>");
-                    if(cbr.Message != "Performing Custom Build Tools")
+                    if (cbr.Message != "Performing Custom Build Tools")
                         o.AppendLine("      <Message " + condition(confName) + ">" + cbr.Message + "</Message>");
                 } //foreach
 
@@ -1765,44 +1801,171 @@ public class Project
         if (bItemGroupOpened)
             o.AppendLine("  </ItemGroup>");
 
-        
-        o.AppendLine("  <Import Project=\""+ propsPath + ".targets\" />");
+
+        o.AppendLine("  <Import Project=\"" + propsPath + ".targets\" />");
 
         if (bIsPackagingProject)
         {
             o.AppendLine("  <ImportGroup Label=\"ExtensionTargets\" />");
         }
-        else { 
+        else
+        {
             o.AppendLine("  <ImportGroup Label=\"ExtensionTargets\">");
             o.AppendLine("  </ImportGroup>");
         }
         o.AppendLine("</Project>");
 
+        String projectsFile = o.ToString();
+
+        //-----------------------------------------------------------------------------------------------------------
+        // .filters file generation.
+        //-----------------------------------------------------------------------------------------------------------
+        String filtersPath = projectPath + ".filters";
+        o = new StringBuilder();
+        o.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+
+        o.AppendLine("<Project ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
+
+        List<String> folderList = files.Select(x => Path.GetDirectoryName(x.relativePath.Replace("/", "\\"))).Where(x => x != "").Distinct().ToList();
+        int nCharsToSkip = 0;
+
+        //
+        //  We try to simply path'es so not so many upper folder references would exists.
+        //
+        while (true)
+        {
+            bool bHasUpReference = folderList.Where(x => x.StartsWith("..\\")).FirstOrDefault() != null;
+            bool bAllUpReferences = false;
+            if (bHasUpReference) bAllUpReferences = folderList.Where(x => !x.StartsWith("..\\")).FirstOrDefault() == null;
+
+            if (bHasUpReference && bAllUpReferences)
+            {
+                folderList = folderList.Select(x => x.Substring(3)).ToList();
+                nCharsToSkip += 3;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        //
+        //  Folder list to create for .filter file.
+        //
+        List<String> folderListToCreate = new List<string>();
+
+        foreach (String dir in folderList)
+        {
+            if (folderListToCreate.Contains(dir))
+                continue;
+
+            String dirSoFar = "";
+            foreach (String part in dir.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (dirSoFar.Length != 0) dirSoFar += "\\";
+                dirSoFar += part;
+
+                if (!folderListToCreate.Contains(dirSoFar))
+                    folderListToCreate.Add(dirSoFar);
+            }
+        }
+
+        folderListToCreate.Sort();
+
+        if (folderListToCreate.Count != 0)
+        {
+            o.AppendLine("  <ItemGroup>");
+            foreach (String dir in folderListToCreate)
+            {
+                o.AppendLine("    <Filter Include=\"" + XmlEscape(dir) + "\">");
+                o.AppendLine("      <UniqueIdentifier>" + SolutionProjectBuilder.GenerateGuid("folder:" + dir) + "</UniqueIdentifier>");
+                o.AppendLine("    </Filter>");
+            }
+            o.AppendLine("  </ItemGroup>");
+        } //if
+
+        //
+        //  Dump file + folder path list.
+        //
+        foreach (String enumName in typeof(IncludeType).GetEnumNames())
+        {
+            IncludeType elemType = (IncludeType)Enum.Parse(typeof(IncludeType), enumName);
+
+            List<String> fileList = files.Where(x => x.includeType == elemType).Select(x => x.relativePath.Replace("/", "\\")).ToList();
+
+            if (fileList.Count == 0)
+                continue;
+
+            fileList.Sort();
+
+            o.AppendLine("  <ItemGroup>");
+            foreach (String file in fileList)
+            {
+                String dir = Path.GetDirectoryName(file);
+                if( dir.Length > nCharsToSkip)
+                    dir = dir.Substring(nCharsToSkip);
+                o.Append("    <" + enumName + " Include=\"" + XmlEscape(file) + "\"");
+
+                if (dir == "")
+                {
+                    o.AppendLine(" />");
+                    continue;
+                }
+                else
+                {
+                    o.AppendLine(">");
+                }
+                
+                o.AppendLine("      <Filter>" + XmlEscape(dir) + "</Filter>");
+                o.AppendLine("    </" + enumName + ">");
+            }
+            o.AppendLine("  </ItemGroup>");
+        }
+        o.AppendLine("</Project>");
+
+        String filtersFile = o.ToString();
+        //
+        // We first save .filters file, because Visual Studio typically does not reload project if only .filters file was changed.
+        // Then if .filters file changes, we force project save as well.
+        //
+        bool bSaved = UpdateFile(filtersPath, filtersFile);
+        UpdateFile(projectPath, projectsFile, bSaved);
+    } //SaveProject
+
+    /// <summary>
+    /// Save file contents if file were updated.
+    /// </summary>
+    /// <param name="path">Path to save</param>
+    /// <param name="force">true if force to save file</param>
+    /// <returns>true if file was updated.</returns>
+    private bool UpdateFile(string path, String newFileContents, bool force = false)
+    {
         //
         // Write project itself.
         //
-        String currentPrj = "";
-        Console.Write("Updating project '" + projectPath + "' ... ");
-        if (File.Exists(projectPath)) currentPrj = File.ReadAllText(projectPath);
+        String currentFileContents = "";
+        Console.Write("Updating project '" + path + "' ... ");
+        if (File.Exists(path)) currentFileContents = File.ReadAllText(path);
 
-        String newPrj = o.ToString();
 
-        if( Keyword == EKeyword.Win32Proj )     // Android & None projects have windows linefeeds.
-            newPrj = newPrj.Replace("\r\n", "\n");
+        if (Keyword == EKeyword.Win32Proj)     // Android & None projects have windows linefeeds.
+            newFileContents = newFileContents.Replace("\r\n", "\n");
 
         //
         // Save only if needed.
         //
-        if (currentPrj == newPrj)
+        if (currentFileContents == newFileContents && !force)
         {
             Console.WriteLine("up-to-date.");
+            return false;
         }
         else
         {
-            File.WriteAllText(projectPath, newPrj, Encoding.UTF8);
+            File.WriteAllText(path, newFileContents, Encoding.UTF8);
             Console.WriteLine("ok.");
+            return true;
         } //if-else
+    } //UpdateFile
 
-    } //SaveProject
 } //Project
 
