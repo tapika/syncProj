@@ -826,6 +826,36 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Specifies system include directories.
+    /// </summary>
+    /// <param name="dirs">List of include directories.</param>
+    static public void sysincludedirs(params String[] dirs)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+        {
+            if (conf.IncludePath.Length != 0)
+                conf.IncludePath += ";";
+
+            conf.IncludePath += String.Join(";", dirs);
+        }
+    }
+
+    /// <summary>
+    /// Specifies system library directories.
+    /// </summary>
+    /// <param name="dirs">List of include directories.</param>
+    static public void syslibdirs(params String[] dirs)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+        {
+            if (conf.LibraryPath.Length != 0)
+                conf.LibraryPath += ";";
+
+            conf.LibraryPath += String.Join(";", dirs);
+        }
+    }
+
+    /// <summary>
     /// Specifies additional defines.
     /// </summary>
     /// <param name="defines">defines, like for example "DEBUG", etc...</param>

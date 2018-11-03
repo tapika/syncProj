@@ -936,9 +936,12 @@ public class Project
                 bool bAppendIntDir = conf.IntDir != null && conf.IntDir != conf.getOutDirDefault(this);
                 bool bAppendTargetName = conf.TargetName != null && conf.TargetName != conf.getTargetNameDefault(this);
                 bool bAppendTargetExt = conf.TargetExt != null;
+                bool bAppendAny = conf.IncludePath != "";
+                if (bAppendAny)
+                    bAppendAny = conf.LibraryPath != "";
 
                 // Empty node.
-                if (!(bAppendLinkIncremental || bAppendOutDir || bAppendIntDir || bAppendTargetName || bAppendTargetExt))
+                if (!(bAppendLinkIncremental || bAppendOutDir || bAppendIntDir || bAppendTargetName || bAppendTargetExt || bAppendAny))
                 {
                     o.AppendLine("  <PropertyGroup " + condition(confName) + " />");
                     continue;
@@ -955,11 +958,17 @@ public class Project
                 if (bAppendIntDir)
                     o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
 
+                if(conf.IncludePath != "")
+                    o.AppendLine("    <IncludePath>" + conf.IncludePath + ";$(IncludePath)</IncludePath>");
+
                 if (bAppendTargetName)
                     o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
 
                 if (bAppendTargetExt)
                     o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
+
+                if (conf.LibraryPath != "")
+                    o.AppendLine("    <LibraryPath>" + conf.LibraryPath + ";$(LibraryPath)</LibraryPath>");
 
                 o.AppendLine("  </PropertyGroup>");
             } //for

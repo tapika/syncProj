@@ -795,7 +795,42 @@ public class Configuration : FileConfigurationInfo
         }
     }
 
+    //-------------------------------------------------------------
+    // VC++ Directories tab - starts
+    //-------------------------------------------------------------
+    /// <summary>
+    /// Include Directories - Semicolon (';') separated list of pathes
+    /// </summary>
+    public String IncludePath = "";
 
+    /// <summary>
+    /// Executable Directories - Semicolon (';') separated list of pathes
+    /// </summary>
+    public String ExecutablePath = "";
+
+    /// <summary>
+    /// Reference Directories - Semicolon (';') separated list of pathes
+    /// </summary>
+    public String ReferencePath = "";
+
+    /// <summary>
+    /// Library Directories - Semicolon (';') separated list of pathes
+    /// </summary>
+    public String LibraryPath = "";
+
+    /// <summary>
+    /// Source Directories - Semicolon (';') separated list of pathes
+    /// </summary>
+    public String SourcePath = "";
+
+    /// <summary>
+    /// Exclude Directories - Semicolon (';') separated list of pathes
+    /// </summary>
+    public String ExcludePath = "";
+
+    //-------------------------------------------------------------
+    // VC++ Directories tab ends
+    //-------------------------------------------------------------
 
     public EWarningLevel WarningLevel = EWarningLevel.Level1;
 

@@ -800,14 +800,29 @@ public class SolutionOrProject
         // Semicolon (';') separated lists.
         //  Like defines, additional include directories, libraries
         //---------------------------------------------------------------------------------
-        String[] fieldNames = new String[] { "PreprocessorDefinitions", "AdditionalIncludeDirectories", "AdditionalDependencies", "LibraryDependencies", "AdditionalLibraryDirectories" };
-        String[] funcNames = new String[] { "defines", "includedirs", "links", "links", "libdirs" };
+        String[] fieldNames = new String[] { 
+            "PreprocessorDefinitions", "AdditionalIncludeDirectories", 
+            "AdditionalDependencies", "LibraryDependencies", 
+            "AdditionalLibraryDirectories",
+            "IncludePath", "LibraryPath"
+        };
+
+        String[] funcNames = new String[] { 
+            "defines", "includedirs", 
+            "links", "links", 
+            "libdirs",
+            "sysincludedirs", "syslibdirs"
+        };
 
         for (int iListIndex = 0; iListIndex < fieldNames.Length; iListIndex++)
         {
             String commaField = fieldNames[iListIndex];
 
             FieldInfo fi = typeof(FileConfigurationInfo).GetField(commaField);
+
+            if (fi == null)
+                fi = typeof(Configuration).GetField(commaField);
+
             List<List<String>> items = new List<List<string>>();
             List<String> origValues = new List<string>();               // To be able to restore model back for new format.
 
@@ -849,7 +864,7 @@ public class SolutionOrProject
                 fi.SetValue(configList[i], origValues[i]);
         } //for
 
-        String[] funcNames2 = new String[] { "defines", "includedirs", "links", "libdirs" };
+        String[] funcNames2 = new String[] { "defines", "includedirs", "links", "libdirs", "sysincludedirs", "syslibdirs" };
 
         foreach (String funcName in funcNames2)
         {
@@ -876,11 +891,13 @@ public class SolutionOrProject
                         (funcName == "defines" && oneEntryValue == "%(PreprocessorDefinitions)") ||
                         (funcName == "links" && oneEntryValue == "%(AdditionalDependencies)") ||
                         // Android project
-                        (funcName == "links" && oneEntryValue == "%(LibraryDependencies)")
+                        (funcName == "links" && oneEntryValue == "%(LibraryDependencies)") ||
+                        (funcName == "sysincludedirs" && oneEntryValue == "$(IncludePath)") ||
+                        (funcName == "syslibdirs" && oneEntryValue == "$(LibraryPath)")
                         )
-                        continue;
+                            continue;
 
-                    oneEntryValue = oneEntryValue.Replace("\"", "\\\"");    // Escape " mark.
+                    oneEntryValue = oneEntryValue.Replace("\\", "\\\\").Replace("\"", "\\\"");    // Escape \ => \\, " => \"
                     if (!first) line += ", ";
                     first = false;
                     line += "\"" + oneEntryValue + "\"";

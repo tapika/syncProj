@@ -807,6 +807,36 @@
             <param name="p">Project against which to query</param>
             <returns>Default value</returns>
         </member>
+        <member name="F:Configuration.IncludePath">
+            <summary>
+            Include Directories - Semicolon (';') separated list of pathes
+            </summary>
+        </member>
+        <member name="F:Configuration.ExecutablePath">
+            <summary>
+            Executable Directories - Semicolon (';') separated list of pathes
+            </summary>
+        </member>
+        <member name="F:Configuration.ReferencePath">
+            <summary>
+            Reference Directories - Semicolon (';') separated list of pathes
+            </summary>
+        </member>
+        <member name="F:Configuration.LibraryPath">
+            <summary>
+            Library Directories - Semicolon (';') separated list of pathes
+            </summary>
+        </member>
+        <member name="F:Configuration.SourcePath">
+            <summary>
+            Source Directories - Semicolon (';') separated list of pathes
+            </summary>
+        </member>
+        <member name="F:Configuration.ExcludePath">
+            <summary>
+            Exclude Directories - Semicolon (';') separated list of pathes
+            </summary>
+        </member>
         <member name="F:Configuration.SubSystem">
             <summary>
             Typically Windows or Console.
@@ -1185,6 +1215,18 @@
             Specifies additional include directories.
             </summary>
             <param name="dirs">List of additional include directories.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.sysincludedirs(System.String[])">
+            <summary>
+            Specifies system include directories.
+            </summary>
+            <param name="dirs">List of include directories.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.syslibdirs(System.String[])">
+            <summary>
+            Specifies system library directories.
+            </summary>
+            <param name="dirs">List of include directories.</param>
         </member>
         <member name="M:SolutionProjectBuilder.defines(System.String[])">
             <summary>
