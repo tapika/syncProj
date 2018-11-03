@@ -238,7 +238,7 @@
         </member>
         <member name="F:CustomBuildRule.Message">
             <summary>
-            Visual studio: description
+            Visual studio: description. Use empty string to supress message printing.
             </summary>
         </member>
         <member name="F:CustomBuildRule.Outputs">

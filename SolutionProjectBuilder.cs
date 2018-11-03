@@ -204,6 +204,7 @@ public class SolutionProjectBuilder
             return;
 
         m_project = new Project() { solution = m_solution };
+        resetConfigurations();
         m_project.ProjectName = name;
         m_project.language = "C++";
         m_project.RelativePath = Path.Combine(m_scriptRelativeDir, name);
@@ -237,7 +238,8 @@ public class SolutionProjectBuilder
     static public void externalproject(String name)
     {
         specifyproject(name);
-        m_project.bDefinedAsExternal = true;
+        if( name != null )
+            m_project.bDefinedAsExternal = true;
     }
 
     /// <summary>
@@ -247,7 +249,9 @@ public class SolutionProjectBuilder
     static public void project(String name)
     {
         specifyproject(name);
-        m_project.bDefinedAsExternal = false;
+        
+        if( name != null )
+            m_project.bDefinedAsExternal = false;
     }
 
     /// <summary>
@@ -379,6 +383,14 @@ public class SolutionProjectBuilder
     static List<FileConfigurationInfo> selectedConfigurations = new List<FileConfigurationInfo>();
     static String[] selectedFilters = null;     // null if not set
     static bool bLastSetFilterWasFileSpecific = false;
+
+    static void resetConfigurations()
+    {
+        selectedFileConfigurations = new List<FileConfigurationInfo>();
+        selectedConfigurations = new List<FileConfigurationInfo>();
+        selectedFilters = null;     // null if not set
+        bLastSetFilterWasFileSpecific = false;
+    }
 
     /// <summary>
     /// Gets currently selected configurations by filter.
@@ -791,13 +803,12 @@ public class SolutionProjectBuilder
         filter("files:" + script2include);
 
         String scriptDir = Path.Combine(m_workPath, m_scriptRelativeDir);
-        String tempLogFile = Path.GetFileName(m_project.getRelativePath());
-
+        String tempLogFile = "$(IntermediateOutputPath)" + script2compile.Replace('.','_') + "_log.txt";
 
         buildrule(
             new CustomBuildRule()
             {
-                Command = "\"" + pathToSyncProjExe + "\" " + script2include,
+                Command = "\"" + pathToSyncProjExe + "\" " + script2include + "\r\n" + "echo 1>" + tempLogFile,
                 Outputs = tempLogFile,
                 Message = ""
             }

@@ -233,7 +233,7 @@ public class Solution
     public void SaveSolution()
     {
         String slnPath = path;
-        Console.Write("Writing solution '" + slnPath + "' ... ");
+        Console.Write("Updating solution '" + slnPath + "' ... ");
         StringBuilder o = new StringBuilder();
 
         o.AppendLine();
