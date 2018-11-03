@@ -39,7 +39,14 @@ public enum IncludeType
     /// <summary>
     /// .def / .bat
     /// </summary>
-    None
+    None,
+
+    // Following enumerations are used in android packaging project (.androidproj)
+    Content,
+    AntBuildXml,
+    AndroidManifest,
+    AntProjectPropertiesFile,
+    ProjectReference
 }
 
 
