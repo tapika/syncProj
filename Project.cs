@@ -271,7 +271,7 @@ public class CustomBuildRule
     /// </summary>
     public String Command = "";
     /// <summary>
-    /// Visual studio: description
+    /// Visual studio: description. Use empty string to supress message printing.
     /// </summary>
     public String Message = "Performing Custom Build Tools";
     /// <summary>
