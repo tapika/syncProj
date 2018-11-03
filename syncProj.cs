@@ -16,7 +16,7 @@ public enum PrecompiledHeaderUse
 {
     Create,
     Use,
-    NotSpecified
+    NotUsing = 0 //enum default is 0.
 }
 
 public enum IncludeType
@@ -41,6 +41,21 @@ public enum IncludeType
     /// </summary>
     None,
 
+    /// <summary>
+    /// .txt files.
+    /// </summary>
+    Text,
+
+    /// <summary>
+    /// .rc / resource files.
+    /// </summary>
+    ResourceCompile,
+
+    /// <summary>
+    /// .ico files.
+    /// </summary>
+    Image,
+
     // Following enumerations are used in android packaging project (.androidproj)
     Content,
     AntBuildXml,
@@ -61,6 +76,22 @@ public class FileInfo
     /// Pre-configuration list.
     /// </summary>
     public List<PrecompiledHeaderUse> phUse = new List<PrecompiledHeaderUse>();
+
+    /// <summary>
+    /// Pre-configuration list of defines. ';' separated strings. null if not used.
+    /// </summary>
+    public List<String> PreprocessorDefinitions;
+
+    /// <summary>
+    /// Pre-configuration list of include directories;
+    /// </summary>
+    public List<String> AdditionalIncludeDirectories;
+
+    /// <summary>
+    /// Pre-configuration list of output filename
+    /// </summary>
+    public List<String> ObjectFileName;
+    public List<String> XMLDocumentationFileName;
 
     /// <summary>
     /// null if not in use, non-null if custom build tool is in use.
@@ -170,6 +201,15 @@ public class Project
     }
 
 
+    void confListInit<T>(ref List<T> list, T defT = default(T) )
+    {
+        list = new List<T>(configurations.Count);
+
+        while (list.Count < configurations.Count)
+            list.Add(defT);
+    }
+
+
     /// <summary>
     /// Extracts compilation options for single cpp/cs file.
     /// </summary>
@@ -179,25 +219,37 @@ public class Project
     {
         foreach (XElement fileProps in clCompile.Elements())
         {
-            switch (fileProps.Name.LocalName)
-            {
-                case "PrecompiledHeader":
-                    String config = getConfiguration(fileProps);
-                    
-                    while (file2compile.phUse.Count < configurations.Count)
-                        file2compile.phUse.Add(PrecompiledHeaderUse.NotSpecified);
-                    
-                    int iCfg = configurations.IndexOf(config);
-                    if(iCfg != -1)
-                        file2compile.phUse[iCfg] = (PrecompiledHeaderUse)Enum.Parse(typeof(PrecompiledHeaderUse), fileProps.Value);
-                    
-                    break;
+            String config = getConfiguration(fileProps);
 
-                default:
-                    if (Debugger.IsAttached)
-                        Debugger.Break();
-                    break;
-            } //switch
+            int iCfg = configurations.IndexOf(config);
+            if (iCfg == -1)
+                continue;           // Invalid configuration string specified.
+
+
+            String localName = fileProps.Name.LocalName;
+
+            if (localName == "PrecompiledHeader")
+            {
+                confListInit(ref file2compile.phUse);
+                file2compile.phUse[iCfg] = (PrecompiledHeaderUse)Enum.Parse(typeof(PrecompiledHeaderUse), fileProps.Value);
+                continue;
+            }
+
+            // PreprocessorDefinitions, AdditionalIncludeDirectories
+            FieldInfo fi = typeof(FileInfo).GetField(fileProps.Name.LocalName);
+            if (fi == null)
+            {
+                if (Debugger.IsAttached) Debugger.Break();
+                continue;
+            }
+
+            List<String> list = (List<String>)fi.GetValue(file2compile);
+            bool bSet = list == null;
+            confListInit(ref list, "");
+            list[iCfg] = fileProps.Value;
+            
+            if( bSet )
+                fi.SetValue(file2compile, list);
         } //foreach
     } //ExtractCompileOptions
 
