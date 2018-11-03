@@ -1077,6 +1077,11 @@
             <param name="bForceNonFileSpecific">true to force project specific configuration set.</param>
             <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
         </member>
+        <member name="M:SolutionProjectBuilder.getSelectedProjectConfigurations">
+            <summary>
+            Gets project configuration list, throw exception if cannot be found
+            </summary>
+        </member>
         <member name="M:SolutionProjectBuilder.filter(System.String[])">
             <summary>
             Selects to which configurations to apply subsequent function calls (like "kind", "symbols", "files"

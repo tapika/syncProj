@@ -380,7 +380,7 @@ public class SolutionProjectBuilder
         } //switch
 
         // Set up default compilation language
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.CompileAs = compileAs;
     }
 
@@ -484,6 +484,16 @@ public class SolutionProjectBuilder
             
         return list;
     }
+
+    /// <summary>
+    /// Gets project configuration list, throw exception if cannot be found
+    /// </summary>
+    static List<Configuration> getSelectedProjectConfigurations()
+    {
+        List<Configuration> projConfs = getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null).ToList();
+        return projConfs;
+    }
+
 
     /// <summary>
     /// Selects to which configurations to apply subsequent function calls (like "kind", "symbols", "files"
@@ -611,7 +621,7 @@ public class SolutionProjectBuilder
                 throw new Exception2("kind value is not supported '" + _kind + "' - supported values are: " + String.Join(",", enums.Select(x => x.ToString()) ));
         }
 
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
         {
             conf.ConfigurationType = type;
             conf.SubSystem = subsystem;
@@ -629,7 +639,7 @@ public class SolutionProjectBuilder
     /// <param name="callerFrame">Tells how many call call frame behind is end-user code. (Non syncproj code). (Reflects to error reporting)</param>
     static public void toolset(String toolset, int callerFrame = 0)
     {
-        foreach (var conf in getSelectedConfigurations(true, callerFrame).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.PlatformToolset = toolset;
     }
 
@@ -640,7 +650,7 @@ public class SolutionProjectBuilder
     /// <param name="apilevel">Android api level</param>
     static public void androidapilevel(String apilevel)
     {
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.AndroidAPILevel = apilevel;
     }
 
@@ -657,7 +667,7 @@ public class SolutionProjectBuilder
 
         EUseOfStl v = (EUseOfStl)Enum.Parse(typeof(EUseOfStl), typeof(EUseOfStl).GetEnumNames()[index]);
 
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.UseOfStl = v;
     }
 
@@ -679,7 +689,7 @@ public class SolutionProjectBuilder
                     String.Join(",", Enum.GetValues(typeof(ECharacterSet)).Cast<ECharacterSet>().Select(x => x.ToString())));
         } //switch
 
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.CharacterSet = cs;
     }
 
@@ -692,7 +702,7 @@ public class SolutionProjectBuilder
         if (!directory.EndsWith("\\"))
             directory += "\\";
 
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.OutDir = directory;
     }
 
@@ -706,7 +716,7 @@ public class SolutionProjectBuilder
         if (!directory.EndsWith("\\"))
             directory += "\\";
 
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.IntDir = directory;
     }
 
@@ -715,7 +725,7 @@ public class SolutionProjectBuilder
     /// </summary>
     static public void targetname(String name)
     {
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.TargetName = name;
     }
 
@@ -725,7 +735,7 @@ public class SolutionProjectBuilder
     /// <param name="extension">For example ".dll", ".exe"</param>
     static public void targetextension(String extension)
     {
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
             conf.TargetExt = extension;
     }
 
@@ -735,7 +745,7 @@ public class SolutionProjectBuilder
     /// <param name="file">header file</param>
     static public void pchheader(String file)
     {
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
         {
             conf.PrecompiledHeader = EPrecompiledHeaderUse.Use;
             conf.PrecompiledHeaderFile = file;
@@ -791,7 +801,7 @@ public class SolutionProjectBuilder
                 throw new Exception2("Allowed symbols() values are: on, off, fastlink");
         }
 
-        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+        foreach (var conf in getSelectedProjectConfigurations())
         {
             conf.GenerateDebugInformation = d;
             conf.UseDebugLibraries = bUseDebugLibraries;
@@ -1058,7 +1068,7 @@ public class SolutionProjectBuilder
             {
                 case "linktimeoptimization":
                     {
-                        foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+                        foreach (var conf in getSelectedProjectConfigurations())
                             conf.WholeProgramOptimization = EWholeProgramOptimization.UseLinkTimeCodeGeneration;
                     }
                     break;
@@ -1066,13 +1076,13 @@ public class SolutionProjectBuilder
                 case "mfc":
                     m_project.Keyword = EKeyword.MFCProj;
 
-                    foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+                    foreach (var conf in getSelectedProjectConfigurations())
                         if (conf.UseOfMfc == EUseOfMfc.None )
                             conf.UseOfMfc = EUseOfMfc.Dynamic;
                     break;
 
                 case "staticruntime":
-                    foreach (var conf in getSelectedConfigurations(true).Cast<Configuration>().Where(x => x != null))
+                    foreach (var conf in getSelectedProjectConfigurations())
                         conf.UseOfMfc = EUseOfMfc.Static;
                     break;
 
@@ -1103,7 +1113,7 @@ public class SolutionProjectBuilder
     /// <param name="files"></param>
     static public void links(params String[] files)
     { 
-        foreach (var conf in getSelectedConfigurations(false))
+        foreach (var conf in getSelectedProjectConfigurations())
         {
             if (conf.AdditionalDependencies.Length != 0)
                 conf.AdditionalDependencies += ";";
@@ -1119,7 +1129,7 @@ public class SolutionProjectBuilder
     /// <param name="folders"></param>
     static public void libdirs(params String[] folders)
     {
-        foreach (var conf in getSelectedConfigurations(false))
+        foreach (var conf in getSelectedProjectConfigurations())
         {
             if (conf.AdditionalLibraryDirectories.Length != 0)
                 conf.AdditionalLibraryDirectories += ";";
