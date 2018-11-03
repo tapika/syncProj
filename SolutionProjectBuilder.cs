@@ -831,6 +831,8 @@ public class SolutionProjectBuilder
                 // new Configuration or new FileConfigurationInfo depending whether it's project configuration or file configuration.
                 FileConfigurationInfo fci = (FileConfigurationInfo)Activator.CreateInstance(type);
                 fci.confName = m_project.configurations[i];
+                if( type == typeof( FileConfigurationInfo ) )
+                    fci.Optimization = EOptimization.ProjectDefault;
                 configItems.Add(fci);
             }
 

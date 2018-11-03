@@ -269,7 +269,7 @@
             </summary>
             <param name="conf">Configuration to dump</param>
             <param name="confName">Configuration name, null if project wise</param>
-            <param name="projectConf">Project configuration, null if conf is file specific configuration</param>
+            <param name="projectConf">If null, then conf is project wide configuration, if non-null - project configuration of file specific configuration</param>
         </member>
         <member name="M:Project.getSortedConfigurations(System.Collections.Generic.List{System.String},System.Boolean,System.Nullable{System.Boolean},System.Boolean)">
             <summary>
@@ -545,8 +545,14 @@
         </member>
         <member name="F:FileConfigurationInfo.Optimization">
             <summary>
-            Optimization level
+            Optimization level. (MaxSpeed is default value for each project configuration, for each file configuration - it's ProjectDefault)
             </summary>
+        </member>
+        <member name="M:FileConfigurationInfo.getOptimization(Project)">
+            <summary>
+            Gets optimization level, set for specific project type.
+            </summary>
+            <param name="p">Project for which to query</param>
         </member>
         <member name="F:FileConfigurationInfo.RuntimeLibrary">
             <summary>
@@ -770,7 +776,12 @@
         </member>
         <member name="F:EOptimization.MinSpace">
             <summary>
-            Minimize Size
+            Minimize Size, in Windows projects
+            </summary>
+        </member>
+        <member name="F:EOptimization.MinSize">
+            <summary>
+            Minimize Size, In Android projects
             </summary>
         </member>
         <member name="F:EOptimization.MaxSpeed">
@@ -781,6 +792,11 @@
         <member name="F:EOptimization.Full">
             <summary>
             Full Optimization
+            </summary>
+        </member>
+        <member name="F:EOptimization.ProjectDefault">
+            <summary>
+            Not available in project file, but this is something we indicate that we haven't set value
             </summary>
         </member>
         <member name="T:ERuntimeLibrary">

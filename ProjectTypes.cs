@@ -273,9 +273,25 @@ public class FileConfigurationInfo
     public String PrecompiledHeaderFile = "stdafx.h";
 
     /// <summary>
-    /// Optimization level
+    /// Optimization level. (MaxSpeed is default value for each project configuration, for each file configuration - it's ProjectDefault)
     /// </summary>
     public EOptimization Optimization = EOptimization.MaxSpeed;
+
+    /// <summary>
+    /// Gets optimization level, set for specific project type.
+    /// </summary>
+    /// <param name="p">Project for which to query</param>
+    public EOptimization getOptimization( Project p )
+    {
+        if( p.Keyword == EKeyword.Android && Optimization == EOptimization.MinSpace )
+            return EOptimization.MinSize;
+
+        if( p.Keyword != EKeyword.Android && Optimization == EOptimization.MinSize )
+            return EOptimization.MinSpace;
+
+        return Optimization;
+    }
+
 
     /// <summary>
     /// Run-time library
@@ -577,10 +593,16 @@ public enum EOptimization
     Disabled,
 
     /// <summary>
-    /// Minimize Size
+    /// Minimize Size, in Windows projects
     /// </summary>
     [FunctionName("size")]
     MinSpace,
+
+    /// <summary>
+    /// Minimize Size, In Android projects
+    /// </summary>
+    [FunctionName( "size" )]
+    MinSize,
 
     /// <summary>
     /// Maximize Speed
@@ -592,7 +614,13 @@ public enum EOptimization
     /// Full Optimization
     /// </summary>
     [FunctionName("on")]
-    Full
+    Full,
+
+    /// <summary>
+    /// Not available in project file, but this is something we indicate that we haven't set value
+    /// </summary>
+    [FunctionName("default")]
+    ProjectDefault
 }
 
 /// <summary>

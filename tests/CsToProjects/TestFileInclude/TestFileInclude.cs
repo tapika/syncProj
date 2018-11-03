@@ -7,7 +7,7 @@ partial class Builder : SolutionProjectBuilder
     {
         try
         {
-            solution("TestAllKinds");
+            solution("out_TestFileInclude");
             project("out_Test");
             vsver(2012);
             platforms("Win32");

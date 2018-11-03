@@ -427,6 +427,7 @@ public class Project
                 int i = file2compile.fileConfig.Count;
                 // Add new configurations, use same precompiled header setting as project uses for given configuration.
                 FileConfigurationInfo nfci = new FileConfigurationInfo() { PrecompiledHeader = projectConfig[i].PrecompiledHeader };
+                nfci.Optimization = EOptimization.ProjectDefault;
                 file2compile.fileConfig.Add(nfci);
 
                 if (subField != null)   
@@ -802,7 +803,7 @@ public class Project
     /// </summary>
     /// <param name="conf">Configuration to dump</param>
     /// <param name="confName">Configuration name, null if project wise</param>
-    /// <param name="projectConf">Project configuration, null if conf is file specific configuration</param>
+    /// <param name="projectConf">If null, then conf is project wide configuration, if non-null - project configuration of file specific configuration</param>
     void DumpConfiguration(FileConfigurationInfo conf, String confName = null, Configuration projectConf = null )
     {
         String sCond = "";
@@ -850,7 +851,10 @@ public class Project
         if (projectConf != null && conf.PrecompiledHeader != EPrecompiledHeaderUse.ProjectDefault && projectConf.PrecompiledHeader != conf.PrecompiledHeader)
             o.AppendLine("      <PrecompiledHeader" + sCond + ">" + conf.PrecompiledHeader + "</PrecompiledHeader>");
 
-        if(conf.ShowIncludes)
+        if (projectConf != null && conf.Optimization != EOptimization.ProjectDefault && conf.Optimization != projectConf.Optimization)
+            o.AppendLine( "      <Optimization" + sCond + ">" + conf.getOptimization(this) + "</Optimization>" );
+
+        if( conf.ShowIncludes)
             o.AppendLine("      <ShowIncludes" + sCond + ">true</ShowIncludes>");
 
         if(conf.ExcludedFromBuild )

@@ -7,7 +7,7 @@ partial class Builder : SolutionProjectBuilder
     {
         try
         {
-            solution("TestAllKinds");
+            solution("out_TestAllKinds");
 
                 foreach (String _kind in new String[] { "ConsoleApp", "WindowedApp", "Application", "SharedLib", "DynamicLibrary", "StaticLibrary", "StaticLib", "Utility", "ConsoleApplication" })
                 {
