@@ -13,13 +13,31 @@ using System.Xml.Serialization;
 /// </summary>
 public class Solution
 {
+    /// <summary>
+    /// File path from where solution was loaded.
+    /// </summary>
     [XmlIgnore]
-    public String path;                                 // File path from where solution was loaded.
+    public String path;
     double slnVer;                                      // 11.00 - vs2010, 12.00 - vs2015
 
-    public String VisualStudioVersion;                  // null for old visual studio's
-    public String MinimumVisualStudioVersion;           // null for old visual studio's
+    /// <summary>
+    /// Visual studio version information used for generation, for example 2010, 2012, 2015 and so on...
+    /// </summary>
+    public int visualStudioFormatTag;
 
+    /// <summary>
+    /// null for old visual studio's
+    /// </summary>
+    public String VisualStudioVersion;
+    
+    /// <summary>
+    /// null for old visual studio's
+    /// </summary>
+    public String MinimumVisualStudioVersion;
+
+    /// <summary>
+    /// List of project included into solution.
+    /// </summary>
     public List<Project> projects = new List<Project>();
 
     /// <summary>
@@ -28,18 +46,26 @@ public class Solution
     /// </summary>
     public List<String> configurations = new List<string>();
 
+    /// <summary>
+    /// Extracts platfroms supported by solution
+    /// </summary>
     public IEnumerable<String> getPlatforms()
     {
         return configurations.Select(x => "\"" + x.Split('|')[0]).Distinct();
     }
 
+    /// <summary>
+    /// Extracts configuration names supported by solution
+    /// </summary>
     public IEnumerable<String> getConfigurations()
     {
         return configurations.Select(x => "\"" + x.Split('|')[1]).Distinct();
     }
 
 
-
+    /// <summary>
+    /// Creates new solution.
+    /// </summary>
     public Solution() { }
 
     /// <summary>
@@ -53,6 +79,12 @@ public class Solution
 
         String slnTxt = File.ReadAllText(path);
         s.slnVer = Double.Parse(Regex.Match(slnTxt, "[\r\n]+Microsoft Visual Studio Solution File, Format Version ([0-9.]+)", RegexOptions.Multiline).Groups[1].Value, CultureInfo.InvariantCulture);
+
+        int vsNumber = Int32.Parse(Regex.Match(slnTxt, "^\\# Visual Studio ([0-9]+)[\r\n]+", RegexOptions.Multiline).Groups[1].Value);
+        if (vsNumber > 2000)
+            s.visualStudioFormatTag = vsNumber;
+        else
+            s.visualStudioFormatTag = vsNumber - 14 + 2015;     // Visual Studio 14 => vs2015, formula might not be applicable for future vs versions.
 
         foreach (String line in new String[] { "VisualStudioVersion", "MinimumVisualStudioVersion" })
         {
@@ -205,18 +237,32 @@ public class Solution
         StringBuilder o = new StringBuilder();
 
         o.AppendLine();
-        // For now hardcoded for vs2013, get rid of this hardcoding later on.
-        o.AppendLine("Microsoft Visual Studio Solution File, Format Version 12.00");
-        o.AppendLine("# Visual Studio 2013");
-        //o.AppendLine("VisualStudioVersion = 12.0.30501.0");
-        //o.AppendLine("MinimumVisualStudioVersion = 10.0.40219.1");
 
+        int verTag = visualStudioFormatTag;
+
+        if (verTag == 0)
+            verTag = 2015;
+
+        String formatVersion = "12.00";
+
+        if (verTag <= 2010)
+            formatVersion = "11.00";
+
+        o.AppendLine("Microsoft Visual Studio Solution File, Format Version " + formatVersion);
+
+        if (verTag >= 2015)
+            verTag -= 2015 - 14;
+
+        o.AppendLine("# Visual Studio " + verTag.ToString());
+
+        // Visual studio 2015 itself dumps also VisualStudioVersion & MinimumVisualStudioVersion - but we cannot support it, as it's targetted per visual studio toolset version.
+        
         //
         // Dump projects.
         //
         foreach (Project p in projects)
         {
-            o.AppendLine("Project(\"" + p.ProjectHostGuid + "\") = \"" + p.ProjectName + "\", \"" + p.getRelativePath() + "\", \"" + p.ProjectGuid + "\"");
+            o.AppendLine("Project(\"" + p.ProjectHostGuid + "\") = \"" + p.ProjectName + "\", \"" + p.getRelativePath() + "\", \"" + p.ProjectGuid.ToUpper() + "\"");
 
             //
             // Dump project dependencies.
@@ -228,7 +274,7 @@ public class Solution
                 {
                     Project dproj = projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
                     if (dproj != null)
-                        o.AppendLine("		" + dproj.ProjectGuid + " = " + dproj.ProjectGuid);
+                        o.AppendLine("		" + dproj.ProjectGuid.ToUpper() + " = " + dproj.ProjectGuid.ToUpper());
                 }
                 o.AppendLine("	EndProjectSection");
             } //if
@@ -236,12 +282,15 @@ public class Solution
             o.AppendLine("EndProject");
         }
 
+
+        List<String> sortedConfs = Project.getSortedConfigurations(configurations, false, null, true);
+
         //
         // Dump configurations.
         //
         o.AppendLine("Global");
         o.AppendLine("	GlobalSection(SolutionConfigurationPlatforms) = preSolution");
-        foreach (String cfg in configurations)
+        foreach (String cfg in sortedConfs)
         {
             o.AppendLine("		" + cfg + " = " + cfg);
         }
@@ -254,23 +303,35 @@ public class Solution
         o.AppendLine("	GlobalSection(ProjectConfigurationPlatforms) = postSolution");
         foreach (Project p in projects)
         {
-            for (int iConf = 0; iConf < configurations.Count; iConf++)
+            if (p.IsSubFolder() )       // If sub-folder no need to list it here.
+                continue;
+
+            foreach( String conf in sortedConfs )
             {
-                String conf = configurations[iConf];
+                int iConf = configurations.IndexOf(conf);
                 String mappedConf = conf;
 
                 if (p.slnConfigurations != null && iConf < p.slnConfigurations.Count)
                     mappedConf = p.slnConfigurations[iConf];
 
                 bool bPeformBuild = true;
+                bool? bPerformDeploy = null;
+
+                if (p.Keyword == EKeyword.Package)
+                    bPerformDeploy = true;
 
                 if (p.slnBuildProject != null && iConf < p.slnBuildProject.Count)
                     bPeformBuild = p.slnBuildProject[iConf];
 
+                if (p.slnDeployProject != null && iConf < p.slnConfigurations.Count)
+                    bPerformDeploy = p.slnDeployProject[iConf];
 
-                o.AppendLine("		" + p.ProjectGuid + "." + conf + ".ActiveCfg = " + mappedConf);
+                o.AppendLine("		" + p.ProjectGuid.ToUpper() + "." + conf + ".ActiveCfg = " + mappedConf);
                 if (bPeformBuild)
-                    o.AppendLine("		" + p.ProjectGuid + "." + conf + ".Build.0 = " + mappedConf);
+                    o.AppendLine("		" + p.ProjectGuid.ToUpper() + "." + conf + ".Build.0 = " + mappedConf);
+                
+                if(bPerformDeploy.HasValue && bPerformDeploy.Value )
+                    o.AppendLine("		" + p.ProjectGuid.ToUpper() + "." + conf + ".Deploy.0 = " + mappedConf);
 
             } //for
         } //foreach
@@ -307,7 +368,7 @@ public class Solution
             {
                 if (p.parent.parent == null)
                     continue;
-                o.AppendLine("		" + p.ProjectGuid + " = " + p.parent.ProjectGuid);
+                o.AppendLine("		" + p.ProjectGuid.ToUpper() + " = " + p.parent.ProjectGuid.ToUpper());
             }
 
             o.AppendLine("	EndGlobalSection");
@@ -318,6 +379,9 @@ public class Solution
         String currentSln = "";
         if (File.Exists(slnPath)) currentSln = File.ReadAllText(slnPath);
 
+        //
+        // Android project uses windows linefeeds (No replace is needed), but Visual studio seems to work both ways.
+        //
         String newSln = o.ToString().Replace("\r\n", "\n");
         //
         // Save only if needed.

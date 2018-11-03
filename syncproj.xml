@@ -376,6 +376,11 @@
         </member>
         <member name="F:EKeyword.None">
             <summary>
+            For sub-folders for example (Also default value)
+            </summary>
+        </member>
+        <member name="F:EKeyword.Package">
+            <summary>
             Typically set for Android packaging project.
             </summary>
         </member>
@@ -387,6 +392,11 @@
         <member name="F:EKeyword.Android">
             <summary>
             Android project
+            </summary>
+        </member>
+        <member name="T:Project">
+            <summary>
+            Represents Visual studio project .xml model
             </summary>
         </member>
         <member name="F:Project.solution">
@@ -402,6 +412,11 @@
         <member name="F:Project.bIsPackagingProject">
             <summary>
             true if it's Android packaging project
+            </summary>
+        </member>
+        <member name="F:Project.bDefinedAsExternal">
+            <summary>
+            Don't generate project if defined as externalproject
             </summary>
         </member>
         <member name="P:Project.ProjectHostGuid">
@@ -509,6 +524,16 @@
             <param name="confName">Configuration name, null if project wise</param>
             <param name="projectConf">Project configuration, null if conf is file specific configuration</param>
         </member>
+        <member name="M:Project.getSortedConfigurations(System.Collections.Generic.List{System.String},System.Boolean,System.Nullable{System.Boolean},System.Boolean)">
+            <summary>
+            Resorts configuration list in some particular order.
+            </summary>
+            <param name="configurations">Configuration to sort</param>
+            <param name="bX3264hasPriority">x86 / x64 platforms have priority.</param>
+            <param name="b64HasPriority">64 bit configurations have priority. null if not use this sort criteria.</param>
+            <param name="bCompareConfigNameFirst">true if compare config name first</param>
+            <returns></returns>
+        </member>
         <member name="M:Project.SaveProject">
             <summary>
             Saves project if necessary.
@@ -519,10 +544,50 @@
             .sln loaded into class.
             </summary>
         </member>
+        <member name="F:Solution.path">
+            <summary>
+            File path from where solution was loaded.
+            </summary>
+        </member>
+        <member name="F:Solution.visualStudioFormatTag">
+            <summary>
+            Visual studio version information used for generation, for example 2010, 2012, 2015 and so on...
+            </summary>
+        </member>
+        <member name="F:Solution.VisualStudioVersion">
+            <summary>
+            null for old visual studio's
+            </summary>
+        </member>
+        <member name="F:Solution.MinimumVisualStudioVersion">
+            <summary>
+            null for old visual studio's
+            </summary>
+        </member>
+        <member name="F:Solution.projects">
+            <summary>
+            List of project included into solution.
+            </summary>
+        </member>
         <member name="F:Solution.configurations">
             <summary>
             List of configuration list, in form "{Configuration}|{Platform}", for example "Release|Win32".
             To extract individual platforms / configuration list, use following functions.
+            </summary>
+        </member>
+        <member name="M:Solution.getPlatforms">
+            <summary>
+            Extracts platfroms supported by solution
+            </summary>
+        </member>
+        <member name="M:Solution.getConfigurations">
+            <summary>
+            Extracts configuration names supported by solution
+            </summary>
+        </member>
+        <member name="M:Solution.#ctor">
+            <summary>
+            Creates new solution.
             </summary>
         </member>
         <member name="M:Solution.LoadSolution(System.String)">
@@ -561,6 +626,12 @@
             Creates new solution.
             </summary>
             <param name="name">Solution name</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.vsver(System.Int32)">
+            <summary>
+            Specifies Visual studio version upon which given solution is targetted.
+            </summary>
+            <param name="vsVersionNumber"></param>
         </member>
         <member name="M:SolutionProjectBuilder.platforms(System.String[])">
             <summary>

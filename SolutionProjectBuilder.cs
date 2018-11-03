@@ -58,12 +58,18 @@ public class SolutionProjectBuilder
                 externalproject(null);
 
                 if (m_solution != null)
+                {
                     m_solution.SaveSolution();
+
+                    foreach (Project p in m_solution.projects)
+                        if( !p.bDefinedAsExternal )
+                            p.SaveProject();
+                }
                 else
                     if (m_project != null)
-                        m_project.SaveProject();
-                    else
-                        Console.WriteLine("No solution or project defined. Use project() or solution() functions in script");
+                    m_project.SaveProject();
+                else
+                    Console.WriteLine("No solution or project defined. Use project() or solution() functions in script");
             }
             catch (Exception ex)
             {
@@ -84,6 +90,21 @@ public class SolutionProjectBuilder
             m_solution.path += ".sln";
     }
 
+    static void requireSolutionSelected()
+    {
+        if (m_solution == null)
+            throw new Exception2("Solution not specified (Use solution(\"name\" to specify new solution)");
+    }
+
+    /// <summary>
+    /// Specifies Visual studio version upon which given solution is targetted.
+    /// </summary>
+    /// <param name="vsVersionNumber"></param>
+    static public void vsver(int vsVersionNumber)
+    { 
+        requireSolutionSelected();
+        m_solution.visualStudioFormatTag = vsVersionNumber;
+    }
 
     static void requireProjectSelected()
     {
@@ -96,8 +117,7 @@ public class SolutionProjectBuilder
         // Generating configurations for solution
         if (m_project == null)
         {
-            if (m_solution == null)
-                throw new Exception2("Solution not specified (Use solution(\"name\" to specify new solution)");
+            requireSolutionSelected();
 
             m_solution.configurations.Clear();
 
@@ -213,6 +233,7 @@ public class SolutionProjectBuilder
     static public void externalproject(String name)
     {
         specifyproject(name);
+        m_project.bDefinedAsExternal = true;
     }
 
     /// <summary>
@@ -222,6 +243,7 @@ public class SolutionProjectBuilder
     static public void project(String name)
     {
         specifyproject(name);
+        m_project.bDefinedAsExternal = false;
     }
 
     /// <summary>
@@ -338,7 +360,9 @@ public class SolutionProjectBuilder
     static public void invokeScript(String path)
     {
         String errors = "";
-        if (!CsScript.RunScript(path, true, out errors, "no_exception_handling"))
+        String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, path);
+
+        if (!CsScript.RunScript(fullPath, true, out errors, "no_exception_handling"))
             throw new Exception(errors);
     }
 
@@ -446,7 +470,7 @@ public class SolutionProjectBuilder
         {
             if (reConfMatch.Match(m_project.configurations[i]).Success)
             {
-                if (i >= configItems.Count)
+                while (i >= configItems.Count)
                 {
                     FileConfigurationInfo fci = (FileConfigurationInfo)Activator.CreateInstance(type);
                     fci.confName = m_project.configurations[i];

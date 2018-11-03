@@ -502,9 +502,14 @@ public class Configuration: FileConfigurationInfo
 public enum EKeyword
 {
     /// <summary>
-    /// Typically set for Android packaging project.
+    /// For sub-folders for example (Also default value)
     /// </summary>
     None = 0,
+
+    /// <summary>
+    /// Typically set for Android packaging project.
+    /// </summary>
+    Package,
 
     /// <summary>
     /// Windows project (32 or 64 bit)
@@ -518,7 +523,9 @@ public enum EKeyword
 }
 
 
-
+/// <summary>
+/// Represents Visual studio project .xml model
+/// </summary>
 [DebuggerDisplay("{ProjectName}, {RelativePath}, {ProjectGuid}")]
 public class Project
 {
@@ -538,6 +545,10 @@ public class Project
     /// </summary>
     public bool bIsPackagingProject = false;
 
+    /// <summary>
+    /// Don't generate project if defined as externalproject
+    /// </summary>
+    public bool bDefinedAsExternal = true;
 
     /// <summary>
     /// Made as a property so can be set over reflection.
@@ -583,7 +594,7 @@ public class Project
         {
             case EKeyword.Android:
                 return "android";
-            case EKeyword.None:
+            case EKeyword.Package:
                 return "package";
             default:
             case EKeyword.Win32Proj:
@@ -602,8 +613,9 @@ public class Project
         switch (osBase.ToLower())
         {
             case "package":
+                bIsPackagingProject = true;
                 ToolsVersion = "14.0";
-                Keyword = EKeyword.None;
+                Keyword = EKeyword.Package;
                 break;
             case "vs2010":
             case "vs2012":
@@ -654,6 +666,14 @@ public class Project
 
         String path = RelativePath.Replace("/", "\\");
 
+        if (bIsFolder)
+            return path;
+
+        if (Keyword == EKeyword.Package)
+        {
+            return path + ".androidproj";
+        }
+        
         if (language != null)
         {
             switch (language)
@@ -664,7 +684,7 @@ public class Project
         }
 
         return path;
-    }
+    } //getRelativePath
 
 
     public bool IsSubFolder()
@@ -828,7 +848,7 @@ public class Project
         if (fi.FieldType == typeof(EKeyword))
         {
             if (oValue == null)
-                oValue = EKeyword.None;
+                oValue = EKeyword.Package;
             else
                 oValue = Enum.Parse(typeof(EKeyword), (String)oValue);
         }
@@ -1065,22 +1085,45 @@ public class Project
     } //DumpConfiguration
 
 
-    List<String> getSortedConfigurations(bool bX3264hasPriority)
+    /// <summary>
+    /// Resorts configuration list in some particular order.
+    /// </summary>
+    /// <param name="configurations">Configuration to sort</param>
+    /// <param name="bX3264hasPriority">x86 / x64 platforms have priority.</param>
+    /// <param name="b64HasPriority">64 bit configurations have priority. null if not use this sort criteria.</param>
+    /// <param name="bCompareConfigNameFirst">true if compare config name first</param>
+    /// <returns></returns>
+    static public List<String> getSortedConfigurations(List<String> configurations, bool bX3264hasPriority, bool? b64HasPriority = true, bool bCompareConfigNameFirst = false)
     {
         List<String> configurationsSorted = configurations;
         int xPriority = bX3264hasPriority ? 1 : -1;
-        configurationsSorted.Sort(delegate (String c1, String c2)
+        int xa64Priority = 1;
+        
+        if(b64HasPriority.HasValue) 
+            xa64Priority = b64HasPriority.Value ? 1 : -1;
+        
+            configurationsSorted.Sort(delegate (String c1, String c2)
         {
             String[] cp1 = c1.Split('|');
             String[] cp2 = c2.Split('|');
             String p1 = cp1[1].ToLower();
             String p2 = cp2[1].ToLower();
 
+            if (bCompareConfigNameFirst)
+            {
+                int cr2 = cp1[0].CompareTo(cp2[0]);
+                if (cr2 != 0)
+                    return cr2;
+            }
+
             if (p1.StartsWith("x") != p2.StartsWith("x"))       // Give x86 & x64 priority over ARM based names.
                 return p1.StartsWith("x") ? -xPriority : xPriority;
 
-            if (p1.Contains("64") != p2.Contains("64"))         // 64-bit named configurations have priority.
-                return p1.Contains("64") ? -1 : 1;
+            if (b64HasPriority.HasValue)
+            {
+                if (p1.Contains("64") != p2.Contains("64"))         // 64-bit named configurations have priority.
+                    return p1.Contains("64") ? -xa64Priority : xa64Priority;
+            }
 
             int cr = p1.CompareTo(p2);
             if (cr != 0)
@@ -1091,6 +1134,11 @@ public class Project
         );
 
         return configurationsSorted;
+    }
+    
+    List<String> getSortedConfigurations(bool bX3264hasPriority)
+    {
+        return Project.getSortedConfigurations(configurations, bX3264hasPriority);
     }
 
 
@@ -1147,28 +1195,42 @@ public class Project
         o.AppendLine("  </ItemGroup>");
 
         o.AppendLine("  <PropertyGroup Label=\"Globals\">");
-        o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
+        
+        bool bIsPackagingProject = Keyword == EKeyword.Package;
+        
+        if(!bIsPackagingProject)
+            o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
 
         //
         // Copied from premake5: VS 2013 adds the <IgnoreWarnCompileDuplicatedFilename> to get rid
         // of spurious warnings when the same filename is present in different
         // configurations.
         //
-        o.AppendLine("    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>");
+        if(!bIsPackagingProject)
+            o.AppendLine("    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>");
         
-        if( Keyword != EKeyword.None )
+        if( Keyword != EKeyword.Package )
             o.AppendLine("    <Keyword>" + Keyword + "</Keyword>");
-        
-        o.AppendLine("    <RootNamespace>" + ProjectName + "</RootNamespace>");
+
+        String rootNamespace = ProjectName;
+        if (rootNamespace.IndexOf('.') != -1)
+            rootNamespace = rootNamespace.Substring(0, rootNamespace.IndexOf('.'));
+
+        o.AppendLine("    <RootNamespace>" + rootNamespace + "</RootNamespace>");
 
         bool bIsAndroidProject = Keyword == EKeyword.Android;
-        bool bIsPackagingProject = Keyword == EKeyword.None;
         if (bIsAndroidProject)
             o.AppendLine("    <DefaultLanguage>en-US</DefaultLanguage>");
 
         if (bIsAndroidProject || bIsPackagingProject)
             o.AppendLine("    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>");
         
+        if (bIsPackagingProject)
+            o.AppendLine("    <ProjectVersion>1.0</ProjectVersion>");
+
+        if (bIsPackagingProject)
+            o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
+
         if (bIsAndroidProject)
             o.AppendLine("    <ApplicationType>Android</ApplicationType>");
         
@@ -1180,7 +1242,7 @@ public class Project
         // Some mysterious xml tag.
         String propsPath = "$(VCTargetsPath)\\Microsoft.Cpp";
 
-        if (Keyword == EKeyword.None)
+        if (Keyword == EKeyword.Package)
             propsPath = "$(AndroidTargetsPath)\\Android";
 
         o.AppendLine("  <Import Project=\""+ propsPath + ".Default.props\" />");
@@ -1198,8 +1260,8 @@ public class Project
             if (bIsPackagingProject)
             {
                 o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
-                o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
-                if(conf.AndroidAPILevel != "android-19" )
+                o.AppendLine("    <ConfigurationType>Application</ConfigurationType>"); // Why this line is needed anyway?
+                if (conf.AndroidAPILevel != "android-19" )
                     o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
             }
             else {
@@ -1222,7 +1284,7 @@ public class Project
 
         o.AppendLine("  <Import Project=\"" + propsPath + ".props\" />");
 
-        if (Keyword == EKeyword.None)
+        if (Keyword == EKeyword.Package)
         {
             o.AppendLine("  <ImportGroup Label=\"ExtensionSettings\" />");
         }
@@ -1237,7 +1299,7 @@ public class Project
             o.AppendLine("  <ImportGroup Label=\"Shared\">");
             o.AppendLine("  </ImportGroup>");
         }
-        else if (Keyword == EKeyword.None)
+        else if (Keyword == EKeyword.Package)
         { 
             o.AppendLine("  <ImportGroup Label=\"Shared\" />");
         }

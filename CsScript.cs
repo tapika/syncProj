@@ -204,7 +204,10 @@ public class CsScript
 
         FieldInfo fi = builderClass.GetField("m_scriptRelativeDir", BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy);
         if (fi != null)
-            fi.SetValue(null, Path.GetDirectoryName(_path));
+        {
+            String scriptSubPath = Path2.makeRelative(Path.GetDirectoryName(_path), SolutionProjectBuilder.m_workPath);
+            fi.SetValue(null, scriptSubPath);
+        }
 
         // ----------------------------------------------------------------
         //  Run script

@@ -319,6 +319,7 @@ public class SolutionOrProject
             //  Building solution
             // ---------------------------------------------------------------------------------
             o.AppendLine(head + "solution" + brO + "\"" + fileName + "\"" + brC);
+            o.AppendLine(head + "    " + ((format == "lua") ? comment : "") + "vsver" + brO + sln.visualStudioFormatTag + brC);
 
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
@@ -424,7 +425,7 @@ public class SolutionOrProject
                 return "symbols" + brO + "\"" + ((s == "True") ? "on" : "off") + "\"" + brC;
             });
 
-            if (proj.Keyword == EKeyword.None)
+            if (proj.Keyword == EKeyword.Package)
             {
                 ConfigationSpecificValue(proj, proj.projectConfig, "AndroidAPILevel", lines2dump, (s) => {
                     return "androidapilevel" + brO + "\"" + s + "\"" + brC;
@@ -955,7 +956,7 @@ partial class Script
                 Console.WriteLine("");
                 Console.WriteLine(" -o      - sets output file (without extension)");
                 Console.WriteLine(" -p      - sets prefix for all output files");
-                Console.WriteLine(" -sln    - does not processed projects");
+                Console.WriteLine(" -sln    - does not processes projects (Solution only load)");
                 Console.WriteLine("");
                 Console.WriteLine("Usage(2): syncProj <.cs>");
                 Console.WriteLine("");
@@ -969,7 +970,15 @@ partial class Script
             SolutionOrProject projCache;
 
             if (File.Exists(projCacheFile))
-                projCache = SolutionOrProject.LoadCache(projCacheFile);
+            {
+                try
+                {
+                    projCache = SolutionOrProject.LoadCache(projCacheFile);
+                }
+                catch (Exception)
+                {
+                }
+            }
 
             Solution s = proj.solutionOrProject as Solution;
             if (s != null && bProcessProjects)
