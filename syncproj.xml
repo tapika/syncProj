@@ -1554,6 +1554,13 @@
             Specifies commands to be executed after project build
             </summary>
         </member>
+        <member name="M:SolutionProjectBuilder.exportFiles(System.String,System.String[])">
+            <summary>
+            Perform export of files in post build step
+            </summary>
+            <param name="toDir">Where to export</param>
+            <param name="files">files to export</param>
+        </member>
         <member name="M:SolutionProjectBuilder.prebuildcommands(System.String[])">
             <summary>
             Specifies commands to be executed before project build

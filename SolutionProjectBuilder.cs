@@ -1365,7 +1365,30 @@ public class SolutionProjectBuilder
     { 
         requireProjectSelected();
         foreach (var conf in getSelectedProjectConfigurations())
-            conf.PostBuildEvent.Command = String.Join("\r\n", commands);
+        {
+            if (conf.PostBuildEvent.Command.Length != 0) conf.PostBuildEvent.Command += "\r\n";
+            conf.PostBuildEvent.Command += String.Join("\r\n", commands);
+        }
+    }
+
+    /// <summary>
+    /// Perform export of files in post build step
+    /// </summary>
+    /// <param name="toDir">Where to export</param>
+    /// <param name="files">files to export</param>
+    static public void exportFiles(String toDir, params String[] files)
+    {
+        if (!toDir.EndsWith("\\"))
+            toDir += "\\";
+
+        using (new UsingSyncProj(1))
+        {
+            foreach (String file in files)
+            { 
+                String cmd = @"echo f 2>nul | xcopy /d /y /q $(ProjectDir)" + file + " $(ProjectDir)" + toDir + file + " >nul";
+                postbuildcommands(cmd);
+            }
+        }
     }
 
     /// <summary>
@@ -1375,7 +1398,10 @@ public class SolutionProjectBuilder
     {
         requireProjectSelected();
         foreach (var conf in getSelectedProjectConfigurations())
-            conf.PreBuildEvent.Command = String.Join("\r\n", commands);
+        {
+            if (conf.PreBuildEvent.Command.Length != 0) conf.PreBuildEvent.Command += "\r\n";
+            conf.PreBuildEvent.Command += String.Join("\r\n", commands);
+        }
     }
 
     /// <summary>
@@ -1385,7 +1411,10 @@ public class SolutionProjectBuilder
     {
         requireProjectSelected();
         foreach (var conf in getSelectedProjectConfigurations())
-            conf.PreLinkEvent.Command = String.Join("\r\n", commands);
+        {
+            if (conf.PreLinkEvent.Command.Length != 0) conf.PreLinkEvent.Command += "\r\n";
+            conf.PreLinkEvent.Command += String.Join("\r\n", commands);
+        }
     }
 
 
