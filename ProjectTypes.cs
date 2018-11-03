@@ -62,31 +62,43 @@ public enum EExceptionHandling
     /// <summary>
     /// The exception-handling model that catches both asynchronous (structured) and synchronous (C++) exceptions. (/EHa)
     /// </summary>
-    [Description("Async")]
     Async,
 
     /// <summary>
     /// Both C++ and C functions can throw exceptions (/EHs)
     /// </summary>
-    [Description("SyncCThrow")]
     SyncCThrow,
 
     /// <summary>
     /// C++ functions can throw exceptions, C functions don't throw exceptions (/EHsc)
     /// </summary>
-    [Description("Sync")]
     Sync,
 
     /// <summary>
     /// Functions assumed not to throw exceptions (/EH-)
     /// </summary>
-    [Description("false")]
     NoExceptionHandling,
+
+    /// <summary>
+    /// Functions assumed not to throw exceptions (-fexceptions)
+    /// </summary>
+    Enabled = SyncCThrow,
+
+    /// <summary>
+    /// Functions assumed not to throw exceptions (-fno-exceptions)
+    /// </summary>
+    Disabled = NoExceptionHandling,
+
+    /// <summary>
+    /// -funwind-tables
+    /// </summary>
+    UnwindTables,
 
     /// <summary>
     /// Default value, not saved in .vcxproj project file
     /// </summary>
     ProjectDefault
+
 }
 
 
@@ -324,6 +336,34 @@ public class FileConfigurationInfo
     /// Exception Handling Model
     /// </summary>
     public EExceptionHandling ExceptionHandling = EExceptionHandling.ProjectDefault;
+
+    /// <summary>
+    /// Gets xml tag for .vcxproj
+    /// </summary>
+    public String getExceptionHandlingValue(EKeyword keyword)
+    {
+        bool isCLangGccCompiler = keyword == EKeyword.Android;
+
+        switch (ExceptionHandling)
+        {
+            default:
+            case EExceptionHandling.Enabled:        // == SyncCThrow
+                return (isCLangGccCompiler) ? "Enabled" : "SyncCThrow";
+
+            case EExceptionHandling.Async:
+                return (isCLangGccCompiler) ? "Enabled": "Async";
+
+            case EExceptionHandling.Disabled:       // == NoExceptionHandling
+                return (isCLangGccCompiler) ? "Disabled" : "false";
+
+            case EExceptionHandling.Sync:
+                return (isCLangGccCompiler) ? "Enabled" : "Sync";
+
+            case EExceptionHandling.UnwindTables:
+                return (isCLangGccCompiler) ? "UnwindTables" : "SyncCThrow";
+        }
+    }
+
 
     /// <summary>
     /// Run-Time Error Checks

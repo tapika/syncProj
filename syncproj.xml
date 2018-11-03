@@ -407,6 +407,21 @@
             Functions assumed not to throw exceptions (/EH-)
             </summary>
         </member>
+        <member name="F:EExceptionHandling.Enabled">
+            <summary>
+            Functions assumed not to throw exceptions (-fexceptions)
+            </summary>
+        </member>
+        <member name="F:EExceptionHandling.Disabled">
+            <summary>
+            Functions assumed not to throw exceptions (-fno-exceptions)
+            </summary>
+        </member>
+        <member name="F:EExceptionHandling.UnwindTables">
+            <summary>
+            -funwind-tables
+            </summary>
+        </member>
         <member name="F:EExceptionHandling.ProjectDefault">
             <summary>
             Default value, not saved in .vcxproj project file
@@ -627,6 +642,11 @@
         <member name="F:FileConfigurationInfo.ExceptionHandling">
             <summary>
             Exception Handling Model
+            </summary>
+        </member>
+        <member name="M:FileConfigurationInfo.getExceptionHandlingValue(EKeyword)">
+            <summary>
+            Gets xml tag for .vcxproj
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.BasicRuntimeChecks">

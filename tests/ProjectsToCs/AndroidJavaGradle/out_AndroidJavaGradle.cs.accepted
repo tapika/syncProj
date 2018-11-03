@@ -1,0 +1,31 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            project("out_AndroidJavaGradle");
+                configurations(  "Debug","Release" );
+                platforms( "ARM","ARM64","x86","x64" );
+                uuid("f7a7b666-3398-472b-832b-9447a0d50c90");
+                vsver(2015);
+                kind("Application","gradlepackage");
+                files( 
+                    "app/build.gradle.template",
+                    "app/src/main/AndroidManifest.xml.template",
+                    "app/src/main/java/com/AndroidJavaGradle/AndroidJavaGradle.java",
+                    "build.gradle.template",
+                    "gradle/wrapper/gradle-wrapper.properties.template",
+                    "settings.gradle.template"
+                 );
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+

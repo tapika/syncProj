@@ -966,7 +966,7 @@ public class Project
 
         if (conf.ExceptionHandling != EExceptionHandling.ProjectDefault)
         {
-            String v = typeof(EExceptionHandling).GetField(conf.ExceptionHandling.ToString()).GetCustomAttribute<DescriptionAttribute>().Description;
+            String v = conf.getExceptionHandlingValue(Keyword);
             o.AppendLine("      <ExceptionHandling" + sCond + ">" + v + "</ExceptionHandling>");
         }
 

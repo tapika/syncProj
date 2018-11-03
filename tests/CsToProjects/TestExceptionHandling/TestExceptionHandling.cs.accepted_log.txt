@@ -1,9 +1,5 @@
 syncProj exited with no error
 TestExceptionHandling.cs :
-File updated: out_ehasync.vcxproj.filters
-File updated: out_ehasync.vcxproj
-File updated: out_ehsynccthrow.vcxproj.filters
-File updated: out_ehsynccthrow.vcxproj
-File updated: out_ehsync.vcxproj.filters
-File updated: out_ehsync.vcxproj
-8 files updated
+File updated: out_ehtest_windows.vcxproj.filters
+File updated: out_ehtest_windows.vcxproj
+4 files updated
