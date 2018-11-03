@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -15,11 +16,34 @@ using System.Xml.Serialization;
 public class Solution
 {
     /// <summary>
+    /// Solution name
+    /// </summary>
+    public String name;
+
+    /// <summary>
     /// File path from where solution was loaded.
     /// </summary>
     [XmlIgnore]
     public String path;
 
+    /// <summary>
+    /// Just an internal project for tracking project hierarchy
+    /// </summary>
+    public Project solutionRoot = new Project();
+
+    /// <summary>
+    /// Solution name for debugger.
+    /// </summary>
+    [ExcludeFromCodeCoverage]
+    public override string ToString()
+    {
+        return "Solution, name = " + name;
+    }
+
+    /// <summary>
+    /// Gets solution path
+    /// </summary>
+    /// <returns></returns>
     public String getSolutionFolder()
     {
         return Path.GetDirectoryName(path);

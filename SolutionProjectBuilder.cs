@@ -19,6 +19,11 @@ using System.Runtime.InteropServices;
 public class SolutionProjectBuilder
 {
     /// <summary>
+    /// List of solutions being generated.
+    /// </summary>
+    public static List<Solution> m_solutions = new List<Solution>();
+
+    /// <summary>
     /// Currently selected active solution on which all function below operates upon. null if not selected yet.
     /// </summary>
     public static Solution m_solution = null;
@@ -52,7 +57,7 @@ public class SolutionProjectBuilder
         }
 
         if (!Path.IsPathRooted(path))
-            path = Path.Combine(getCurrentlyExecutingScriptDirectory(), path);
+            path = Path.Combine(getExecutingScript(), path);
 
         if (!Directory.Exists(path))
             throw new Exception2("Path '" + Exception2.getPath(path) + "' does not exists", 1);
@@ -86,15 +91,22 @@ public class SolutionProjectBuilder
     public static String m_currentlyExecutingScriptPath = "";
 
     /// <summary>
-    /// Gets directory under which script is currently executing. This is either determined from script executed by invokeScript
+    /// Gets directory and/or filename under which script is currently executing. This is either determined from script executed by invokeScript
     /// or C# initial script location (script which created SolutionProjectBuilder)
     /// </summary>
     /// <returns></returns>
-    public static String getCurrentlyExecutingScriptDirectory()
+    public static String getExecutingScript( bool bDirectory = true, bool bFilename = false, bool bExtension = false)
     {
-        String dir;
-        dir = Path.GetDirectoryName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
-        return dir;
+        if( bDirectory && bFilename ) 
+            return m_currentlyExecutingScriptPath;
+
+        if( bDirectory && !bFilename )
+            return Path.GetDirectoryName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
+        
+        if( bExtension )
+            return Path.GetFileName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
+
+        return Path.GetFileNameWithoutExtension( SolutionProjectBuilder.m_currentlyExecutingScriptPath );
     }
 
     /// <summary>
@@ -103,6 +115,9 @@ public class SolutionProjectBuilder
     public static String m_scriptRelativeDir = "";
     static List<String> m_platforms = new List<String>();
     static List<String> m_configurations = new List<String>( new String[] { "Debug", "Release" } );
+    /// <summary>
+    /// If generating only project, this is global root
+    /// </summary>
     static Project m_solutionRoot = new Project();
     static String m_groupPath = "";
     private static readonly Destructor Finalise = new Destructor();
@@ -145,15 +160,20 @@ public class SolutionProjectBuilder
 
             UpdateInfo uinfo = new UpdateInfo();
 
-            if (m_solution != null)
+            if (m_solutions.Count != 0)
             {
                 // Flush project into solution.
                 externalproject(null);
-                m_solution.SaveSolution(uinfo);
 
-                foreach (Project p in m_solution.projects)
-                    if (!p.bDefinedAsExternal)
-                        p.SaveProject(uinfo);
+                foreach ( Solution s in m_solutions )
+                {
+                    m_solution = s;     // Select just in case if someone is using static generation functions.    
+                    s.SaveSolution( uinfo );
+
+                    foreach( Project p in s.projects )
+                        if( !p.bDefinedAsExternal )
+                            p.SaveProject( uinfo );
+                }
             }
             else
             {
@@ -194,10 +214,24 @@ public class SolutionProjectBuilder
     /// <param name="name">Solution name</param>
     static public void solution(String name)
     {
-        m_solution = new Solution();
-        m_solution.path = Path.Combine(m_workPath, name);
-        if (!m_solution.path.EndsWith(".sln"))
-            m_solution.path += ".sln";
+        // Flush last project if any was generated, so it would end up into correct solution
+        externalproject( null );
+
+        Solution sln2select = m_solutions.Where( x => x.name == name ).FirstOrDefault();
+        
+        if( sln2select == null )
+        {
+            m_solution = new Solution() { name = name };
+            m_solution.path = Path.Combine( m_workPath, name );
+            if( !m_solution.path.EndsWith( ".sln" ) )
+                m_solution.path += ".sln";
+
+            m_solutions.Add( m_solution );
+        }
+        else 
+        {
+            m_solution = sln2select;        
+        }
     }
 
     static void requireSolutionSelected(int callerFrame = 0)
@@ -339,6 +373,8 @@ public class SolutionProjectBuilder
         m_project.RelativePath = path;
 
         Project parent = m_solutionRoot;
+        if( m_solution != null ) parent = m_solution.solutionRoot;
+
         String pathSoFar = "";
 
         // Result of group() expansion - try to create correspondent "virtual projects / folders"
@@ -664,7 +700,7 @@ public class SolutionProjectBuilder
         if (!Path.IsPathRooted(fullPath))
         {
             // By default search from same place where script is.
-            dir = SolutionProjectBuilder.getCurrentlyExecutingScriptDirectory();
+            dir = SolutionProjectBuilder.getExecutingScript();
 
             fullPath = Path.Combine(dir, path);
         }
@@ -691,6 +727,7 @@ public class SolutionProjectBuilder
     /// </summary>
     public static void resetStatics()
     {
+        m_solutions = new List<Solution>();
         m_solution = null;
         m_project = null;
         solutionUpdateProject = "";

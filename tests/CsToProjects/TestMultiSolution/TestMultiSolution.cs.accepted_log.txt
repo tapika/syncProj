@@ -1,0 +1,7 @@
+syncProj exited with no error
+TestMultiSolution.cs :
+TestMultiSolution
+TestMultiSolution
+TestMultiSolution.cs
+TestMultiSolution.cs
+4 files updated

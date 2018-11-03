@@ -1264,10 +1264,31 @@
             .sln loaded into class.
             </summary>
         </member>
+        <member name="F:Solution.name">
+            <summary>
+            Solution name
+            </summary>
+        </member>
         <member name="F:Solution.path">
             <summary>
             File path from where solution was loaded.
             </summary>
+        </member>
+        <member name="F:Solution.solutionRoot">
+            <summary>
+            Just an internal project for tracking project hierarchy
+            </summary>
+        </member>
+        <member name="M:Solution.ToString">
+            <summary>
+            Solution name for debugger.
+            </summary>
+        </member>
+        <member name="M:Solution.getSolutionFolder">
+            <summary>
+            Gets solution path
+            </summary>
+            <returns></returns>
         </member>
         <member name="F:Solution.fileFormatVersion">
             <summary>
@@ -1326,6 +1347,11 @@
             Helper class for generating solution or projects.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.m_solutions">
+            <summary>
+            List of solutions being generated.
+            </summary>
+        </member>
         <member name="F:SolutionProjectBuilder.m_solution">
             <summary>
             Currently selected active solution on which all function below operates upon. null if not selected yet.
@@ -1364,9 +1390,9 @@
             Full path from where current execution proceeds (location of .cs script)
             </summary>
         </member>
-        <member name="M:SolutionProjectBuilder.getCurrentlyExecutingScriptDirectory">
+        <member name="M:SolutionProjectBuilder.getExecutingScript(System.Boolean,System.Boolean,System.Boolean)">
             <summary>
-            Gets directory under which script is currently executing. This is either determined from script executed by invokeScript
+            Gets directory and/or filename under which script is currently executing. This is either determined from script executed by invokeScript
             or C# initial script location (script which created SolutionProjectBuilder)
             </summary>
             <returns></returns>
@@ -1374,6 +1400,11 @@
         <member name="F:SolutionProjectBuilder.m_scriptRelativeDir">
             <summary>
             Relative directory from solution. Set by RunScript.
+            </summary>
+        </member>
+        <member name="F:SolutionProjectBuilder.m_solutionRoot">
+            <summary>
+            If generating only project, this is global root
             </summary>
         </member>
         <member name="F:SolutionProjectBuilder.bSaveGeneratedProjects">
