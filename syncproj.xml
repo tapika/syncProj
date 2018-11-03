@@ -1076,11 +1076,21 @@
             </summary>
             <param name="defines">defines, like for example "DEBUG", etc...</param>
         </member>
+        <member name="M:SolutionProjectBuilder.matchFiles(System.String,System.String)">
+            <summary>
+            Matches files from folder _dir using glob file pattern.
+            In glob file pattern matching * reflects to any file or folder name, ** refers to any path (including sub-folders).
+            
+            There exists also 3-rd party library for performing similar matching - 'Microsoft.Extensions.FileSystemGlobbing'
+            but it was dragging a lot of dependencies, I've decided to survive without it.
+            </summary>
+            <returns>List of files matches your selection</returns>
+        </member>
         <member name="M:SolutionProjectBuilder.files(System.String[])">
             <summary>
             Adds one or more file into project.
             </summary>
-            <param name="files">Files to be added</param>
+            <param name="filePatterns">File patterns to be added</param>
         </member>
         <member name="M:SolutionProjectBuilder.buildrule(CustomBuildRule)">
             <summary>

@@ -798,76 +798,162 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Matches files from folder _dir using glob file pattern.
+    /// In glob file pattern matching * reflects to any file or folder name, ** refers to any path (including sub-folders).
+    /// 
+    /// There exists also 3-rd party library for performing similar matching - 'Microsoft.Extensions.FileSystemGlobbing'
+    /// but it was dragging a lot of dependencies, I've decided to survive without it.
+    /// </summary>
+    /// <returns>List of files matches your selection</returns>
+    static public String[] matchFiles( String _dir, String filePattern )
+    {
+        if (filePattern.IndexOf('*') == -1)     // Speed up matching, if no asterisk, then it can be simply file path.
+        {
+            String path = Path.Combine(_dir, filePattern);
+            if (File.Exists(path))
+                return new String[] { filePattern };
+            return new String[] { };
+        }
+
+        String dir = Path.GetFullPath(_dir);        // Make it absolute, just so we can extract relative path'es later on.
+        String[] pattParts = filePattern.Replace("/", "\\").Split('\\');
+        List<String> scanDirs = new List<string>();
+        scanDirs.Add(dir);
+
+        //
+        //  By default glob pattern matching specifies "*" to any file / folder name, 
+        //  which corresponds to any character except folder separator - in regex that's "[^\\]*"
+        //  glob matching also allow double astrisk "**" which also recurses into subfolders. 
+        //  We split here each part of match pattern and match it separately.
+        //
+        for (int iPatt = 0; iPatt < pattParts.Length; iPatt++)
+        {
+            bool bIsLast = iPatt == (pattParts.Length - 1);
+            bool bRecurse = false;
+
+            String regex1 = Regex.Escape(pattParts[iPatt]);         // Escape special regex control characters ("*" => "\*", "." => "\.")
+            String pattern = Regex.Replace(regex1, @"\\\*(\\\*)?", delegate (Match m)
+                {
+                    if (m.ToString().Length == 4)   // "**" => "\*\*" (escaped) - we need to recurse into sub-folders.
+                    {
+                        bRecurse = true;
+                        return ".*";
+                    }
+                    else
+                        return @"[^\\]*";
+                }).Replace(@"\?", ".");
+
+            if (pattParts[iPatt] == "..")                           // Special kind of control, just to scan upper folder.
+            {
+                for (int i = 0; i < scanDirs.Count; i++)
+                    scanDirs[i] = scanDirs[i] + "\\..";
+                
+                continue;
+            }
+                
+            Regex re = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            int nScanItems = scanDirs.Count;
+            for (int i = 0; i < nScanItems; i++)
+            {
+                String[] items;
+                if (!bIsLast)
+                    items = Directory.GetDirectories(scanDirs[i], "*", (bRecurse) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                else
+                    items = Directory.GetFiles(scanDirs[i], "*", (bRecurse) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+                foreach (String path in items)
+                {
+                    String matchSubPath = path.Substring(scanDirs[i].Length + 1);
+                    if (re.Match(matchSubPath).Success)
+                        scanDirs.Add(path);
+                }
+            }
+            scanDirs.RemoveRange(0, nScanItems);    // Remove items what we have just scanned.
+        } //for
+
+        //  Make relative and return.
+        return scanDirs.Select( x => x.Substring(dir.Length + 1) ).ToArray();
+    } //matchFiles
+
+
+    /// <summary>
     /// Adds one or more file into project.
     /// </summary>
-    /// <param name="files">Files to be added</param>
-    static public void files(params String[] files)
+    /// <param name="filePatterns">File patterns to be added</param>
+    static public void files(params String[] filePatterns)
     {
         requireProjectSelected();
 
-        foreach (String _file in files)
+        foreach (String _filePattern in filePatterns)
         {
             bool bMandatory = true;
             
-            String file;
-            if (_file.StartsWith("?"))
+            String filePattern;
+            if (_filePattern.StartsWith("?"))
             {
-                file = _file.Substring(1);
+                filePattern = _filePattern.Substring(1);
                 bMandatory = false;
             }
             else
-                file = _file;
-        
-            // If file already exists in project, we just ignore and continue.
-            bool bExist = m_project.files.Where(x => x.relativePath == file).FirstOrDefault() != null ;
-            if (bExist)
-                continue;
+                filePattern = _filePattern;
 
-            String fullFilePath = Path.Combine(m_project.getProjectFolder(), file);    
-            if (bMandatory && !File.Exists(fullFilePath))
-                throw new Exception2("File '" + file + "' does not exist.\r\n" +
+            String[] fileList = matchFiles(m_project.getProjectFolder(), filePattern);
+
+            if (bMandatory && fileList.Length == 0)
+            {
+                throw new Exception2("No file found which is specified by pattern '" + filePattern + "'.\r\n" +
                     "If file is generated during project build, please mark it as optional with '?' character in front of filename - for example files(\"?temp.txt\") "
                 );
-
-            FileInfo fi = new FileInfo() { relativePath = file };
-
-            switch (Path.GetExtension(file).ToLower())
-            {
-                case ".properties":
-                    fi.includeType = IncludeType.AntProjectPropertiesFile; break;
-                case ".xml":
-                    {
-                        String filename = Path.GetFileNameWithoutExtension(file).ToLower();
-                        if (filename == "build")
-                            fi.includeType = IncludeType.AntBuildXml;
-                        else if (filename.Contains("manifest") )
-                            fi.includeType = IncludeType.AndroidManifest;
-                        else
-                            fi.includeType = IncludeType.Content;
-                    }
-                    break;
-                case ".c":
-                case ".cxx":
-                case ".cpp": 
-                    fi.includeType = IncludeType.ClCompile; break;
-
-                case ".h":
-                    fi.includeType = IncludeType.ClInclude; break;
-
-                case ".rc":
-                    fi.includeType = IncludeType.ResourceCompile; break;
-
-                case ".ico":
-                    fi.includeType = IncludeType.Image; break;
-
-                case ".txt":
-                    fi.includeType = IncludeType.Text; break;
-                
-                default:
-                    fi.includeType = IncludeType.None; break;
             }
-            
-            m_project.files.Add(fi);
+
+            foreach (String file in fileList)
+            {
+                // If file already exists in project, we just ignore and continue.
+                bool bExist = m_project.files.Where(x => x.relativePath == file).FirstOrDefault() != null;
+                if (bExist)
+                    continue;
+
+                String fullFilePath = Path.Combine(m_project.getProjectFolder(), filePattern);
+                FileInfo fi = new FileInfo() { relativePath = file };
+
+                switch (Path.GetExtension(filePattern).ToLower())
+                {
+                    case ".properties":
+                        fi.includeType = IncludeType.AntProjectPropertiesFile; break;
+                    case ".xml":
+                        {
+                            String filename = Path.GetFileNameWithoutExtension(filePattern).ToLower();
+                            if (filename == "build")
+                                fi.includeType = IncludeType.AntBuildXml;
+                            else if (filename.Contains("manifest"))
+                                fi.includeType = IncludeType.AndroidManifest;
+                            else
+                                fi.includeType = IncludeType.Content;
+                        }
+                        break;
+                    case ".c":
+                    case ".cxx":
+                    case ".cpp":
+                        fi.includeType = IncludeType.ClCompile; break;
+
+                    case ".h":
+                        fi.includeType = IncludeType.ClInclude; break;
+
+                    case ".rc":
+                        fi.includeType = IncludeType.ResourceCompile; break;
+
+                    case ".ico":
+                        fi.includeType = IncludeType.Image; break;
+
+                    case ".txt":
+                        fi.includeType = IncludeType.Text; break;
+
+                    default:
+                        fi.includeType = IncludeType.None; break;
+                }
+
+                m_project.files.Add(fi);
+            }
         } //foreach
     } //files
 
