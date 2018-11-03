@@ -268,12 +268,9 @@ public class CsScript
             
         }
 
-        FieldInfo fi = builderClass.GetField("m_scriptRelativeDir", BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-        if (fi != null)
-        {
-            String scriptSubPath = Path2.makeRelative(Path.GetDirectoryName(_path), SolutionProjectBuilder.m_workPath);
-            fi.SetValue(null, scriptSubPath);
-        }
+        String oldScriptPath = SolutionProjectBuilder.m_scriptRelativeDir;
+        String scriptSubPath = Path2.makeRelative(Path.GetDirectoryName(_path), SolutionProjectBuilder.m_workPath);
+        SolutionProjectBuilder.m_scriptRelativeDir = scriptSubPath;
 
         // ----------------------------------------------------------------
         //  Run script
@@ -281,8 +278,11 @@ public class CsScript
         try
         {
             entry.Invoke(null, new object[] { args });
-        } catch ( Exception ex )
+            SolutionProjectBuilder.m_scriptRelativeDir = oldScriptPath;
+        }
+        catch ( Exception ex )
         {
+            SolutionProjectBuilder.m_scriptRelativeDir = oldScriptPath;
             Exception2 ex2 = ex.InnerException as Exception2;
             if (ex2 != null && bAllowThrow)
                 throw ex2;
@@ -311,7 +311,7 @@ public class CsScript
     {
         String baseName = Path.GetFileNameWithoutExtension(path);
         string ProcID = Process.GetCurrentProcess().Id.ToString();
-        string tmpFolder = System.IO.Path.GetTempPath();
+        string tmpFolder = Path.GetTempPath();
         string outFile = tmpFolder + baseName + "_" + ProcID;
         return outFile;
     }

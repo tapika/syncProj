@@ -565,7 +565,7 @@ public class SolutionProjectBuilder
     static public void invokeScript(String path)
     {
         String errors = "";
-        String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, path);
+        String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, SolutionProjectBuilder.m_scriptRelativeDir, path);
 
         CsScript.RunScript(fullPath, true, out errors, "no_exception_handling");
     }

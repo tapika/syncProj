@@ -1,0 +1,13 @@
+syncProj exited with no error
+ScriptLocationTrace.cs :
+1. I'm in folder ''
+2. I'm in folder 'subdir'
+3. I'm in folder 'subdir\subdir2'
+2. I'm in folder 'subdir'
+1. I'm in folder ''
+4. I'm in folder 'subdir'
+3. I'm in folder 'subdir\subdir2'
+4. I'm in folder 'subdir'
+1. I'm in folder ''
+No solution or project defined. Use project() or solution() functions in script
+0 files updated

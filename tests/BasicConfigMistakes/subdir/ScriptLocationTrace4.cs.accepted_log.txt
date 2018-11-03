@@ -1,0 +1,7 @@
+syncProj exited with no error
+ScriptLocationTrace4.cs :
+4. I'm in folder ''
+3. I'm in folder 'subdir2'
+4. I'm in folder ''
+No solution or project defined. Use project() or solution() functions in script
+0 files updated
