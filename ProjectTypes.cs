@@ -417,26 +417,32 @@ public class CustomBuildRule
     /// <summary>
     /// Visual studio: Command line
     /// </summary>
+    [XmlElementAttribute( Order = 1 )]
     public String Command = "";
     /// <summary>
     /// Visual studio: description. Use empty string to supress message printing.
     /// </summary>
+    [XmlElementAttribute( Order = 2 )]
     public String Message = "Performing Custom Build Tools";
     /// <summary>
     /// Visual studio: outputs
     /// </summary>
+    [XmlElementAttribute( Order = 3 )]
     public String Outputs = "";
     /// <summary>
     /// Visual studio: additional dependencies
     /// </summary>
+    [XmlElementAttribute( Order = 4 )]
     public String AdditionalInputs = "";
     /// <summary>
     /// Specify whether the inputs and outputs files with specific extension are passed to linker.
     /// </summary>
+    [XmlElementAttribute( Order = 5 )]
     public bool LinkObjects = true;
     /// <summary>
     /// Probably unused field. Added to satisfy code when loading project.
     /// </summary>
+    [XmlElementAttribute( Order = 6 )]
     public bool ExcludedFromBuild = false;
 
     /// <summary>

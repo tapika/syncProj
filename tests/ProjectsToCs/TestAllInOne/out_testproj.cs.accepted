@@ -31,14 +31,7 @@ class Builder: SolutionProjectBuilder
                 filter ( "Debug", "platforms:Win32", "files:test.c" );
                     disablewarnings( "4018", "4389", "4146" );
 
-                filter ( "Debug", "platforms:Win32", "files:custom.txt" );
-                    buildrule( new CustomBuildRule() {
-                        Message = "Performing Custom Build Tools", 
-                        Command = "custom rule command (x32)", 
-                        Outputs = "custom_output.txt"
-                    });
-
-                filter ( "Release", "platforms:Win32", "files:custom.txt" );
+                filter ( "platforms:Win32", "files:custom.txt" );
                     buildrule( new CustomBuildRule() {
                         Message = "Performing Custom Build Tools", 
                         Command = "custom rule command (x32)", 
