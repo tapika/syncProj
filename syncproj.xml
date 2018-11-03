@@ -1172,9 +1172,9 @@
             </summary>
             <param name="name">Project name</param>
         </member>
-        <member name="M:SolutionProjectBuilder.checkProjectToolset">
+        <member name="M:SolutionProjectBuilder.selectDefaultToolset">
             <summary>
-            Checks default toolset after vsver or kind project definition.
+            Selects default toolset after vsver or kind project definition.
             </summary>
         </member>
         <member name="M:SolutionProjectBuilder.vsver(System.Int32)">

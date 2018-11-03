@@ -298,9 +298,9 @@ public class SolutionProjectBuilder
 
 
     /// <summary>
-    /// Checks default toolset after vsver or kind project definition.
+    /// Selects default toolset after vsver or kind project definition.
     /// </summary>
-    static void checkProjectToolset()
+    static void selectDefaultToolset()
     {
         if (m_project.Keyword == EKeyword.Win32Proj || m_project.Keyword == EKeyword.MFCProj)
         {
@@ -737,9 +737,6 @@ public class SolutionProjectBuilder
                 throw new Exception2("os value is not supported '" + os + "' - supported values are: windows, android, package");
         }
 
-        checkProjectToolset();
-
-
         EConfigurationType type;
         var enums = Enum.GetValues(typeof(EConfigurationType)).Cast<EConfigurationType>();
         ESubSystem subsystem = ESubSystem.Windows;
@@ -774,6 +771,7 @@ public class SolutionProjectBuilder
             conf.SubSystem = subsystem;
         }
 
+        selectDefaultToolset();
         toolsetCheck();
     } //kind
 
