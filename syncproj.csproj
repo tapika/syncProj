@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CsScript.cs" />
+    <Compile Include="HelperFunctions.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="ProjectTypes.cs" />
     <Compile Include="SelfTest.cs" />

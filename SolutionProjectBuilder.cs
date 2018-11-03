@@ -300,7 +300,7 @@ public class SolutionProjectBuilder
 
     /// <summary>
     /// Specify platform list to be used for your solution or project.
-    ///     For example: platforms("x32", "x64");
+    ///     For example: platforms("x86", "x64");
     /// </summary>
     /// <param name="platformList">List of platforms to support</param>
     static public void platforms(params String[] platformList)
@@ -1609,7 +1609,7 @@ public class SolutionProjectBuilder
             foreach (String file in fileList)
             {
                 // If file already exists in project, we just ignore and continue.
-                bool bExist = m_project.files.Where(x => x.relativePath == file).FirstOrDefault() != null;
+                bool bExist = m_project.files.Where(x => x.relativePath.CompareTo(file, true)).FirstOrDefault() != null;
                 if (bExist)
                     continue;
 

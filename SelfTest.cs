@@ -158,6 +158,10 @@ partial class syncProj
                 String toolName = "syncProj";
                 if (bIsBat)
                 {
+                    // Requires a lot of Android stuff preinstalled, we want to focus on syncProj testing.
+                    if (Path.GetFileNameWithoutExtension(test).ToLower() == "gradlew")
+                        continue;
+
                     error = ExecCmd(test + " -x", ref logActual);
                     toolName = "Batch";
                 }

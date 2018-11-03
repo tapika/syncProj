@@ -63,6 +63,16 @@
             Global flag to enable C# script compilation debugging
             </summary>
         </member>
+        <member name="T:StringExtensions">
+            <summary>
+            String helpers.
+            </summary>
+        </member>
+        <member name="M:StringExtensions.CompareTo(System.String,System.String,System.Boolean)">
+            <summary>
+            Compares two strings, set ignoreCase to true to ignore case comparison ('A' == 'a')
+            </summary>
+        </member>
         <member name="T:Project">
             <summary>
             Represents Visual studio project .xml model
@@ -1633,7 +1643,7 @@
         <member name="M:SolutionProjectBuilder.platforms(System.String[])">
             <summary>
             Specify platform list to be used for your solution or project.
-                For example: platforms("x32", "x64");
+                For example: platforms("x86", "x64");
             </summary>
             <param name="platformList">List of platforms to support</param>
         </member>

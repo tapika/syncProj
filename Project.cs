@@ -1108,6 +1108,9 @@ public class Project
         if (String.IsNullOrEmpty(ProjectGuid))
             SolutionProjectBuilder.uuid(ProjectName);
 
+        if (configurations.Count == 0)
+            SolutionProjectBuilder.platforms("x86");
+
         if (projectConfig.Count != configurations.Count)        // Make sure we have project configurations created.
             SolutionProjectBuilder.filter();
 
@@ -1122,7 +1125,7 @@ public class Project
             if (fi.includeType != IncludeType.ClCompile)
                 continue;
 
-            String fileBase = Path.GetFileNameWithoutExtension(fi.relativePath.Replace("/", "\\"));
+            String fileBase = Path.GetFileNameWithoutExtension(fi.relativePath.Replace("/", "\\")).ToLower();
 
             if (objFileNames.ContainsKey(fileBase))
             {
