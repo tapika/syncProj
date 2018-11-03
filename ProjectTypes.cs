@@ -286,7 +286,32 @@ public enum EDebugInformationFormat
     Invalid
 }
 
+/// <summary>
+/// C Language standard
+/// </summary>
+public enum ECLanguageStandard
+{
+    ProjectDefault,
+    c89,
+    c99,
+    c11,
+    gnu99,
+    gnu11
+}
 
+/// <summary>
+/// C++ Language standard
+/// </summary>
+public enum ECppLanguageStandard
+{ 
+    ProjectDefault,
+    cpp98,
+    cpp11,
+    cpp1y,
+    gnupp98,
+    gnupp11,
+    gnupp1y
+}
 
 /// <summary>
 /// Configuration class which configures project as well as individual file entries.
@@ -523,6 +548,21 @@ public class FileConfigurationInfo
     /// Additional linker options
     /// </summary>
     public String Link_AdditionalOptions = "";
+
+    /// <summary>
+    /// Android: Enable run-time type information
+    /// </summary>
+    public bool RuntimeTypeInfo = false;
+
+    /// <summary>
+    /// Android: C Language Standard
+    /// </summary>
+    public ECLanguageStandard CLanguageStandard = ECLanguageStandard.ProjectDefault;
+
+    /// <summary>
+    /// Android: C++ Language Standard
+    /// </summary>
+    public ECppLanguageStandard CppLanguageStandard = ECppLanguageStandard.ProjectDefault;
 
 }
 

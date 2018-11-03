@@ -2433,5 +2433,32 @@ public class SolutionProjectBuilder
         }
     }
 
+    /// <summary>
+    /// Enables / disables run-time type information
+    /// </summary>
+    static public void RunTimeTypeInformation( bool b = true )
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.RuntimeTypeInfo = b;
+    }
+
+    /// <summary>
+    /// Sets C Language Standard
+    /// </summary>
+    static public void CLanguageStandard(ECLanguageStandard ls)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.CLanguageStandard = ls;
+    }
+
+    /// <summary>
+    /// Sets C++ Language Standard
+    /// </summary>
+    static public void CppLanguageStandard(ECppLanguageStandard ls)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.CppLanguageStandard = ls;
+    }
+
 };
 

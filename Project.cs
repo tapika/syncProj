@@ -976,6 +976,21 @@ public class Project
         if ( conf.ClCompile_AdditionalOptions.Length != 0)
             o.AppendLine("      <AdditionalOptions" + sCond + ">" + conf.ClCompile_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");
 
+        if (Keyword == EKeyword.Android)
+        {
+            if (conf.RuntimeTypeInfo)
+                o.AppendLine("      <RuntimeTypeInfo" + sCond + ">true</RuntimeTypeInfo>");
+
+            if (conf.CLanguageStandard != ECLanguageStandard.ProjectDefault)
+                o.AppendLine("      <CLanguageStandard" + sCond + ">" +  conf.CLanguageStandard + "</CLanguageStandard>");
+
+            if (conf.CppLanguageStandard != ECppLanguageStandard.ProjectDefault)
+            {
+                String v = conf.CppLanguageStandard.ToString().Replace("p", "+");
+                o.AppendLine("      <CppLanguageStandard" + sCond + ">" + v + "</CppLanguageStandard>");
+            }
+        }
+
         if (projectConf != null)
         {
             // File specific flags only

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="c11.c" />
+    <ClCompile Include="c89.c" />
+    <ClCompile Include="c99.c" />
+    <ClCompile Include="cpp11.cpp" />
+    <ClCompile Include="cpp1y.cpp" />
+    <ClCompile Include="cpp98.cpp" />
+    <ClCompile Include="gnu11.c" />
+    <ClCompile Include="gnu99.c" />
+    <ClCompile Include="gnupp11.cpp" />
+    <ClCompile Include="gnupp1y.cpp" />
+    <ClCompile Include="gnupp98.cpp" />
+    <ClCompile Include="projectdefault.c" />
+    <ClCompile Include="projectdefault.cpp" />
+  </ItemGroup>
+</Project>

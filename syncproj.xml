@@ -604,6 +604,16 @@
             Just some value, just to indicate that enumeration value is invalid.
             </summary>
         </member>
+        <member name="T:ECLanguageStandard">
+            <summary>
+            C Language standard
+            </summary>
+        </member>
+        <member name="T:ECppLanguageStandard">
+            <summary>
+            C++ Language standard
+            </summary>
+        </member>
         <member name="T:FileConfigurationInfo">
             <summary>
             Configuration class which configures project as well as individual file entries.
@@ -769,6 +779,21 @@
         <member name="F:FileConfigurationInfo.Link_AdditionalOptions">
             <summary>
             Additional linker options
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.RuntimeTypeInfo">
+            <summary>
+            Android: Enable run-time type information
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.CLanguageStandard">
+            <summary>
+            Android: C Language Standard
+            </summary>
+        </member>
+        <member name="F:FileConfigurationInfo.CppLanguageStandard">
+            <summary>
+            Android: C++ Language Standard
             </summary>
         </member>
         <member name="T:FileInfo">
@@ -2229,6 +2254,21 @@
             Enables multiprocessor build.
             </summary>
             <param name="bValue">true to enable</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.RunTimeTypeInformation(System.Boolean)">
+            <summary>
+            Enables / disables run-time type information
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.CLanguageStandard(ECLanguageStandard)">
+            <summary>
+            Sets C Language Standard
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.CppLanguageStandard(ECppLanguageStandard)">
+            <summary>
+            Sets C++ Language Standard
+            </summary>
         </member>
         <member name="T:UpdateInfo">
             <summary>
