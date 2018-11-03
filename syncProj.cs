@@ -304,15 +304,15 @@ public class SolutionOrProject
         Solution sln = solutionOrProject as Solution;
         Project proj = solutionOrProject as Project;
 
-        String pathToSyncProj = "";
+        String pathToSyncProjExe = "";
 
         //
         // C# script header
         //
         if (bCsScript)
         {
-            pathToSyncProj = Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(path));
-            o.AppendLine("//css_ref " + pathToSyncProj);
+            pathToSyncProjExe = Path2.makeRelative(Assembly.GetExecutingAssembly().Location, Path.GetDirectoryName(Path.GetFullPath(path)));
+            o.AppendLine("//css_ref " + pathToSyncProjExe);
             
             o.AppendLine("using System;         //Exception");
             o.AppendLine();
@@ -428,6 +428,10 @@ public class SolutionOrProject
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", proj.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    uuid" + brO + "\"" + proj.ProjectGuid.Substring(1, proj.ProjectGuid.Length - 2) + "\"" + brC);
+            
+            // Packaging projects cannot have custom build step.
+            if( bCsScript && proj.Keyword != EKeyword.Package)
+                o.AppendLine(head + "    projectScript(\"" + fileName + ".cs" + "\", null, \"" + pathToSyncProjExe.Replace("\\", "\\\\") + "\");");
 
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
 
@@ -560,22 +564,22 @@ public class SolutionOrProject
         }
 
         //
-        // Let's generate now .bat files just to simplify testing.
+        // .bat can simplify testing, but since projectScript function call this is not needed anymore.
         //
-        if (bCsScript)
-        {
-            String bat = "@echo off\r\n" + pathToSyncProj + " " + Path.GetFileName(outPath);
-            String outBat = Path.Combine(Path.GetDirectoryName(outPath), Path.GetFileNameWithoutExtension(outPath) + ".bat");
+        //if (bCsScript)
+        //{
+        //    String bat = "@echo off\r\n" + pathToSyncProj + " " + Path.GetFileName(outPath);
+        //    String outBat = Path.Combine(Path.GetDirectoryName(outPath), Path.GetFileNameWithoutExtension(outPath) + ".bat");
 
-            if (File.Exists(outBat) && File.ReadAllText(outBat) == bat)
-            {
-                uinfo.nUpToDate++;
-                return;
-            }
+        //    if (File.Exists(outBat) && File.ReadAllText(outBat) == bat)
+        //    {
+        //        uinfo.nUpToDate++;
+        //        return;
+        //    }
 
-            File.WriteAllText(outBat, bat);
-            uinfo.filesUpdated.Add(outBat);
-        } //if
+        //    File.WriteAllText(outBat, bat);
+        //    uinfo.filesUpdated.Add(outBat);
+        //} //if
 
     } //UpdateProjectScript
 
@@ -648,8 +652,9 @@ public class SolutionOrProject
 
                 if (bCsScript)
                 {
-                    r = "buildrule" + arO + "new CustomBuildTool() {" + lf;
-                    r += "    Message = \"" + cbp.Message + "\", " + lf;
+                    r = "buildrule" + arO + "new CustomBuildRule() {" + lf;
+                    if( cbp.Message != "" )
+                        r += "    Message = \"" + cbp.Message + "\", " + lf;
                     r += "    Command = \"" + cbp.Command + "\", " + lf;
                     r += "    Outputs = \"" + cbp.Outputs + "\"" + lf;
                     r += "});";

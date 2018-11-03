@@ -624,6 +624,11 @@
             Helper class for generating solution or projects.
             </summary>
         </member>
+        <member name="F:SolutionProjectBuilder.m_workPath">
+            <summary>
+            Path where we are building solution / project at. By default same as script is started from.
+            </summary>
+        </member>
         <member name="F:SolutionProjectBuilder.m_scriptRelativeDir">
             <summary>
             Relative directory from solution. Set by RunScript.
@@ -849,6 +854,14 @@
             </summary>
             <param name="cbt">Custom build rule.</param>
         </member>
+        <member name="M:SolutionProjectBuilder.projectScript(System.String,System.String,System.String)">
+            <summary>
+            Configures project rebuild step.
+            </summary>
+            <param name="script2include">Script to include into project</param>
+            <param name="script2compile">Script which shall be compiled once script2include is changed</param>
+            <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
+        </member>
         <member name="M:SolutionProjectBuilder.flags(System.String[])">
             <summary>
             Enables certain flags for specific configurations.
@@ -921,6 +934,11 @@
             <param name="fileName">name of file of which configuration is being parsed.</param>
             <param name="lines2dump">lines to dump</param>
             <param name="includeType">item type to include (Custom build step or compilable source code)</param>
+        </member>
+        <member name="M:SolutionOrProject.tabbedLine(System.String,System.String)">
+            <summary>
+            Adds heading (tab) before each line - s is multiline string.
+            </summary>
         </member>
         <member name="M:SolutionOrProject.WriteLinesToDump(System.Text.StringBuilder,Dictionary2{System.String,System.Collections.Generic.List{System.String}},System.Boolean@,System.String)">
             <summary>

@@ -273,7 +273,7 @@ public class CustomBuildRule
     /// <summary>
     /// Visual studio: description
     /// </summary>
-    public String Message = "";
+    public String Message = "Performing Custom Build Tools";
     /// <summary>
     /// Visual studio: outputs
     /// </summary>
@@ -1514,7 +1514,8 @@ public class Project
 
                     o.AppendLine("      <Command " + condition(confName) + ">" + cbr.Command + "</Command>");
                     o.AppendLine("      <Outputs " + condition(confName) + ">" + cbr.Outputs + "</Outputs>");
-                    o.AppendLine("      <Message " + condition(confName) + ">" + cbr.Message + "</Message>");
+                    if(cbr.Message != "Performing Custom Build Tools")
+                        o.AppendLine("      <Message " + condition(confName) + ">" + cbr.Message + "</Message>");
                 } //foreach
 
                 o.AppendLine("    </CustomBuild>");
@@ -1560,7 +1561,7 @@ public class Project
         // Write project itself.
         //
         String currentPrj = "";
-        Console.Write("Writing project '" + projectPath + "' ... ");
+        Console.Write("Updating project '" + projectPath + "' ... ");
         if (File.Exists(projectPath)) currentPrj = File.ReadAllText(projectPath);
 
         String newPrj = o.ToString();

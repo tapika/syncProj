@@ -17,7 +17,11 @@ public class SolutionProjectBuilder
 {
     static Solution m_solution = null;
     static Project m_project = null;
-    public static String m_workPath;  // Path where we are building solution / project at. By default same as script is started from.
+    
+    /// <summary>
+    /// Path where we are building solution / project at. By default same as script is started from.
+    /// </summary>
+    public static String m_workPath;
     
     /// <summary>
     /// Relative directory from solution. Set by RunScript.
@@ -714,6 +718,11 @@ public class SolutionProjectBuilder
 
         foreach (String file in files)
         {
+            // If file already exists in project, we just ignore and continue.
+            bool bExist = m_project.files.Where(x => x.relativePath == file).FirstOrDefault() != null ;
+            if (bExist)
+                continue;
+
             FileInfo fi = new FileInfo() { relativePath = file };
 
             switch (Path.GetExtension(file).ToLower())
@@ -766,6 +775,34 @@ public class SolutionProjectBuilder
         foreach (var conf in getSelectedConfigurations(false))
             conf.customBuildRule = cbt;
     } //buildrule
+
+    /// <summary>
+    /// Configures project rebuild step.
+    /// </summary>
+    /// <param name="script2include">Script to include into project</param>
+    /// <param name="script2compile">Script which shall be compiled once script2include is changed</param>
+    /// <param name="pathToSyncProjExe">Path where syncProj.exe will reside</param>
+    static public void projectScript(String script2include, String script2compile, String pathToSyncProjExe )
+    {
+        if (script2compile == null)
+            script2compile = script2include;
+
+        files(script2include);
+        filter("files:" + script2include);
+
+        String scriptDir = Path.Combine(m_workPath, m_scriptRelativeDir);
+        String tempLogFile = Path.GetFileName(m_project.getRelativePath());
+
+
+        buildrule(
+            new CustomBuildRule()
+            {
+                Command = "\"" + pathToSyncProjExe + "\" " + script2include,
+                Outputs = tempLogFile,
+                Message = ""
+            }
+        );
+    }
 
 
     /// <summary>
