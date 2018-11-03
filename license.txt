@@ -1,5 +1,5 @@
 
-Copyright 2017 Tarmo Pikaro
+Copyright 2017-2018 Tarmo Pikaro
 
 This software and associated documentation can be copied, modified, redistributed as free of charge 
 by any person obtaining a copy of this software.
