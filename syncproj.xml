@@ -156,6 +156,12 @@
             Let's make system flexible enough that we can load projects and solutions independently of file format.
             </summary>
         </member>
+        <member name="M:SolutionOrProject.UpdateProjectScript(System.String)">
+            <summary>
+            Builds solution or project .lua script.
+            </summary>
+            <param name="format">lua or cs</param>
+        </member>
         <member name="T:SolutionProjectBuilder">
             <summary>
             Helper class for generating solution or projects.

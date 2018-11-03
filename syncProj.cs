@@ -584,7 +584,7 @@ public class SolutionOrProject
         String outPath = Path.Combine(Path.GetDirectoryName(path), fileName + "." + format);
         StringBuilder o = new StringBuilder();
         o.AppendLine("");
-        o.AppendLine("solution \"test_" + fileName + "\"");
+        o.AppendLine("solution \"" + fileName + "\"");
 
         Solution sln = solutionOrProject as Solution;
         o.AppendLine("    configurations { " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + " }");
