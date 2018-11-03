@@ -871,12 +871,12 @@ public class SolutionProjectBuilder
         filter("files:" + script2include);
 
         String scriptDir = Path.Combine(m_workPath, m_scriptRelativeDir);
-        String tempLogFile = "$(IntermediateOutputPath)" + script2compile.Replace('.','_') + "_log.txt";
+        String tempLogFile = "$(IntermediateOutputPath)" + Path.GetFileName(script2compile).Replace('.','_') + "_log.txt";
 
         buildrule(
             new CustomBuildRule()
             {
-                Command = "\"" + pathToSyncProjExe + "\" " + script2include + "\r\n" + "echo 1>" + tempLogFile,
+                Command = "\"" + pathToSyncProjExe + "\" $(ProjectDir)" + script2compile + "\r\n" + "echo 1>" + tempLogFile,
                 Outputs = tempLogFile,
                 Message = ""
             }

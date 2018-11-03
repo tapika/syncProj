@@ -1,7 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartArguments>"C:\Prototyping\Tools\syncproj\testsuite\testSln1\winvlc.sln" -lua</StartArguments>
+    <StartArguments>"E:\Prototyping\vlc-2.2.1.32-2013\winvlc2.cs"</StartArguments>
+    <StartAction>Project</StartAction>
+    <StartProgram>E:\Prototyping\vlc-2.2.1.32-2013\cscs.exe</StartProgram>
+    <StartWorkingDirectory>E:\Prototyping\vlc-2.2.1.32-2013</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup>
     <PublishUrlHistory>publish\</PublishUrlHistory>

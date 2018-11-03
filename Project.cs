@@ -1947,10 +1947,9 @@ public class Project
         Console.Write("Updating project '" + path + "' ... ");
         if (File.Exists(path)) currentFileContents = File.ReadAllText(path);
 
-
-        if (Keyword == EKeyword.Win32Proj)     // Android & None projects have windows linefeeds.
-            newFileContents = newFileContents.Replace("\r\n", "\n");
-
+        // Projects & filters files uses windows linefeed (0x0D / 0x0A), but some git repositories might store projects with
+        // incorrect linefeeds, Visual studio will put correct linefeeds when saving.
+        
         //
         // Save only if needed.
         //
