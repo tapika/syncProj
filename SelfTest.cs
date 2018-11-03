@@ -141,7 +141,7 @@ partial class syncProj
 
                 // Start only particular test
                 String testFilename = Path.GetFileNameWithoutExtension(test);
-                if (testToStart != null && String.Compare(testFilename,testToStart,true) != 0 )
+                if (testToStart != null && testFilename.CompareTo(testToStart, true) )
                     continue;
 
                 UpdateInfo.lastUpdateInfo = null;
