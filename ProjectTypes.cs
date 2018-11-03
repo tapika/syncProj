@@ -399,6 +399,12 @@ public class FileConfigurationInfo
     public bool FunctionLevelLinking = false;
 
     /// <summary>
+    /// Enables minimal rebuild, which determines whether C++ source files that include changed C++ class definitions (stored in header (.h) files) need to be recompiled.
+    /// (/Gm option)
+    /// </summary>
+    public bool? MinimalRebuild = null;
+
+    /// <summary>
     /// Replaces some function calls with intrinsic or otherwise special forms of the function that help your application run faster.
     /// </summary>
     public bool IntrinsicFunctions = false;
@@ -456,6 +462,10 @@ public class FileConfigurationInfo
         return EDebugInformationFormat.ProgramDatabase;
     }
 
+    /// <summary>
+    /// /MP (Build with Multiple Processes)
+    /// </summary>
+    public bool MultiProcessorCompilation = false;
 
     /// <summary>
     /// Custom build step for includeType.CustomBuild specification. Can be null if not defined.
@@ -991,6 +1001,9 @@ public class Configuration : FileConfigurationInfo
         // ConfigurationType changes, maybe makes sense to check TargetExt later on ?
     } //ConfigurationTypeUpdated
 
+    /// <summary>
+    /// Mysterious flag, which cannot be set from Visual studio properties, but it affects to some parameter's default values.
+    /// </summary>
     public bool UseDebugLibraries = false;
 
     /// <summary>

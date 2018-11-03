@@ -2400,5 +2400,19 @@ public class SolutionProjectBuilder
         m_project.GradlePackage.ProjectDirectory = path;
     }
 
+    /// <summary>
+    /// Enables multiprocessor build.
+    /// </summary>
+    /// <param name="bValue">true to enable</param>
+    static public void EnableMultiProcessBuild( bool bValue = true )
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+        {
+            // warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
+            if (bValue) conf.MinimalRebuild = false;
+            conf.MultiProcessorCompilation = bValue;
+        }
+    }
+
 };
 

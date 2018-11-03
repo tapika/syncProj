@@ -691,6 +691,12 @@
             Allows the compiler to package individual functions in the form of packaged functions (COMDATs).
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.MinimalRebuild">
+            <summary>
+            Enables minimal rebuild, which determines whether C++ source files that include changed C++ class definitions (stored in header (.h) files) need to be recompiled.
+            (/Gm option)
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.IntrinsicFunctions">
             <summary>
             Replaces some function calls with intrinsic or otherwise special forms of the function that help your application run faster.
@@ -722,6 +728,11 @@
             </summary>
             <param name="confName">configuration name (E.g. Debug|Win32) for which to query, null if use this configuration</param>
             <returns>Default value</returns>
+        </member>
+        <member name="F:FileConfigurationInfo.MultiProcessorCompilation">
+            <summary>
+            /MP (Build with Multiple Processes)
+            </summary>
         </member>
         <member name="F:FileConfigurationInfo.customBuildRule">
             <summary>
@@ -1138,6 +1149,11 @@
         <member name="M:Configuration.ConfigurationTypeUpdated">
             <summary>
             Called when ConfigurationType has changed.
+            </summary>
+        </member>
+        <member name="F:Configuration.UseDebugLibraries">
+            <summary>
+            Mysterious flag, which cannot be set from Visual studio properties, but it affects to some parameter's default values.
             </summary>
         </member>
         <member name="F:Configuration.AndroidAPILevel">
@@ -2173,6 +2189,12 @@
             Sets Gradle Project Directory. If not specified, uses project directory.
             </summary>
             <param name="path">path</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.EnableMultiProcessBuild(System.Boolean)">
+            <summary>
+            Enables multiprocessor build.
+            </summary>
+            <param name="bValue">true to enable</param>
         </member>
         <member name="T:UpdateInfo">
             <summary>

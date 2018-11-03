@@ -951,6 +951,10 @@ public class Project
                 o.AppendLine("      <ProgramDataBaseFileName />");
         }
 
+        // false forces not to use multiprocessor compilation, which is VS default (no value)
+        if( conf.MultiProcessorCompilation )
+            o.AppendLine("      <MultiProcessorCompilation" + sCond + ">true</MultiProcessorCompilation>");
+
         if (conf.AdditionalIncludeDirectories.Length != 0 )
             o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>");
 
@@ -994,6 +998,10 @@ public class Project
             if (conf.FunctionLevelLinking && conf.FunctionLevelLinking != projectConf.FunctionLevelLinking)
                 o.AppendLine("      <FunctionLevelLinking" + sCond + ">true</FunctionLevelLinking>");
         }
+
+        // Not applicable for Android platform
+        if (Keyword != EKeyword.Android && conf.MinimalRebuild.HasValue && conf.MinimalRebuild.Value != bUseDebugLibraries)
+            o.AppendLine("      <MinimalRebuild" + sCond + ">" + conf.MinimalRebuild.Value.ToString() + "</MinimalRebuild>");
 
         if ( conf.ShowIncludes)
             o.AppendLine("      <ShowIncludes" + sCond + ">true</ShowIncludes>");
