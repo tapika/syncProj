@@ -2086,6 +2086,17 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Configures basic run-time checks.
+    /// </summary>
+    /// <param name="rtc">Checks to use</param>
+    static public void CCpp_CodeGeneration_BasicRuntimeChecks(EBasicRuntimeChecks rtc)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.BasicRuntimeChecks = rtc;
+    }
+
+
+    /// <summary>
     /// Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
     /// </summary>
     /// <param name="wpgen"></param>

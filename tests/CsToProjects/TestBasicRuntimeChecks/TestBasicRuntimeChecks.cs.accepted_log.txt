@@ -1,0 +1,13 @@
+syncProj exited with no error
+TestBasicRuntimeChecks.cs :
+File updated: out_rtcstackframeruntimecheck.vcxproj.filters
+File updated: out_rtcstackframeruntimecheck.vcxproj
+File updated: out_rtcuninitializedlocalusagecheck.vcxproj.filters
+File updated: out_rtcuninitializedlocalusagecheck.vcxproj
+File updated: out_rtcenablefastchecks.vcxproj.filters
+File updated: out_rtcenablefastchecks.vcxproj
+File updated: out_rtcdefault.vcxproj.filters
+File updated: out_rtcdefault.vcxproj
+File updated: out_rtcprojectdefault.vcxproj.filters
+File updated: out_rtcprojectdefault.vcxproj
+12 files updated

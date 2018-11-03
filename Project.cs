@@ -835,7 +835,36 @@ public class Project
         if (confName != null)
             sCond = " " + condition(confName);
 
-        if( conf.ObjectFileName != null )
+        //-----------------------------------------------------------------------------------------
+        // When UseDebugLibraries is set to true, and optimizations are enabled
+        // we must disable run-time checks, otherwise will get compilation error.
+        //  cl : Command line error D8016: '/O2' and '/RTC1' command-line options are incompatible
+        //-----------------------------------------------------------------------------------------
+        bool bUseDebugLibraries = false;
+        EOptimization opt = conf.Optimization;
+        EBasicRuntimeChecks rtc = conf.BasicRuntimeChecks;
+
+        if (projectConf != null)    // If we have project wide configuration, copy values from there just to know if we need
+        {                           // to configure on individual file level.
+            bUseDebugLibraries = projectConf.UseDebugLibraries;
+
+            if (opt == EOptimization.ProjectDefault)
+                opt = projectConf.Optimization;
+
+            if (rtc == EBasicRuntimeChecks.ProjectDefault)
+                rtc = projectConf.BasicRuntimeChecks;
+        }
+        else
+            bUseDebugLibraries = (conf as Configuration).UseDebugLibraries;
+
+        if (bUseDebugLibraries &&  opt != EOptimization.Disabled && 
+            // Not yet specified by end-user
+            rtc == EBasicRuntimeChecks.ProjectDefault )
+            conf.BasicRuntimeChecks = EBasicRuntimeChecks.Default;
+
+
+
+        if ( conf.ObjectFileName != null )
             o.AppendLine("      <ObjectFileName" + sCond + ">" + conf.ObjectFileName + "</ObjectFileName>");
 
         if (conf.PreprocessorDefinitions.Length != 0)
@@ -877,6 +906,9 @@ public class Project
 
         if( conf.DisableSpecificWarnings.Length != 0)
             o.AppendLine("      <DisableSpecificWarnings" + sCond + ">" + conf.DisableSpecificWarnings + ";%(DisableSpecificWarnings)</DisableSpecificWarnings>");
+
+        if( conf.BasicRuntimeChecks != EBasicRuntimeChecks.ProjectDefault)
+            o.AppendLine("      <BasicRuntimeChecks" + sCond + ">" + conf.BasicRuntimeChecks + "</BasicRuntimeChecks>");
 
         if ( conf.ClCompile_AdditionalOptions.Length != 0)
             o.AppendLine("      <AdditionalOptions" + sCond + ">" + conf.ClCompile_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");

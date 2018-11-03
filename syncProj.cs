@@ -67,10 +67,9 @@ public class UpdateInfo
         }
     }
 
-    public UpdateInfo(bool _immidiatePrint)
+    public UpdateInfo(bool _immidiatePrint): this()
     {
         immidiatePrint = _immidiatePrint;
-        lastUpdateInfo = this;
     }
 
     /// <summary>
