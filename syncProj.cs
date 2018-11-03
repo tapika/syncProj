@@ -1716,7 +1716,8 @@ class MakeLogToSolutionBuilder : SolutionProjectBuilder
             Dictionary<String, String> custCommand = new Dictionary<string, string>();
 
             m_workPath = Path.GetDirectoryName(inFile);
-            solution("ffmpeg");
+            String solutioName = Path.GetFileNameWithoutExtension(inFile);
+            solution(solutioName);
             configurations("Debug", "Release");
             platforms("Win32");
             vsver(2013);
