@@ -197,8 +197,15 @@ public class SolutionProjectBuilder
 
     static void specifyproject(String name)
     {
-        if (m_project != null && m_solution != null )
-            m_solution.projects.Add(m_project);
+        if (m_project != null)
+        {
+            if (m_solution != null)
+                m_solution.projects.Add(m_project);
+            else
+                // We are collecting projects only (no solution) and this is not last project
+                if( name != null )
+                    m_project.SaveProject();
+        }
 
         if (name == null)       // Will be used to "flush" last filled project.
             return;
