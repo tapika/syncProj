@@ -66,12 +66,7 @@ public class SolutionProjectBuilder
     public static String getCurrentlyExecutingScriptDirectory()
     {
         String dir;
-        if (!String.IsNullOrEmpty(m_currentlyExecutingScriptPath))
-            dir = Path.GetDirectoryName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
-        else
-            // C# script specific
-            dir = SolutionProjectBuilder.m_workPath;
-
+        dir = Path.GetDirectoryName(SolutionProjectBuilder.m_currentlyExecutingScriptPath);
         return dir;
     }
 
@@ -90,7 +85,10 @@ public class SolutionProjectBuilder
         String path = Path2.GetScriptPath(3);
 
         if (path != null)
+        {
             m_workPath = Path.GetDirectoryName(path);
+            m_currentlyExecutingScriptPath = path;
+        }
         //Console.WriteLine(m_workPath);
     }
 
