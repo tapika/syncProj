@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -598,7 +599,7 @@ public class Project
                 return "package";
             default:
             case EKeyword.Win32Proj:
-                if (Double.Parse(ToolsVersion) <= 4.0)
+                if (Double.Parse(ToolsVersion, CultureInfo.InvariantCulture) <= 4.0)
                     return "vs2012";
                 return "vs2015";
         }
@@ -936,6 +937,8 @@ public class Project
             return null;
 
         XDocument p = XDocument.Load(path);
+
+        project.ToolsVersion = p.Root.Attribute("ToolsVersion").Value;
 
         foreach (XElement node in p.Root.Elements())
         {
