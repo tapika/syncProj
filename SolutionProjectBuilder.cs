@@ -757,6 +757,18 @@ public class SolutionProjectBuilder
     } //files
 
     /// <summary>
+    /// Specifies custom build rule for specific file.
+    /// </summary>
+    /// <param name="cbt">Custom build rule.</param>
+    static public void buildrule(CustomBuildRule cbt)
+    { 
+        requireProjectSelected();
+        foreach (var conf in getSelectedConfigurations(false))
+            conf.customBuildRule = cbt;
+    } //buildrule
+
+
+    /// <summary>
     /// Enables certain flags for specific configurations.
     /// </summary>
     /// <param name="flags">

@@ -225,6 +225,11 @@ public class FileConfigurationInfo
     /// Format of debug information
     /// </summary>
     public EDebugInformationFormat DebugInformationFormat = EDebugInformationFormat.ProgramDatabase;
+
+    /// <summary>
+    /// Custom build step for includeType.CustomBuild specification.
+    /// </summary>
+    public CustomBuildRule customBuildRule;
 }
 
 
@@ -253,16 +258,13 @@ public class FileInfo
     /// Per configuration specific file configuration.
     /// </summary>
     public List<FileConfigurationInfo> fileConfig = new List<FileConfigurationInfo>();
-
-    /// <summary>
-    /// null if not in use, non-null if custom build tool is in use.
-    /// </summary>
-    public List<CustomBuildToolProperties> customBuildTool;
 }
 
-
+/// <summary>
+/// Custom build tool properties.
+/// </summary>
 [DebuggerDisplay("Custom Build Tool '{Message}'")]
-public class CustomBuildToolProperties
+public class CustomBuildRule
 {
     /// <summary>
     /// Visual studio: Command line
@@ -280,6 +282,34 @@ public class CustomBuildToolProperties
     /// Visual studio: additional dependencies
     /// </summary>
     public String AdditionalInputs = "";
+
+    /// <summary>
+    /// Gets class instance as one xml string.
+    /// </summary>
+    public override string ToString()
+    {
+        XmlSerializer ser = new XmlSerializer(typeof(CustomBuildRule), typeof(CustomBuildRule).GetNestedTypes());
+        using (var ms = new MemoryStream())
+        {
+            ser.Serialize(ms, this);
+            return Encoding.UTF8.GetString(ms.ToArray());
+        }
+    }
+
+    /// <summary>
+    /// Decodes class from string
+    /// </summary>
+    /// <param name="inS">xml string to deserialize</param>
+    /// <returns>CustomBuildRule class instance</returns>
+    public static CustomBuildRule FromString(String inS)
+    {
+        XmlSerializer ser = new XmlSerializer(typeof(CustomBuildRule), typeof(CustomBuildRule).GetNestedTypes());
+
+        using (TextReader reader = new StringReader(inS))
+        {
+            return (CustomBuildRule)ser.Deserialize(reader);
+        }
+    }
 }
 
 public enum EConfigurationType
@@ -800,7 +830,8 @@ public class Project
     /// </summary>
     /// <param name="clCompile">xml node from where to get</param>
     /// <param name="file2compile">compiler options to fill out</param>
-    void ExtractCompileOptions(XElement clCompile, FileInfo file2compile)
+    /// <param name="subField">Into which field to enter if non null</param>
+    void ExtractCompileOptions(XElement clCompile, FileInfo file2compile, String subField)
     {
         foreach (XElement fileProps in clCompile.Elements())
         {
@@ -812,7 +843,11 @@ public class Project
 
 
             String localName = fileProps.Name.LocalName;
-            FieldInfo fi = typeof(FileConfigurationInfo).GetField(fileProps.Name.LocalName);
+            Type type = typeof(FileConfigurationInfo);
+            if (subField != null)
+                type = type.GetField(subField).FieldType;       //==typeof(CustomBuildRule)
+
+            FieldInfo fi = type.GetField(fileProps.Name.LocalName);
             if (fi == null)
             {
                 if (Debugger.IsAttached) Debugger.Break();
@@ -820,16 +855,29 @@ public class Project
             }
 
             //
-            // PrecompiledHeader, PreprocessorDefinitions, AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
+            // FileConfigurationInfo: PrecompiledHeader, PreprocessorDefinitions, AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
+            // CustomBuildRule: Command, Message, Outputs, AdditionalInputs
             //
             while (file2compile.fileConfig.Count < configurations.Count)
             {
                 int i = file2compile.fileConfig.Count;
                 // Add new configurations, use same precompiled header setting as project uses for given configuration.
-                file2compile.fileConfig.Add(new FileConfigurationInfo() { PrecompiledHeader = projectConfig[i].PrecompiledHeader });
-            }
+                FileConfigurationInfo nfci = new FileConfigurationInfo() { PrecompiledHeader = projectConfig[i].PrecompiledHeader };
+                file2compile.fileConfig.Add(nfci);
+
+                if (subField != null)   
+                    //file2compile.fileConfig[i].customBuildRule = new CustomBuildRule;
+                    typeof(FileConfigurationInfo).GetField(subField).SetValue(nfci, Activator.CreateInstance(type));
+            } //while
 
             FileConfigurationInfo fci = file2compile.fileConfig[iCfg];
+            Object o2set;
+
+            if (subField == null)
+                o2set = fci;
+            else
+                o2set = typeof(FileConfigurationInfo).GetField(subField).GetValue(fci);     //fci.customBuildRule
+
             object oValue;
 
             if (fi.FieldType.IsEnum)
@@ -837,7 +885,7 @@ public class Project
             else
                 oValue = Convert.ChangeType(fileProps.Value, fi.FieldType);
 
-            fi.SetValue(fci, oValue);
+            fi.SetValue(o2set, oValue);
         } //foreach
     } //ExtractCompileOptions
 
@@ -964,33 +1012,8 @@ public class Project
                             f.includeType = (IncludeType)Enum.Parse(typeof(IncludeType), igNode.Name.LocalName);
                             f.relativePath = igNode.Attribute("Include").Value;
 
-                            if (f.includeType == IncludeType.ClCompile)
-                                project.ExtractCompileOptions(igNode, f);
-
-                            //
-                            // Custom build tool
-                            //
-                            if (f.includeType == IncludeType.CustomBuild)
-                            {
-                                f.customBuildTool = new List<CustomBuildToolProperties>(project.configurations.Count);
-
-                                while (f.customBuildTool.Count < project.configurations.Count)
-                                    f.customBuildTool.Add(new CustomBuildToolProperties());
-
-                                foreach (XElement custbNode in igNode.Elements())
-                                {
-                                    FieldInfo fi = typeof(CustomBuildToolProperties).GetField(custbNode.Name.LocalName);
-                                    if (fi == null) continue;
-
-                                    String config = getConfiguration(custbNode);
-                                    int iCfg = project.configurations.IndexOf(config);
-
-                                    if (iCfg == -1)
-                                        continue;
-
-                                    fi.SetValue(f.customBuildTool[iCfg], custbNode.Value);
-                                } //for
-                            } //if
+                            if (f.includeType == IncludeType.ClCompile || f.includeType == IncludeType.CustomBuild)
+                                project.ExtractCompileOptions(igNode, f, (f.includeType == IncludeType.CustomBuild) ? "customBuildRule" : null );
 
                             if (f.includeType == IncludeType.ProjectReference)
                                 f.Project = igNode.Elements().Where(x => x.Name.LocalName == "Project").FirstOrDefault()?.Value;
@@ -1452,6 +1475,11 @@ public class Project
         //
         foreach (FileInfo fi in files)
         {
+            bool bHasCustomBuildStep = fi.fileConfig.Where(x => x.customBuildRule != null).FirstOrDefault() != null;
+
+            if (bHasCustomBuildStep)
+                fi.includeType = IncludeType.CustomBuild;
+
             if (simplifyForGroupReopen(inctype) != simplifyForGroupReopen(fi.includeType))
             { 
                 if( bItemGroupOpened )
@@ -1469,6 +1497,27 @@ public class Project
                 o.AppendLine(">");
                 o.AppendLine("      <Project>" + fi.Project + "</Project>");
                 o.AppendLine("    </ProjectReference>");
+                continue;
+            }
+
+            if (fi.includeType == IncludeType.CustomBuild)
+            { 
+                o.AppendLine(">");
+
+                foreach (String confName in getSortedConfigurations(false))
+                {
+                    int iConf = configurations.IndexOf(confName);
+                    CustomBuildRule cbr = fi.fileConfig[iConf].customBuildRule;
+
+                    if (cbr == null)
+                        continue;
+
+                    o.AppendLine("      <Command " + condition(confName) + ">" + cbr.Command + "</Command>");
+                    o.AppendLine("      <Outputs " + condition(confName) + ">" + cbr.Outputs + "</Outputs>");
+                    o.AppendLine("      <Message " + condition(confName) + ">" + cbr.Message + "</Message>");
+                } //foreach
+
+                o.AppendLine("    </CustomBuild>");
                 continue;
             }
 

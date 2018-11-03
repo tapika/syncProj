@@ -196,6 +196,11 @@
             Format of debug information
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.customBuildRule">
+            <summary>
+            Custom build step for includeType.CustomBuild specification.
+            </summary>
+        </member>
         <member name="T:FileInfo">
             <summary>
             Information about that particular file.
@@ -221,30 +226,42 @@
             Per configuration specific file configuration.
             </summary>
         </member>
-        <member name="F:FileInfo.customBuildTool">
+        <member name="T:CustomBuildRule">
             <summary>
-            null if not in use, non-null if custom build tool is in use.
+            Custom build tool properties.
             </summary>
         </member>
-        <member name="F:CustomBuildToolProperties.Command">
+        <member name="F:CustomBuildRule.Command">
             <summary>
             Visual studio: Command line
             </summary>
         </member>
-        <member name="F:CustomBuildToolProperties.Message">
+        <member name="F:CustomBuildRule.Message">
             <summary>
             Visual studio: description
             </summary>
         </member>
-        <member name="F:CustomBuildToolProperties.Outputs">
+        <member name="F:CustomBuildRule.Outputs">
             <summary>
             Visual studio: outputs
             </summary>
         </member>
-        <member name="F:CustomBuildToolProperties.AdditionalInputs">
+        <member name="F:CustomBuildRule.AdditionalInputs">
             <summary>
             Visual studio: additional dependencies
             </summary>
+        </member>
+        <member name="M:CustomBuildRule.ToString">
+            <summary>
+            Gets class instance as one xml string.
+            </summary>
+        </member>
+        <member name="M:CustomBuildRule.FromString(System.String)">
+            <summary>
+            Decodes class from string
+            </summary>
+            <param name="inS">xml string to deserialize</param>
+            <returns>CustomBuildRule class instance</returns>
         </member>
         <member name="F:EConfigurationType.Application">
             <summary>
@@ -503,12 +520,13 @@
             Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" => "Debug|x64"
             </summary>
         </member>
-        <member name="M:Project.ExtractCompileOptions(System.Xml.Linq.XElement,FileInfo)">
+        <member name="M:Project.ExtractCompileOptions(System.Xml.Linq.XElement,FileInfo,System.String)">
             <summary>
             Extracts compilation options for single cpp/cs file.
             </summary>
             <param name="clCompile">xml node from where to get</param>
             <param name="file2compile">compiler options to fill out</param>
+            <param name="subField">Into which field to enter if non null</param>
         </member>
         <member name="M:Project.LoadProject(Solution,System.String,Project)">
             <summary>
@@ -825,6 +843,12 @@
             </summary>
             <param name="files">Files to be added</param>
         </member>
+        <member name="M:SolutionProjectBuilder.buildrule(CustomBuildRule)">
+            <summary>
+            Specifies custom build rule for specific file.
+            </summary>
+            <param name="cbt">Custom build rule.</param>
+        </member>
         <member name="M:SolutionProjectBuilder.flags(System.String[])">
             <summary>
             Enables certain flags for specific configurations.
@@ -883,16 +907,20 @@
             <summary>
             Builds solution or project .lua/.cs scripts
             </summary>
+            <param name="uinfo">Information about updates peformed (to print out summary)</param>
             <param name="path">Full path from where project was loaded.</param>
             <param name="solutionOrProject">Solution or project</param>
             <param name="bProcessProjects">true to process sub-project, false not</param>
             <param name="format">lua or cs</param>
             <param name="outFile">Output filename without extension</param>
+            <param name="outPrefix">Output prefix (To add before project name)</param>
         </member>
-        <member name="M:SolutionOrProject.UpdateConfigurationEntries(Project,System.Collections.Generic.IEnumerable{FileConfigurationInfo},Dictionary2{System.String,System.Collections.Generic.List{System.String}},System.String)">
+        <member name="M:SolutionOrProject.UpdateConfigurationEntries(Project,System.Collections.Generic.IEnumerable{FileConfigurationInfo},Dictionary2{System.String,System.Collections.Generic.List{System.String}},IncludeType,System.String)">
             <param name="proj"></param>
             <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
             <param name="fileName">name of file of which configuration is being parsed.</param>
+            <param name="lines2dump">lines to dump</param>
+            <param name="includeType">item type to include (Custom build step or compilable source code)</param>
         </member>
         <member name="M:SolutionOrProject.WriteLinesToDump(System.Text.StringBuilder,Dictionary2{System.String,System.Collections.Generic.List{System.String}},System.Boolean@,System.String)">
             <summary>

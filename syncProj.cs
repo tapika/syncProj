@@ -132,15 +132,22 @@ public class SolutionOrProject
         //---------------------------------------------------------------------
         for (int i = 0; i < list.Count; i++)
         {
-            String value = fi.GetValue(list[i]).ToString();
+            Object o = fi.GetValue(list[i]);
+            if (o == null) continue;
+            String value = o.ToString();
             weigths[value]++;
         }
-        int maxWeight = weigths.Values.Max();
-        List<String> maxValues = weigths.Where(x => x.Value == maxWeight).Select(x => x.Key).ToList();
-        String defaultValue = null;
 
-        if (maxValues.Count == 1)
-            defaultValue = maxValues[0];
+        String defaultValue = null;
+        
+        if (weigths.Values.Count != 0)
+        {
+            int maxWeight = weigths.Values.Max();
+            List<String> maxValues = weigths.Where(x => x.Value == maxWeight).Select(x => x.Key).ToList();
+
+            if (maxValues.Count == 1)
+                defaultValue = maxValues[0];
+        } //if
 
         weigths.Clear();
         //---------------------------------------------------------------------
@@ -149,7 +156,9 @@ public class SolutionOrProject
         //---------------------------------------------------------------------
         for (int i = 0; i < list.Count; i++)
         {
-            String value = fi.GetValue(list[i]).ToString();
+            Object o = fi.GetValue(list[i]);
+            if (o == null) continue;
+            String value = o.ToString();
 
             if (defaultValue != null && value == defaultValue)
                 continue;
@@ -177,7 +186,9 @@ public class SolutionOrProject
         //---------------------------------------------------------------------
         for (int i = 0; i < list.Count; i++)
         {
-            String value = fi.GetValue(list[i]).ToString();
+            Object o = fi.GetValue(list[i]);
+            if (o == null) continue;
+            String value = o.ToString();
             String[] configNamePlatform = proj.configurations[i].Split('|');
             String configName = configNamePlatform[0];
             String platform = configNamePlatform[1];
@@ -246,23 +257,27 @@ public class SolutionOrProject
     //
     //  Parameters used in script generation functions
     //
+    static bool bCsScript = false;      // set to true when generating C# script, false if .lua script
     static String brO = " ", brC = "";
     static String arO = " { ", arC = " }";
     static String head = "";
     static String comment = "-- ";
+    static String lf = "\r\n";
 
 
     /// <summary>
     /// Builds solution or project .lua/.cs scripts
     /// </summary>
+    /// <param name="uinfo">Information about updates peformed (to print out summary)</param>
     /// <param name="path">Full path from where project was loaded.</param>
     /// <param name="solutionOrProject">Solution or project</param>
     /// <param name="bProcessProjects">true to process sub-project, false not</param>
     /// <param name="format">lua or cs</param>
     /// <param name="outFile">Output filename without extension</param>
+    /// <param name="outPrefix">Output prefix (To add before project name)</param>
     static public void UpdateProjectScript(UpdateInfo uinfo, String path, object solutionOrProject, String outFile, String format, bool bProcessProjects, String outPrefix)
     {
-        bool bCsScript = (format == "cs");
+        bCsScript = (format == "cs");
         if (bCsScript)
         {
             brO = "("; brC = ");";
@@ -508,7 +523,7 @@ public class SolutionOrProject
             foreach (FileInfo fi in proj.files)
             { 
                 lines2dump.Clear();
-                UpdateConfigurationEntries(proj, fi.fileConfig, lines2dump, fi.relativePath);
+                UpdateConfigurationEntries(proj, fi.fileConfig, lines2dump, fi.includeType, fi.relativePath);
                 WriteLinesToDump(o, lines2dump, ref bFiltersActive, fi.relativePath );
             }
 
@@ -589,32 +604,68 @@ public class SolutionOrProject
     } //TagPchEntries
 
 
-
-
     /// <param name="proj"></param>
     /// <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
     /// <param name="fileName">name of file of which configuration is being parsed.</param>
-    static void UpdateConfigurationEntries(Project proj, IEnumerable<FileConfigurationInfo> config, Dictionary2<String, List<String>> lines2dump, String fileName = "")
+    /// <param name="lines2dump">lines to dump</param>
+    /// <param name="includeType">item type to include (Custom build step or compilable source code)</param>
+    static void UpdateConfigurationEntries(Project proj, IEnumerable<FileConfigurationInfo> config, Dictionary2<String, List<String>> lines2dump, 
+        IncludeType includeType = IncludeType.ClCompile, String fileName = "")
     {
         List<FileConfigurationInfo> configList = config.ToList();
         
         TagPchEntries(config, fileName, true);
-        ConfigationSpecificValue(proj, configList, "PrecompiledHeaderFile", lines2dump, (s) => {
-            if( s == "" )
-                return "flags" + arO + "\"NoPch\"" + arC;
 
-            char cl = s[1];
-            s = s.Substring(2);
-            switch (cl)
+        // For custom build type we dont have pchheader info
+        if (includeType == IncludeType.ClCompile)
+        {
+            ConfigationSpecificValue(proj, configList, "PrecompiledHeaderFile", lines2dump, (s) =>
             {
-                case 'C': 
-                    return "pchsource" + brO + "\"" + s + "\"" + brC;
-                default:
-                case 'U': 
-                    return "pchheader" + brO + "\"" + s + "\"" + brC;
-            }
-        });
+                if (s == "")
+                    return "flags" + arO + "\"NoPch\"" + arC;
+
+                char cl = s[1];
+                s = s.Substring(2);
+                switch (cl)
+                {
+                    case 'C':
+                        return "pchsource" + brO + "\"" + s + "\"" + brC;
+                    default:
+                    case 'U':
+                        return "pchheader" + brO + "\"" + s + "\"" + brC;
+                }
+            });
+        } //if
+                
         TagPchEntries(config, fileName, false);
+
+        if (includeType == IncludeType.CustomBuild)
+        {
+            ConfigationSpecificValue(proj, configList, "customBuildRule", lines2dump, (s) =>
+            {
+                CustomBuildRule cbp = CustomBuildRule.FromString(s);
+                String r;
+
+                if (bCsScript)
+                {
+                    r = "buildrule" + arO + "new CustomBuildTool() {" + lf;
+                    r += "    Message = \"" + cbp.Message + "\", " + lf;
+                    r += "    Command = \"" + cbp.Command + "\", " + lf;
+                    r += "    Outputs = \"" + cbp.Outputs + "\"" + lf;
+                    r += "});";
+                }
+                else
+                {
+                    r = "buildrule" + arO + lf;
+                    r += "    description = \"" + cbp.Message + "\", " + lf;
+                    r += "    commands = \"" + cbp.Command + "\", " + lf;
+                    r += "    output = \"" + cbp.Outputs + "\"" + lf;
+                    r += arC;
+                }
+
+                return r;
+            });
+        } //if
 
         //---------------------------------------------------------------------------------
         // Semicolon (';') separated lists.
@@ -728,6 +779,18 @@ public class SolutionOrProject
 
     } //UpdateConfigurationEntries
 
+    /// <summary>
+    /// Adds heading (tab) before each line - s is multiline string.
+    /// </summary>
+    static String tabbedLine(String tab, String s)
+    {
+        String r = "";
+
+        foreach (String i in s.Split(new String[] { lf }, StringSplitOptions.None))
+            r += tab + i + lf;
+
+        return r;
+    }
 
     /// <summary>
     /// Writes lines to dump into built string.
@@ -765,9 +828,11 @@ public class SolutionOrProject
                 if (lines2dump[""].Count != 0)
                     o.AppendLine(head + "    filter " + arO + "\"files:" + file + "\" " + arC);
             } //if
-        
+
             foreach (String line in lines2dump[""])
-                o.AppendLine(lhead + "    " + line);
+            {
+                o.Append(tabbedLine(lhead + "    ", line));
+            }
             lines2dump.Remove("");
         }
 
@@ -796,7 +861,7 @@ public class SolutionOrProject
             foreach (String line in kv.Value)
             {
                 if (line.Length == 0) continue;
-                o.AppendLine(head + "        " + line);
+                o.Append(tabbedLine(head + "        ", line));
             }
 
             o.AppendLine("");
