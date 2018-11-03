@@ -26,15 +26,11 @@ public class CsScript
     /// error information, including .cs filename and source code line information.
     /// </summary>
     /// <param name="_path">Path to script which to execute</param>
-    /// <param name="bCompileNextToCs">
-    ///     When this parameter is set to true, produced assembly will be kept next to C# script path.
-    ///     This also means that StackTrace will be able to display correct source code path and code line, unlike when loaded into ram
-    ///     false - if you don't care about source code position</param>
     /// <param name="bAllowThrow">true if allow to throw exceptions</param>
     /// <param name="errors">Errors if any</param>
     /// <param name="args">Main argument parameters</param>
     /// <returns>true if execution was successful.</returns>
-    static public bool RunScript( String _path, bool bCompileNextToCs, bool bAllowThrow, out String errors, params String[] args )
+    static public bool RunScript( String _path, bool bAllowThrow, out String errors, params String[] args )
     {
         errors = "";
 
@@ -44,22 +40,40 @@ public class CsScript
         String path = Path.GetFullPath( _path );
         if( !File.Exists( path ) )
         {
-            errors = "Error: Could not load file '" + path + "': File does not exists.";
+            errors = "Error: Could not load file '" + Exception2.getPath(path) + "': File does not exists.";
             if (bAllowThrow)
-                throw new Exception2(errors);
+                throw new Exception2(errors, 1);
             return false;
         }
 
+        // Create syncProj cache folder next to syncProj.exe executable.
+        String cacheDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "syncProjCache");
+        if (!Directory.Exists(cacheDir))
+        {
+            DirectoryInfo di = Directory.CreateDirectory(cacheDir);
+            di.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
+        }
+
+        String dllBaseName = Path.GetFileNameWithoutExtension(_path);
         String tempDll;
 
-        if (bCompileNextToCs)
+        for (int i = 1; ; i++)
         {
-            tempDll = Path.Combine(Path.GetDirectoryName(_path), Path.GetFileNameWithoutExtension(_path));
+            tempDll = Path.Combine(cacheDir, dllBaseName);
+            if (i != 1)
+                tempDll += i;
+
+            String dllInfoFile = tempDll + "_script.txt";       // We keep here C# script full path just not to get collisions.
+            if (!File.Exists(dllInfoFile))
+            {
+                File.WriteAllText(dllInfoFile, path);
+                break;
+            }
+
+            if ( File.ReadAllText(dllInfoFile) == path)
+                break;
         }
-        else {
-            tempDll = GetUniqueTempFilename(path);
-        }
-        
+
         String pdb = tempDll + ".pdb";
         tempDll += ".dll";
 
@@ -152,7 +166,7 @@ public class CsScript
                 foreach (CompilerError error in results.Errors)
                 {
                     sb.AppendFormat("{0}({1},{2}): error {3}: {4}\r\n",
-                        path, error.Line, error.Column, error.ErrorNumber, error.ErrorText
+                        Exception2.getPath(path), error.Line, error.Column, error.ErrorNumber, error.ErrorText
                     );
                 }
                 errors = sb.ToString();
@@ -210,39 +224,7 @@ public class CsScript
         // ----------------------------------------------------------------
         MethodInfo entry = null;
         String funcName = "";
-        Assembly asm;
-
-        if (!bCompileNextToCs)
-        {
-            byte[] asmRaw = File.ReadAllBytes(tempDll);
-            byte[] pdbRaw = null;
-
-            if (File.Exists(pdb))
-            {
-                try
-                {
-                    pdbRaw = File.ReadAllBytes(pdb);
-                }
-                catch (Exception)
-                {
-                }
-            }
-
-            asm = Assembly.Load(asmRaw, pdbRaw);
-            try
-            {
-                File.Delete(tempDll);
-                File.Delete(pdb);
-            }
-            catch (Exception)
-            {
-                // Could not delete intermediate files.. Oh well...
-            }
-        }
-        else
-        {
-            asm = Assembly.LoadFrom(tempDll);
-        }
+        Assembly asm = Assembly.LoadFrom(tempDll);
             
         //Assembly asm = results.CompiledAssembly;
         // ----------------------------------------------------------------
@@ -271,7 +253,7 @@ public class CsScript
 
         if( entry == null )
         {
-            errors = String.Format( "{0}(1,1): error: Code does not have 'Main' function\r\n", path );
+            errors = String.Format( "{0}(1,1): error: Code does not have 'Main' function\r\n", Exception2.getPath(path) );
             if (bAllowThrow)
                 throw new Exception2(errors);
             return false;
@@ -279,7 +261,7 @@ public class CsScript
 
         if ( entry.GetParameters().Length != 1 )
         {
-            errors = String.Format("{0}(1,1): error: Function '{1}' is not expected to have {2} parameter(s)\r\n", path, funcName,entry.GetParameters().Length);
+            errors = String.Format("{0}(1,1): error: Function '{1}' is not expected to have {2} parameter(s)\r\n", Exception2.getPath(path), funcName,entry.GetParameters().Length);
             if (bAllowThrow)
                 throw new Exception2(errors);
             return false;

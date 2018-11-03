@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+KindInvalid2.cs :
+KindInvalid2.cs(12,13): error: kind value is not supported 'bootimage' - supported values are: Application,DynamicLibrary,StaticLibrary,Utility

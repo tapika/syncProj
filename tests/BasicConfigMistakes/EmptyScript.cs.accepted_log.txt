@@ -1,0 +1,4 @@
+syncProj exited with ERROR: -2
+EmptyScript.cs :
+EmptyScript.cs(1,1): error: Code does not have 'Main' function
+

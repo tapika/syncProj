@@ -1,0 +1,4 @@
+syncProj exited with ERROR: -2
+InvalidScriptContext.cs :
+InvalidScriptContext.cs(3,1): error CS0116: A namespace cannot directly contain members such as fields or methods
+

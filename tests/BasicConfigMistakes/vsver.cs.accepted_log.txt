@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+vsver.cs :
+vsver.cs(10,13): error: Solution not specified (Use solution("name" to specify new solution)

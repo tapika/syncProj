@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+invokeNoScript.cs :
+invokeNoScript.cs(10,13): error: Error: Could not load file 'missing.cs': File does not exists.

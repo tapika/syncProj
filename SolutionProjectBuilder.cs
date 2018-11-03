@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.ComponentModel;
+using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Helper class for generating solution or projects.
@@ -56,9 +58,53 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
-    /// Just an indicator that we did not have any exception.
+    /// true if to save generated solutions or projects.
     /// </summary>
-    static bool bEverythingIsOk = true;
+    public static bool bSaveGeneratedProjects = true;
+    
+    /// <summary>
+    /// Forces to save generated solution and projects.
+    /// </summary>
+    public static void SaveGenerated()
+    {
+        try
+        {
+            if (!bSaveGeneratedProjects)
+                return;
+
+            UpdateInfo uinfo = new UpdateInfo();
+
+            if (m_solution != null)
+            {
+                // Flush project into solution.
+                externalproject(null);
+                m_solution.SaveSolution(uinfo);
+
+                foreach (Project p in m_solution.projects)
+                    if (!p.bDefinedAsExternal)
+                        p.SaveProject(uinfo);
+            }
+            else
+            {
+                if (m_project != null)
+                    m_project.SaveProject(uinfo);
+                else
+                {
+                    Console.WriteLine("No solution or project defined. Use project() or solution() functions in script");
+                }
+            }
+
+            uinfo.DisplaySummary();
+
+            m_solution = null;
+            m_project = null;
+            resetConfigurations();
+        }
+        catch (Exception ex)
+        {
+            ConsolePrintException(ex);
+        }
+    }
 
     /// <summary>
     /// Execute once for each invocation of script. Not executed if multiple scripts are included.
@@ -67,31 +113,7 @@ public class SolutionProjectBuilder
     {
         ~Destructor()
         {
-            try
-            {
-                if (!bEverythingIsOk)
-                    return;
-                
-                if (m_solution != null)
-                {
-                    // Flush project into solution.
-                    externalproject(null);
-                    m_solution.SaveSolution();
-
-                    foreach (Project p in m_solution.projects)
-                        if( !p.bDefinedAsExternal )
-                            p.SaveProject();
-                }
-                else
-                    if (m_project != null)
-                    m_project.SaveProject();
-                else
-                    Console.WriteLine("No solution or project defined. Use project() or solution() functions in script");
-            }
-            catch (Exception ex)
-            {
-                ConsolePrintException(ex);
-            }
+            SaveGenerated();
         }
     }
 
@@ -107,16 +129,16 @@ public class SolutionProjectBuilder
             m_solution.path += ".sln";
     }
 
-    static void requireSolutionSelected()
+    static void requireSolutionSelected(int callerFrame = 0)
     {
         if (m_solution == null)
-            throw new Exception2("Solution not specified (Use solution(\"name\" to specify new solution)");
+            throw new Exception2("Solution not specified (Use solution(\"name\" to specify new solution)", callerFrame + 1);
     }
 
-    static void requireProjectSelected()
+    static void requireProjectSelected(int callerFrame = 0)
     {
         if (m_project == null)
-            throw new Exception2("Project not specified (Use project(\"name\" to specify new project)");
+            throw new Exception2("Project not specified (Use project(\"name\" to specify new project)", callerFrame + 1);
     }
 
     static void generateConfigurations()
@@ -124,7 +146,7 @@ public class SolutionProjectBuilder
         // Generating configurations for solution
         if (m_project == null)
         {
-            requireSolutionSelected();
+            requireSolutionSelected(1);
 
             m_solution.configurations.Clear();
 
@@ -133,10 +155,10 @@ public class SolutionProjectBuilder
                     m_solution.configurations.Add(configuration + "|" + platform);
         }
         else {
-            requireProjectSelected();
+            requireProjectSelected(1);
 
             if (m_project.projectConfig.Count != 0)
-                throw new Exception2("You must use platforms() or configurations() before you start to configure project using other functions", 1);
+                throw new Exception2("You must use platforms() or configurations() before you start to configure project using other functions", 2);
 
             m_project.configurations.Clear();
 
@@ -207,13 +229,13 @@ public class SolutionProjectBuilder
         {
             if (m_solution != null)
             {
-                if(!m_solution.projects.Contains(m_project) )
+                if (!m_solution.projects.Contains(m_project))
                     m_solution.projects.Add(m_project);
             }
             else
                 // We are collecting projects only (no solution) and this is not last project
                 if (name != null)
-                m_project.SaveProject();
+                    m_project.SaveProject(new UpdateInfo(true));
         }
 
         // Release active project
@@ -503,16 +525,17 @@ public class SolutionProjectBuilder
             if (guid == null)
             {
                 if (!File.Exists(path))
-                    throw new Exception2("Referenced project '" + path + "' does not exists.\r\n" +
+                    throw new Exception2("Referenced project '" + Exception2.getPath(path) + "' does not exists.\r\n" +
                         "You can avoid loading project by specifying project guid after project path, for example:\r\n" +
                         "\r\n" +
-                        "    references(\"project.vcxproj\", \"{E3A9D624-DA07-DBBF-B4DD-0E33BE2390AE}\" ); \r\n" + 
+                        "    references(\"project.vcxproj\", \"{E3A9D624-DA07-DBBF-B4DD-0E33BE2390AE}\" ); \r\n" +
                         "\r\n" +
                         "or if you're using syncProj on that project:\r\n" +
                         "\r\n" +
                         "    references(\"project.vcxproj\", \"unique name\" ); or \r\n" +
                         "    references(\"project.vcxproj\", \"\" );  - same as references(\"project.vcproj\", \"project\" );"
                         );
+
                 guid = Project.getProjectGuid(path);
             }
 
@@ -543,7 +566,7 @@ public class SolutionProjectBuilder
         String errors = "";
         String fullPath = Path.Combine(SolutionProjectBuilder.m_workPath, path);
 
-        CsScript.RunScript(fullPath, true, true, out errors, "no_exception_handling");
+        CsScript.RunScript(fullPath, true, out errors, "no_exception_handling");
     }
 
 
@@ -555,6 +578,26 @@ public class SolutionProjectBuilder
     static List<FileConfigurationInfo> selectedConfigurations = new List<FileConfigurationInfo>();
     static String[] selectedFilters = null;     // null if not set
     static bool bLastSetFilterWasFileSpecific = false;
+
+    /// <summary>
+    /// Resets static variables to be able to start next testing round.
+    /// </summary>
+    public static void resetStatics()
+    {
+        m_solution = null;
+        m_project = null;
+        solutionUpdateProject = "";
+        m_workPath = null;
+        m_scriptRelativeDir = "";
+        m_platforms = new List<String>();
+        m_configurations = new List<String>(new String[] { "Debug", "Release" });
+        m_solutionRoot = new Project();
+        m_groupPath = "";
+        bSaveGeneratedProjects = true;
+
+        resetConfigurations();
+    }
+
 
     static void resetConfigurations()
     {
@@ -1425,39 +1468,42 @@ public class SolutionProjectBuilder
     {
         requireProjectSelected();
 
-        foreach (String flag in flags)
+        using (new UsingSyncProj(3))        //getSelectedProjectConfigurations requires shift by 3.
         {
-            switch (flag.ToLower())
+            foreach (String flag in flags)
             {
-                case "linktimeoptimization":
-                    {
+                switch (flag.ToLower())
+                {
+                    case "linktimeoptimization":
+                        {
+                            foreach (var conf in getSelectedProjectConfigurations())
+                                conf.WholeProgramOptimization = EWholeProgramOptimization.UseLinkTimeCodeGeneration;
+                        }
+                        break;
+
+                    case "mfc":
+                        m_project.Keyword = EKeyword.MFCProj;
+
                         foreach (var conf in getSelectedProjectConfigurations())
-                            conf.WholeProgramOptimization = EWholeProgramOptimization.UseLinkTimeCodeGeneration;
-                    }
-                    break;
+                            if (conf.UseOfMfc == EUseOfMfc.None)
+                                conf.UseOfMfc = EUseOfMfc.Dynamic;
+                        break;
 
-                case "mfc":
-                    m_project.Keyword = EKeyword.MFCProj;
+                    case "staticruntime":
+                        foreach (var conf in getSelectedProjectConfigurations())
+                            conf.UseOfMfc = EUseOfMfc.Static;
+                        break;
 
-                    foreach (var conf in getSelectedProjectConfigurations())
-                        if (conf.UseOfMfc == EUseOfMfc.None )
-                            conf.UseOfMfc = EUseOfMfc.Dynamic;
-                    break;
+                    case "nopch":
+                        foreach (var conf in getSelectedConfigurations(false))
+                            conf.PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
+                        break;
 
-                case "staticruntime":
-                    foreach (var conf in getSelectedProjectConfigurations())
-                        conf.UseOfMfc = EUseOfMfc.Static;
-                    break;
-
-                case "nopch":
-                    foreach (var conf in getSelectedConfigurations(false))
-                        conf.PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
-                    break;
-
-                default:
-                    throw new Exception2("Flag '" + flag + "' is not supported");
-            } //switch 
-        } //foreach
+                    default:
+                        throw new Exception2("Flag '" + flag + "' is not supported");
+                } //switch 
+            } //foreach
+        }
     } //flags
 
     /// <summary>
@@ -1729,12 +1775,16 @@ public class SolutionProjectBuilder
         else
             Console.WriteLine(ex.Message);
 
-        Console.WriteLine();
-        Console.WriteLine("----------------------- Full call stack trace follows -----------------------");
-        Console.WriteLine();
-        Console.WriteLine(ex.StackTrace);
-        Console.WriteLine();
-        bEverythingIsOk = false;
+        // Might contain syncProj source code position, path, function names and parameters which can change from release to another.
+        if (Exception2.g_bReportFullPath)
+        {
+            Console.WriteLine();
+            Console.WriteLine("----------------------- Full call stack trace follows -----------------------");
+            Console.WriteLine();
+            Console.WriteLine(ex.StackTrace);
+            Console.WriteLine();
+        }
+        bSaveGeneratedProjects = false;
     }
 
     /// <summary>

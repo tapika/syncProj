@@ -9,17 +9,13 @@
             class for executing c# script.
             </summary>
         </member>
-        <member name="M:CsScript.RunScript(System.String,System.Boolean,System.Boolean,System.String@,System.String[])">
+        <member name="M:CsScript.RunScript(System.String,System.Boolean,System.String@,System.String[])">
             <summary>
             Compiles .cs script into dll/pdb, loads as assembly, and executes Main function.
             Temporary dll/pdb gets deleted. If .cs throws exception - it will be converted to
             error information, including .cs filename and source code line information.
             </summary>
             <param name="_path">Path to script which to execute</param>
-            <param name="bCompileNextToCs">
-                When this parameter is set to true, produced assembly will be kept next to C# script path.
-                This also means that StackTrace will be able to display correct source code path and code line, unlike when loaded into ram
-                false - if you don't care about source code position</param>
             <param name="bAllowThrow">true if allow to throw exceptions</param>
             <param name="errors">Errors if any</param>
             <param name="args">Main argument parameters</param>
@@ -236,16 +232,17 @@
             Escapes xml special characters. http://weblogs.sqlteam.com/mladenp/archive/2008/10/21/Different-ways-how-to-escape-an-XML-string-in-C.aspx
             </summary>
         </member>
-        <member name="M:Project.SaveProject">
+        <member name="M:Project.SaveProject(UpdateInfo)">
             <summary>
             Saves project if necessary.
             </summary>
         </member>
-        <member name="M:Project.UpdateFile(System.String,System.String,System.Boolean)">
+        <member name="M:Project.UpdateFile(System.String,System.String,UpdateInfo,System.Boolean)">
             <summary>
             Save file contents if file were updated.
             </summary>
             <param name="path">Path to save</param>
+            <param name="newFileContents">new file contents to save</param>
             <param name="force">true if force to save file</param>
             <returns>true if file was updated.</returns>
         </member>
@@ -1029,6 +1026,8 @@
             Use Standard Windows Libraries (No MFC), can be serialized for Utility project type.
             </summary>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:syncProj.StartSelfTests(System.String[],System.Int32)" -->
+        <!-- Badly formed XML comment ignored for member "M:syncProj.ExecCmd(System.String,System.String@)" -->
         <member name="T:Solution">
             <summary>
             .sln loaded into class.
@@ -1086,7 +1085,7 @@
             </summary>
             <exception cref="T:System.IO.FileNotFoundException">The file specified in path was not found.</exception>
         </member>
-        <member name="M:Solution.SaveSolution">
+        <member name="M:Solution.SaveSolution(UpdateInfo)">
             <summary>
             Saves solution into .sln file. Where to save is defined by path.
             </summary>
@@ -1121,9 +1120,14 @@
             Relative directory from solution. Set by RunScript.
             </summary>
         </member>
-        <member name="F:SolutionProjectBuilder.bEverythingIsOk">
+        <member name="F:SolutionProjectBuilder.bSaveGeneratedProjects">
             <summary>
-            Just an indicator that we did not have any exception.
+            true if to save generated solutions or projects.
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.SaveGenerated">
+            <summary>
+            Forces to save generated solution and projects.
             </summary>
         </member>
         <member name="T:SolutionProjectBuilder.Destructor">
@@ -1241,6 +1245,11 @@
             <summary>
             Selected configurations (Either project global or file specific) selected by filter.
             selectedFileConfigurations is file specific, selectedConfigurations is project wide.
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.resetStatics">
+            <summary>
+            Resets static variables to be able to start next testing round.
             </summary>
         </member>
         <member name="M:SolutionProjectBuilder.getSelectedConfigurations(System.Boolean,System.Int32)">
@@ -1514,6 +1523,38 @@
             Returns true if it's developer of syncProj.
             </summary>
         </member>
+        <member name="T:UpdateInfo">
+            <summary>
+            Info about updated files.
+            </summary>
+        </member>
+        <member name="F:UpdateInfo.lastUpdateInfo">
+            <summary>
+            Last update information of files which were updated or planned to be updated.
+            </summary>
+        </member>
+        <member name="F:UpdateInfo.filesUpdated">
+            <summary>
+            Files which were updated.
+            </summary>
+        </member>
+        <member name="F:UpdateInfo.filesUpToDate">
+            <summary>
+            Files which are up-to-date
+            </summary>
+        </member>
+        <member name="M:UpdateInfo.MarkFileUpdated(System.String,System.Boolean)">
+            <summary>
+            Adds file which was updated.
+            </summary>
+            <param name="path">File path to be updated</param>
+            <param name="bWasSaved">true if file was saved, false if file is up-to-date</param>
+        </member>
+        <member name="M:UpdateInfo.DisplaySummary">
+            <summary>
+            Prints summary about update
+            </summary>
+        </member>
         <member name="T:SolutionOrProject">
             <summary>
             Let's make system flexible enough that we can load projects and solutions independently of file format.
@@ -1594,6 +1635,16 @@
         <member name="T:Exception2">
             <summary>
             Same as Exception, only we save call stack in here (to be able to report error line later on).
+            </summary>
+        </member>
+        <member name="F:Exception2.g_bReportFullPath">
+            <summary>
+            When testing, this will be set to false.
+            </summary>
+        </member>
+        <member name="M:Exception2.getPath(System.String)">
+            <summary>
+            returns 'path' if unit test is not active, otherwise picks up only filename without file path.
             </summary>
         </member>
         <member name="F:Exception2.shiftCallerFrame">

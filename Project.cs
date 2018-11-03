@@ -802,7 +802,7 @@ public class Project
     /// <summary>
     /// Saves project if necessary.
     /// </summary>
-    public void SaveProject()
+    public void SaveProject(UpdateInfo uinfo)
     {
         //
         // We serialize here using string append, so we can easily compare with Visual studio projects with your favorite comaprison tool.
@@ -1386,23 +1386,23 @@ public class Project
         // We first save .filters file, because Visual Studio typically does not reload project if only .filters file was changed.
         // Then if .filters file changes, we force project save as well.
         //
-        bool bSaved = UpdateFile(filtersPath, filtersFile);
-        UpdateFile(projectPath, projectsFile, bSaved);
+        bool bSaved = UpdateFile(filtersPath, filtersFile, uinfo);
+        UpdateFile(projectPath, projectsFile, uinfo, bSaved);
     } //SaveProject
 
     /// <summary>
     /// Save file contents if file were updated.
     /// </summary>
     /// <param name="path">Path to save</param>
+    /// <param name="newFileContents">new file contents to save</param>
     /// <param name="force">true if force to save file</param>
     /// <returns>true if file was updated.</returns>
-    private bool UpdateFile(string path, String newFileContents, bool force = false)
+    private bool UpdateFile(string path, String newFileContents, UpdateInfo uinfo, bool force = false)
     {
         //
         // Write project itself.
         //
         String currentFileContents = "";
-        Console.Write("Updating project '" + path + "' ... ");
         if (File.Exists(path)) currentFileContents = File.ReadAllText(path);
 
         // Projects & filters files uses windows linefeed (0x0D / 0x0A), but some git repositories might store projects with
@@ -1413,13 +1413,13 @@ public class Project
         //
         if (currentFileContents == newFileContents && !force)
         {
-            Console.WriteLine("up-to-date.");
+            uinfo.MarkFileUpdated(path, false);
             return false;
         }
         else
         {
             File.WriteAllText(path, newFileContents, Encoding.UTF8);
-            Console.WriteLine("ok.");
+            uinfo.MarkFileUpdated(path, true);
             return true;
         } //if-else
     } //UpdateFile

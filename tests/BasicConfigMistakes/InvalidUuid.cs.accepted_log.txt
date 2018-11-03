@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+InvalidUuid.cs :
+InvalidUuid.cs(11,13): error: Invalid uuid value '{123}'

@@ -1,0 +1,337 @@
+<?xml version="1.0"?>
+<SolutionOrProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <solutionOrProject xsi:type="Solution">
+    <VisualStudioVersion>14.0.25420.1</VisualStudioVersion>
+    <MinimumVisualStudioVersion>10.0.40219.1</MinimumVisualStudioVersion>
+    <fileFormatVersion>2015</fileFormatVersion>
+    <projects>
+      <Project>
+        <ProjectName>MFCApplication1</ProjectName>
+        <RelativePath>MFCApplication1.vcxproj</RelativePath>
+        <ProjectGuid>{22DF2B57-18B4-4C55-A294-03C2FB53D478}</ProjectGuid>
+        <bIsFolder>false</bIsFolder>
+        <bIsPackagingProject>false</bIsPackagingProject>
+        <bDefinedAsExternal>true</bDefinedAsExternal>
+        <fileFormatVersion>2015</fileFormatVersion>
+        <ToolsVersion>14.0</ToolsVersion>
+        <Keyword>MFCProj</Keyword>
+        <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+        <slnConfigurations>
+          <string>Debug|x64</string>
+          <string>Debug|Win32</string>
+          <string>Release|x64</string>
+          <string>Release|Win32</string>
+        </slnConfigurations>
+        <configurations>
+          <string>Debug|Win32</string>
+          <string>Release|Win32</string>
+          <string>Debug|x64</string>
+          <string>Release|x64</string>
+        </configurations>
+        <slnBuildProject>
+          <boolean>true</boolean>
+          <boolean>true</boolean>
+          <boolean>true</boolean>
+          <boolean>true</boolean>
+        </slnBuildProject>
+        <projectConfig>
+          <Configuration>
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <AdditionalIncludeDirectories />
+            <ShowIncludes>false</ShowIncludes>
+            <AdditionalDependencies />
+            <LibraryDependencies />
+            <AdditionalLibraryDirectories />
+            <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+            <Optimization>Disabled</Optimization>
+            <RuntimeLibrary>NotSet</RuntimeLibrary>
+            <FunctionLevelLinking>false</FunctionLevelLinking>
+            <IntrinsicFunctions>false</IntrinsicFunctions>
+            <EnableCOMDATFolding>false</EnableCOMDATFolding>
+            <OptimizeReferences>false</OptimizeReferences>
+            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+            <ClCompile_AdditionalOptions />
+            <Link_AdditionalOptions />
+            <ConfigurationType>Application</ConfigurationType>
+            <UseDebugLibraries>true</UseDebugLibraries>
+            <UseOfStl>gnustl_static</UseOfStl>
+            <PlatformToolset>v140</PlatformToolset>
+            <CharacterSet>Unicode</CharacterSet>
+            <UseOfMfc>Dynamic</UseOfMfc>
+            <LinkIncremental>true</LinkIncremental>
+            <WholeProgramOptimization>NoWholeProgramOptimization</WholeProgramOptimization>
+            <IncludePath />
+            <ExecutablePath />
+            <ReferencePath />
+            <LibraryPath />
+            <SourcePath />
+            <ExcludePath />
+            <WarningLevel>Level3</WarningLevel>
+            <SubSystem>Windows</SubSystem>
+            <GenerateDebugInformation>OptimizeForDebugging</GenerateDebugInformation>
+            <CompileAs>CompileAsCpp</CompileAs>
+          </Configuration>
+          <Configuration>
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <AdditionalIncludeDirectories />
+            <ShowIncludes>false</ShowIncludes>
+            <AdditionalDependencies />
+            <LibraryDependencies />
+            <AdditionalLibraryDirectories />
+            <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+            <Optimization>MaxSpeed</Optimization>
+            <RuntimeLibrary>NotSet</RuntimeLibrary>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+            <ClCompile_AdditionalOptions />
+            <Link_AdditionalOptions />
+            <ConfigurationType>Application</ConfigurationType>
+            <UseDebugLibraries>false</UseDebugLibraries>
+            <UseOfStl>gnustl_static</UseOfStl>
+            <PlatformToolset>v140</PlatformToolset>
+            <CharacterSet>Unicode</CharacterSet>
+            <UseOfMfc>Dynamic</UseOfMfc>
+            <LinkIncremental>false</LinkIncremental>
+            <WholeProgramOptimization>UseLinkTimeCodeGeneration</WholeProgramOptimization>
+            <IncludePath />
+            <ExecutablePath />
+            <ReferencePath />
+            <LibraryPath />
+            <SourcePath />
+            <ExcludePath />
+            <WarningLevel>Level3</WarningLevel>
+            <SubSystem>Windows</SubSystem>
+            <GenerateDebugInformation>OptimizeForDebugging</GenerateDebugInformation>
+            <CompileAs>CompileAsCpp</CompileAs>
+          </Configuration>
+          <Configuration>
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <AdditionalIncludeDirectories />
+            <ShowIncludes>false</ShowIncludes>
+            <AdditionalDependencies />
+            <LibraryDependencies />
+            <AdditionalLibraryDirectories />
+            <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+            <Optimization>Disabled</Optimization>
+            <RuntimeLibrary>NotSet</RuntimeLibrary>
+            <FunctionLevelLinking>false</FunctionLevelLinking>
+            <IntrinsicFunctions>false</IntrinsicFunctions>
+            <EnableCOMDATFolding>false</EnableCOMDATFolding>
+            <OptimizeReferences>false</OptimizeReferences>
+            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+            <ClCompile_AdditionalOptions />
+            <Link_AdditionalOptions />
+            <ConfigurationType>Application</ConfigurationType>
+            <UseDebugLibraries>true</UseDebugLibraries>
+            <UseOfStl>gnustl_static</UseOfStl>
+            <PlatformToolset>v140</PlatformToolset>
+            <CharacterSet>Unicode</CharacterSet>
+            <UseOfMfc>Dynamic</UseOfMfc>
+            <LinkIncremental>true</LinkIncremental>
+            <WholeProgramOptimization>NoWholeProgramOptimization</WholeProgramOptimization>
+            <IncludePath />
+            <ExecutablePath />
+            <ReferencePath />
+            <LibraryPath />
+            <SourcePath />
+            <ExcludePath />
+            <WarningLevel>Level3</WarningLevel>
+            <SubSystem>Windows</SubSystem>
+            <GenerateDebugInformation>OptimizeForDebugging</GenerateDebugInformation>
+            <CompileAs>CompileAsCpp</CompileAs>
+          </Configuration>
+          <Configuration>
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <AdditionalIncludeDirectories />
+            <ShowIncludes>false</ShowIncludes>
+            <AdditionalDependencies />
+            <LibraryDependencies />
+            <AdditionalLibraryDirectories />
+            <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+            <Optimization>MaxSpeed</Optimization>
+            <RuntimeLibrary>NotSet</RuntimeLibrary>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+            <ClCompile_AdditionalOptions />
+            <Link_AdditionalOptions />
+            <ConfigurationType>Application</ConfigurationType>
+            <UseDebugLibraries>false</UseDebugLibraries>
+            <UseOfStl>gnustl_static</UseOfStl>
+            <PlatformToolset>v140</PlatformToolset>
+            <CharacterSet>Unicode</CharacterSet>
+            <UseOfMfc>Dynamic</UseOfMfc>
+            <LinkIncremental>false</LinkIncremental>
+            <WholeProgramOptimization>UseLinkTimeCodeGeneration</WholeProgramOptimization>
+            <IncludePath />
+            <ExecutablePath />
+            <ReferencePath />
+            <LibraryPath />
+            <SourcePath />
+            <ExcludePath />
+            <WarningLevel>Level3</WarningLevel>
+            <SubSystem>Windows</SubSystem>
+            <GenerateDebugInformation>OptimizeForDebugging</GenerateDebugInformation>
+            <CompileAs>CompileAsCpp</CompileAs>
+          </Configuration>
+        </projectConfig>
+        <files>
+          <FileInfo>
+            <includeType>Text</includeType>
+            <relativePath>ReadMe.txt</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClInclude</includeType>
+            <relativePath>MFCApplication1.h</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClInclude</includeType>
+            <relativePath>MFCApplication1Dlg.h</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClInclude</includeType>
+            <relativePath>Resource.h</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClInclude</includeType>
+            <relativePath>stdafx.h</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClInclude</includeType>
+            <relativePath>targetver.h</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClCompile</includeType>
+            <relativePath>MFCApplication1.cpp</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClCompile</includeType>
+            <relativePath>MFCApplication1Dlg.cpp</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>ClCompile</includeType>
+            <relativePath>stdafx.cpp</relativePath>
+            <fileConfig>
+              <FileConfigurationInfo>
+                <PrecompiledHeader>Create</PrecompiledHeader>
+                <PreprocessorDefinitions />
+                <AdditionalIncludeDirectories />
+                <ShowIncludes>false</ShowIncludes>
+                <AdditionalDependencies />
+                <LibraryDependencies />
+                <AdditionalLibraryDirectories />
+                <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+                <Optimization>MaxSpeed</Optimization>
+                <RuntimeLibrary>NotSet</RuntimeLibrary>
+                <FunctionLevelLinking>false</FunctionLevelLinking>
+                <IntrinsicFunctions>false</IntrinsicFunctions>
+                <EnableCOMDATFolding>false</EnableCOMDATFolding>
+                <OptimizeReferences>false</OptimizeReferences>
+                <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+                <ClCompile_AdditionalOptions />
+                <Link_AdditionalOptions />
+              </FileConfigurationInfo>
+              <FileConfigurationInfo>
+                <PrecompiledHeader>Create</PrecompiledHeader>
+                <PreprocessorDefinitions />
+                <AdditionalIncludeDirectories />
+                <ShowIncludes>false</ShowIncludes>
+                <AdditionalDependencies />
+                <LibraryDependencies />
+                <AdditionalLibraryDirectories />
+                <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+                <Optimization>MaxSpeed</Optimization>
+                <RuntimeLibrary>NotSet</RuntimeLibrary>
+                <FunctionLevelLinking>false</FunctionLevelLinking>
+                <IntrinsicFunctions>false</IntrinsicFunctions>
+                <EnableCOMDATFolding>false</EnableCOMDATFolding>
+                <OptimizeReferences>false</OptimizeReferences>
+                <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+                <ClCompile_AdditionalOptions />
+                <Link_AdditionalOptions />
+              </FileConfigurationInfo>
+              <FileConfigurationInfo>
+                <PrecompiledHeader>Create</PrecompiledHeader>
+                <PreprocessorDefinitions />
+                <AdditionalIncludeDirectories />
+                <ShowIncludes>false</ShowIncludes>
+                <AdditionalDependencies />
+                <LibraryDependencies />
+                <AdditionalLibraryDirectories />
+                <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+                <Optimization>MaxSpeed</Optimization>
+                <RuntimeLibrary>NotSet</RuntimeLibrary>
+                <FunctionLevelLinking>false</FunctionLevelLinking>
+                <IntrinsicFunctions>false</IntrinsicFunctions>
+                <EnableCOMDATFolding>false</EnableCOMDATFolding>
+                <OptimizeReferences>false</OptimizeReferences>
+                <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+                <ClCompile_AdditionalOptions />
+                <Link_AdditionalOptions />
+              </FileConfigurationInfo>
+              <FileConfigurationInfo>
+                <PrecompiledHeader>Create</PrecompiledHeader>
+                <PreprocessorDefinitions />
+                <AdditionalIncludeDirectories />
+                <ShowIncludes>false</ShowIncludes>
+                <AdditionalDependencies />
+                <LibraryDependencies />
+                <AdditionalLibraryDirectories />
+                <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+                <Optimization>MaxSpeed</Optimization>
+                <RuntimeLibrary>NotSet</RuntimeLibrary>
+                <FunctionLevelLinking>false</FunctionLevelLinking>
+                <IntrinsicFunctions>false</IntrinsicFunctions>
+                <EnableCOMDATFolding>false</EnableCOMDATFolding>
+                <OptimizeReferences>false</OptimizeReferences>
+                <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+                <ClCompile_AdditionalOptions />
+                <Link_AdditionalOptions />
+              </FileConfigurationInfo>
+            </fileConfig>
+          </FileInfo>
+          <FileInfo>
+            <includeType>ResourceCompile</includeType>
+            <relativePath>MFCApplication1.rc</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>None</includeType>
+            <relativePath>res\MFCApplication1.rc2</relativePath>
+            <fileConfig />
+          </FileInfo>
+          <FileInfo>
+            <includeType>Image</includeType>
+            <relativePath>res\MFCApplication1.ico</relativePath>
+            <fileConfig />
+          </FileInfo>
+        </files>
+        <ProjectHostGuid>{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}</ProjectHostGuid>
+      </Project>
+    </projects>
+    <configurations>
+      <string>Debug|x64</string>
+      <string>Debug|x86</string>
+      <string>Release|x64</string>
+      <string>Release|x86</string>
+    </configurations>
+  </solutionOrProject>
+  <path>C:\Prototyping\Tools\syncproj\Tests\ProjectsToCs\MFCApplication1\MFCApplication1.sln</path>
+</SolutionOrProject>

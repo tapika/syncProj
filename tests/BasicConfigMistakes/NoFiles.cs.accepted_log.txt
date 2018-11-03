@@ -1,0 +1,4 @@
+syncProj exited with ERROR: -2
+NoFiles.cs :
+NoFiles.cs(13,13): error: No file found which is specified by pattern 'DoesNotExists.cpp'.
+If file is generated during project build, please mark it as optional with '?' character in front of filename - for example files("?temp.txt") 

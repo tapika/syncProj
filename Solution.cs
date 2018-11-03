@@ -237,10 +237,9 @@ public class Solution
     /// <summary>
     /// Saves solution into .sln file. Where to save is defined by path.
     /// </summary>
-    public void SaveSolution()
+    public void SaveSolution(UpdateInfo uinfo)
     {
         String slnPath = path;
-        Console.Write("Updating solution '" + slnPath + "' ... ");
 
         //
         //  For all projects which does not have uuid, we generated uuid based on project name.
@@ -447,13 +446,13 @@ public class Solution
         //
         if (currentSln == newSln)
         {
-            Console.WriteLine("up-to-date.");
+            uinfo.MarkFileUpdated(slnPath, false);
         }
         else
         {
-            if(SolutionProjectBuilder.isDeveloper()) File.Copy(slnPath, slnPath + ".bkp", true);
+            if(SolutionProjectBuilder.isDeveloper() && File.Exists(slnPath)) File.Copy(slnPath, slnPath + ".bkp", true);
             File.WriteAllText(slnPath, newSln, Encoding.UTF8);
-            Console.WriteLine("ok.");
+            uinfo.MarkFileUpdated(slnPath, true);
         } //if-else
     } //SaveSolution
 

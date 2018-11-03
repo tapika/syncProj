@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+DoubleUuid.cs :
+DoubleUuid.cs(14,13): error: uuid '{74657374-0000-0000-0000-000000000000}' is already used by project 'test1' - please consider using different uuid. For more information refer to uuid() function description.

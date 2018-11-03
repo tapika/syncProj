@@ -36,10 +36,102 @@ class Dictionary2<TKey, TValue> : Dictionary<TKey, TValue>
     }
 }
 
+/// <summary>
+/// Info about updated files.
+/// </summary>
 public class UpdateInfo
 {
-    public int nUpToDate = 0;
+    bool immidiatePrint = false;
+
+    /// <summary>
+    /// Last update information of files which were updated or planned to be updated.
+    /// </summary>
+    static public UpdateInfo lastUpdateInfo = null;
+
+    public UpdateInfo()
+    {
+        lastUpdateInfo = this;
+    }
+
+    public UpdateInfo(bool _immidiatePrint)
+    {
+        immidiatePrint = _immidiatePrint;
+        lastUpdateInfo = this;
+    }
+
+    /// <summary>
+    /// Files which were updated.
+    /// </summary>
     public List<String> filesUpdated = new List<string>();
+
+    /// <summary>
+    /// Files which are up-to-date
+    /// </summary>
+    public List<String> filesUpToDate = new List<string>();
+
+    /// <summary>
+    /// Adds file which was updated.
+    /// </summary>
+    /// <param name="path">File path to be updated</param>
+    /// <param name="bWasSaved">true if file was saved, false if file is up-to-date</param>
+    public void MarkFileUpdated(String path, bool bWasSaved)
+    {
+        if (!bWasSaved)
+        {
+            filesUpToDate.Add(path);
+        }
+        else
+        {
+            filesUpdated.Add(path);
+        }
+
+        if (!immidiatePrint)
+            return;
+
+        if( bWasSaved)
+            Console.WriteLine("File updated: " + path);
+    }
+
+
+    /// <summary>
+    /// Prints summary about update
+    /// </summary>
+    public void DisplaySummary()
+    {
+        // When testing is in progress we don't want detailed information on what was updated as what was not updated, as long as
+        // summary accessed files is the same.
+        if (!Exception2.g_bReportFullPath)
+        { 
+            Console.WriteLine((filesUpdated.Count + filesUpToDate.Count) + " files updated");
+            return;
+        }
+
+        if (filesUpToDate.Count != 0)
+            Console.Write(filesUpToDate.Count + " files are up-to-date. ");
+
+        if (filesUpdated.Count != 0)
+        {
+            if (filesUpdated.Count == 1)
+            {
+                Console.WriteLine("File updated: " + filesUpdated[0]);
+            }
+            else
+            {
+                if (filesUpdated.Count < 3)
+                {
+                    Console.WriteLine("Files updated: " + String.Join(", ", filesUpdated.Select(x => Path.GetFileName(x))));
+                }
+                else
+                {
+                    Console.WriteLine(filesUpdated.Count + " files updated");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+    } //DisplaySummary
 };
 
 
@@ -733,14 +825,14 @@ public class SolutionOrProject
 
         if (File.Exists(outPath) && File.ReadAllText(outPath) == text2save)
         {
-            uinfo.nUpToDate++;
+            uinfo.MarkFileUpdated(outPath, false);
             bSaveFile = false;
         }
 
         if (bSaveFile)
         {
             File.WriteAllText(outPath, text2save);
-            uinfo.filesUpdated.Add(outPath);
+            uinfo.MarkFileUpdated(outPath, true);
         }
 
         //
@@ -1211,6 +1303,23 @@ public class UsingSyncProj : IDisposable
 /// </summary>
 public class Exception2 : Exception
 {
+    /// <summary>
+    /// When testing, this will be set to false.
+    /// </summary>
+    public static bool g_bReportFullPath = true;
+
+    /// <summary>
+    /// returns 'path' if unit test is not active, otherwise picks up only filename without file path.
+    /// </summary>
+    static public String getPath(String path)
+    {
+        if (g_bReportFullPath)
+            return path;
+
+        return Path.GetFileName(path);
+    }
+
+
     StackTrace strace;
     String msg;
     int nCallerFrame = 0;
@@ -1243,7 +1352,7 @@ public class Exception2 : Exception
 
         StackFrame f = strace.GetFrame(nCallerFrame + 2);
         if (f.GetFileName() != null)
-            return f.GetFileName() + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
+            return Exception2.getPath(f.GetFileName()) + "(" + f.GetFileLineNumber() + "," + f.GetFileColumnNumber() + "): ";
         
         return "";
     } //getThrowLocation
@@ -1274,6 +1383,10 @@ public class Exception2 : Exception
             {
                 StackFrame sf = strace.GetFrame(i);
                 String f = sf.GetFileName();
+
+                if (!g_bReportFullPath)
+                    f = Path.GetFileName(f);
+
                 // Omit stack trace if filename is not known (Simplify output)
                 if (f != null)
                 {
@@ -1376,7 +1489,7 @@ public class Path2
 };
 
 
-partial class Script
+partial class syncProj
 {
 
     static int Main(String[] args)
@@ -1388,6 +1501,7 @@ partial class Script
             String outFile = null;
             String outPrefix = "";
             bool bProcessProjects = true;
+            bool bTestsExecuted = false;
 
             for( int i = 0; i < args.Length; i++ )
             {
@@ -1406,6 +1520,12 @@ partial class Script
                     case "o": i++; outFile = args[i]; break;
                     case "p": i++; outPrefix = args[i]; break;
                     case "sln": bProcessProjects = false; break;
+                    case "t": 
+                        StartSelfTests(args, i + 1); 
+                        bTestsExecuted = true;
+                        SolutionProjectBuilder.bSaveGeneratedProjects = false;
+                        break;
+                    case "x": Exception2.g_bReportFullPath = false; break;
                 }
             } //foreach
 
@@ -1414,7 +1534,12 @@ partial class Script
                 try
                 {
                     SolutionProjectBuilder.m_workPath = Path.GetDirectoryName(Path.GetFullPath(inFile));
-                    Console.WriteLine(inFile + " :");
+                    
+                    if( !Exception2.g_bReportFullPath )
+                        Console.WriteLine(Path.GetFileName(inFile) + " :");
+                    else
+                        Console.WriteLine(inFile + " :");
+                    
                     SolutionProjectBuilder.invokeScript(inFile);
                     return 0;
                 }
@@ -1425,7 +1550,8 @@ partial class Script
                 return -2;
             } //if
 
-            String ext = Path.GetExtension(inFile).ToLower();
+            String ext = null;
+            if( inFile != null ) ext = Path.GetExtension(inFile).ToLower();
             //
             // If we have solution, let's export by default in C# script format.
             //
@@ -1434,6 +1560,9 @@ partial class Script
 
             if (inFile == null || formats.Count == 0)
             {
+                if (bTestsExecuted)
+                    return 0;
+
                 Console.WriteLine("Usage(1): syncProj <.sln or .vcxproj file> (-lua|-cs) [-o file]");
                 Console.WriteLine("");
                 Console.WriteLine("         Parses solution or project and generates premake5 .lua script or syncProj C# script.");
@@ -1444,6 +1573,8 @@ partial class Script
                 Console.WriteLine(" -o      - sets output file (without extension)");
                 Console.WriteLine(" -p      - sets prefix for all output files");
                 Console.WriteLine(" -sln    - does not processes projects (Solution only load)");
+                Console.WriteLine(" -t      - starts self-diagnostic tests (requires tests directory)");
+                Console.WriteLine(" -keep   - keeps test results");
                 Console.WriteLine("");
                 Console.WriteLine("Usage(2): syncProj <.cs>");
                 Console.WriteLine("");
@@ -1485,32 +1616,9 @@ partial class Script
             foreach ( String format in formats )
                 SolutionOrProject.UpdateProjectScript(uinfo, proj.path, proj.solutionOrProject, outFile, format, bProcessProjects, outPrefix);
 
-            Console.Write(inFile + ": ");
+            Console.Write(Exception2.getPath(inFile) + ": ");
+            uinfo.DisplaySummary();
 
-            if (uinfo.nUpToDate != 0)
-                Console.Write(uinfo.nUpToDate + " files are up-to-date. ");
-
-            if (uinfo.filesUpdated.Count != 0)
-            {
-                if (uinfo.filesUpdated.Count == 1)
-                {
-                    Console.WriteLine("File updated: " + uinfo.filesUpdated[0]);
-                }
-                else
-                {
-                    if (uinfo.filesUpdated.Count < 3)
-                    {
-                        Console.WriteLine("Files updated: " + String.Join(", ", uinfo.filesUpdated.Select(x => Path.GetFileName(x))));
-                    }
-                    else
-                    {
-                        Console.WriteLine(uinfo.filesUpdated.Count + " files updated");
-                    }
-                }
-            }
-            else {
-                Console.WriteLine();
-            }
         }
         catch (Exception ex)
         {

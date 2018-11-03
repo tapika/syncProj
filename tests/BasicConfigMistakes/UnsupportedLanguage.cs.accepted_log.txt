@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+UnsupportedLanguage.cs :
+UnsupportedLanguage.cs(11,13): error: Language 'C--' is not supported

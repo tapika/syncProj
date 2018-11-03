@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+FilterNoKnown.cs :
+FilterNoKnown.cs(12,17): error: filter tag 'filez' is not supported

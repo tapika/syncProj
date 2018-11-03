@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+KindInvalid.cs :
+KindInvalid.cs(12,13): error: os value is not supported 'macos' - supported values are: windows, android, package
