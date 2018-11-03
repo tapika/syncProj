@@ -257,7 +257,7 @@ public class SolutionProjectBuilder
     /// <summary>
     /// Specifies IDE / OS where project is targetted upon.
     /// </summary>
-    /// <param name="osName">One of following: vs2010, vs2012, vs2015, android, package</param>
+    /// <param name="osBase">One of following: vs2010, vs2012, vs2015, android, package</param>
     static public void osbase(String osBase)
     {
         requireProjectSelected();

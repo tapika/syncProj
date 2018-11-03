@@ -16,8 +16,14 @@ using System.Xml.Serialization;
 /// </summary>
 public class FunctionNameAttribute : Attribute
 {
+    /// <summary>
+    /// function name itself.
+    /// </summary>
     public String tag;
 
+    /// <summary>
+    /// function name attribute
+    /// </summary>
     public FunctionNameAttribute(String s)
     {
         tag = s;
@@ -25,10 +31,23 @@ public class FunctionNameAttribute : Attribute
 }
 
 
+/// <summary>
+/// Specifies whether or not to use precompiled headers
+/// </summary>
 public enum EPrecompiledHeaderUse
 {
+    /// <summary>
+    /// Create precompiled headers
+    /// </summary>
     Create = 2,
+    /// <summary>
+    /// Use precompiled headers
+    /// </summary>
     Use = 1,
+
+    /// <summary>
+    /// Default value (not initialized)
+    /// </summary>
     NotUsing = 0 //enum default is 0.
 }
 
@@ -64,6 +83,10 @@ public enum EWarningLevel
     EnableAllWarnings
 }
 
+/// <summary>
+/// Defines what needs to be done with given item. Not all project types support all enumerations - for example
+/// packaging projects / C# projects does not support CustomBuild.
+/// </summary>
 public enum IncludeType
 {
     /// <summary>
@@ -106,6 +129,10 @@ public enum IncludeType
     AntBuildXml,
     AndroidManifest,
     AntProjectPropertiesFile,
+
+    /// <summary>
+    /// For Android package project: Reference to another project, which needs to be included into package.
+    /// </summary>
     ProjectReference,
 
     /// <summary>
@@ -170,6 +197,10 @@ public class FileConfigurationInfo
     // ItemGroup\
     //                     ClCompile
     //--------------------------------------------------------------------------------------------
+    
+    /// <summary>
+    /// Precompile header - use or create.
+    /// </summary>
     public EPrecompiledHeaderUse PrecompiledHeader = EPrecompiledHeaderUse.NotUsing;
 
     /// <summary>
@@ -205,10 +236,24 @@ public class FileConfigurationInfo
     public String ObjectFileName;
     public String XMLDocumentationFileName;
 
+    /// <summary>
+    /// Precompiled header file
+    /// </summary>
     public String PrecompiledHeaderFile = "stdafx.h";
 
+    /// <summary>
+    /// Optimization level
+    /// </summary>
     public EOptimization Optimization = EOptimization.MaxSpeed;
+
+    /// <summary>
+    /// Allows the compiler to package individual functions in the form of packaged functions (COMDATs).
+    /// </summary>
     public bool FunctionLevelLinking = false;
+
+    /// <summary>
+    /// Replaces some function calls with intrinsic or otherwise special forms of the function that help your application run faster.
+    /// </summary>
     public bool IntrinsicFunctions = false;
 
     /// <summary>
@@ -312,6 +357,9 @@ public class CustomBuildRule
     }
 }
 
+/// <summary>
+/// Project type
+/// </summary>
 public enum EConfigurationType
 {
     /// <summary>
@@ -327,6 +375,9 @@ public enum EConfigurationType
     DynamicLibrary
 };
 
+/// <summary>
+/// Character set - unicode MBCS.
+/// </summary>
 public enum ECharacterSet
 { 
     /// <summary>
@@ -366,10 +417,22 @@ public enum EWholeProgramOptimization
 }
 
 
+/// <summary>
+/// Binary image format / target
+/// </summary>
 public enum ESubSystem
 {
+    /// <summary>
+    /// Not specified
+    /// </summary>
     NotSet,
+    /// <summary>
+    /// Windows application
+    /// </summary>
     Windows,
+    /// <summary>
+    /// Console application
+    /// </summary>
     Console,
     Native,
     EFI_Application,
@@ -379,11 +442,17 @@ public enum ESubSystem
     POSIX
 }
 
+/// <summary>
+/// How to optimize code ?
+/// </summary>
 public enum EOptimization
 {
     [FunctionName("custom")]
     Custom,
     
+    /// <summary>
+    /// No optimizations
+    /// </summary>
     [FunctionName("off")]
     Disabled,
 
@@ -406,15 +475,27 @@ public enum EOptimization
     Full
 }
 
+/// <summary>
+/// Generate debug information
+/// </summary>
 [Description("")]   // Marker to switch Enum value / Description when parsing
 public enum EGenerateDebugInformation
 {
+    /// <summary>
+    /// No
+    /// </summary>
     [Description("false"), FunctionName("off")]
     No = 0,
 
+    /// <summary>
+    /// Optimize for debugging
+    /// </summary>
     [Description("true"), FunctionName("on")]
     OptimizeForDebugging,
 
+    /// <summary>
+    /// Use fast linking
+    /// </summary>
     [Description("DebugFastLink"), FunctionName("fastlink")]
     OptimizeForFasterLinking
 }
@@ -449,6 +530,9 @@ public enum ECompileAs
 /// </summary>
 public class Configuration: FileConfigurationInfo
 {
+    /// <summary>
+    /// Project type
+    /// </summary>
     public EConfigurationType ConfigurationType = EConfigurationType.Application;
 
     public void ConfigurationTypeUpdated()
