@@ -460,8 +460,12 @@ public class SolutionProjectBuilder
     /// </summary>
     static void selectDefaultToolset( bool force = false )
     {
-        if (m_project.Keyword == EKeyword.Win32Proj || m_project.Keyword == EKeyword.MFCProj)
+        if (m_project.Keyword == EKeyword.Win32Proj || m_project.Keyword == EKeyword.MFCProj || m_project.Keyword == EKeyword.None)
         {
+            // We can specify version before configurations / platforms were selected.
+            if (m_project.projectConfig.Count == 0)
+                return;
+
             using (new UsingSyncProj(4))
             {
                 switch (m_project.fileFormatVersion)
@@ -484,7 +488,8 @@ public class SolutionProjectBuilder
     /// Sets Visual Studio file format version to be used.
     /// </summary>
     /// <param name="vsVersion">2010, 2012, 2013, ...</param>
-    static public void vsver(int vsVersion)
+    /// <param name="force">set to true if besides selecting visual studio project format version, also set default toolset for specific project</param>
+    static public void vsver(int vsVersion, bool force = true)
     {
         if (m_solution == null && m_project == null)
             requireSolutionSelected();
@@ -494,7 +499,7 @@ public class SolutionProjectBuilder
             m_project.SetFileFormatVersion(vsVersion);
 
             // Reselect default toolset, if file format version changed.
-            selectDefaultToolset();
+            selectDefaultToolset(force);
         }
         else 
         {

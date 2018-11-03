@@ -1387,7 +1387,7 @@ public class Configuration : FileConfigurationInfo
 public enum EKeyword
 {
     /// <summary>
-    /// For sub-folders for example (Also default value)
+    /// For sub-folders for example (Also default value). Also for utility projects.
     /// </summary>
     None = 0,
 

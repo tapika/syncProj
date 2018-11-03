@@ -1576,7 +1576,8 @@ public class Project
                 o.AppendLine("      <Profile>true</Profile>");
 
             if (conf.AdditionalLibraryDirectories.Length != 0)
-                o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + "</AdditionalLibraryDirectories>");
+                o.AppendLine("      <AdditionalLibraryDirectories>" + conf.AdditionalLibraryDirectories + 
+                    ";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>");
 
             if (conf.ConfigurationType != EConfigurationType.StaticLibrary && conf.Link_AdditionalOptions.Length != 0)
                 o.AppendLine("      <AdditionalOptions>" + conf.Link_AdditionalOptions + " %(AdditionalOptions)</AdditionalOptions>");

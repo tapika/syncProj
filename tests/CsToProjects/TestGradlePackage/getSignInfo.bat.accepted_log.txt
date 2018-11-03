@@ -1,5 +1,0 @@
-Batch exited with no error
-Using app.keystore for singing apk package...
-app.keystore
-android
-androiddebugkey

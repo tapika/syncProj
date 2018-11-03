@@ -1421,7 +1421,7 @@
         </member>
         <member name="F:EKeyword.None">
             <summary>
-            For sub-folders for example (Also default value)
+            For sub-folders for example (Also default value). Also for utility projects.
             </summary>
         </member>
         <member name="F:EKeyword.Win32Proj">
@@ -1490,9 +1490,15 @@
             launch code coverage.
             </summary>
         </member>
-        <member name="M:TestStarter.RunSyncProjectTests">
+        <member name="M:TestStarter.RunAllTests">
             <summary>
             Runs all tests
+            </summary>
+        </member>
+        <member name="M:TestStarter.RunTest1">
+            <summary>
+            Modify however you want - to add "shortcut" to any test which is failing, by default RunAllTests
+            will find all tests automatically at run-time.
             </summary>
         </member>
         <member name="T:syncProj">
@@ -1748,11 +1754,12 @@
             Selects default toolset after vsver or kind project definition.
             </summary>
         </member>
-        <member name="M:SolutionProjectBuilder.vsver(System.Int32)">
+        <member name="M:SolutionProjectBuilder.vsver(System.Int32,System.Boolean)">
             <summary>
             Sets Visual Studio file format version to be used.
             </summary>
             <param name="vsVersion">2010, 2012, 2013, ...</param>
+            <param name="force">set to true if besides selecting visual studio project format version, also set default toolset for specific project</param>
         </member>
         <member name="M:SolutionProjectBuilder.location(System.String)">
             <summary>

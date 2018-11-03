@@ -22,10 +22,21 @@ public class TestStarter
     /// Runs all tests
     /// </summary>
     [TestMethod]
-    public void RunSyncProjectTests()
+    public void RunAllTests()
     {
         syncProj.Main("-t", "-testexplorer");
     }
+
+    /// <summary>
+    /// Modify however you want - to add "shortcut" to any test which is failing, by default RunAllTests
+    /// will find all tests automatically at run-time.
+    /// </summary>
+    [TestMethod]
+    public void RunTest1()
+    {
+        syncProj.Main("-t", "-testexplorer", "TestAllKinds");
+    }
+
 }
 
 partial class syncProj
@@ -141,7 +152,7 @@ partial class syncProj
 
                 // Start only particular test
                 String testFilename = Path.GetFileNameWithoutExtension(test);
-                if (testToStart != null && testFilename.CompareTo(testToStart, true) )
+                if (testToStart != null && !testFilename.CompareTo(testToStart, true) )
                     continue;
 
                 UpdateInfo.lastUpdateInfo = null;
@@ -158,8 +169,9 @@ partial class syncProj
                 String toolName = "syncProj";
                 if (bIsBat)
                 {
-                    // Requires a lot of Android stuff preinstalled, we want to focus on syncProj testing.
-                    if (Path.GetFileNameWithoutExtension(test).ToLower() == "gradlew")
+                    // Requires Android stuff preinstalled, we want to focus on syncProj testing.
+                    String[] excludeBats = new string[] { "gradlew", "getsigninfo" };
+                    if (Array.IndexOf(excludeBats,Path.GetFileNameWithoutExtension(test).ToLower()) != -1)
                         continue;
 
                     error = ExecCmd(test + " -x", ref logActual);
