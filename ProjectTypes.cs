@@ -503,7 +503,9 @@ public class FileConfigurationInfo
     }
 
     /// <summary>
-    /// /MP (Build with Multiple Processes)
+    ///  Build with Multiple Processes -
+    ///     Windows: "/MP" - can be specified on file level, not sure why
+    ///     Android: "UseMultiToolTask" - only on project level
     /// </summary>
     public bool MultiProcessorCompilation = false;
 
@@ -1417,6 +1419,10 @@ public class GradlePackage
     /// Gradle version
     /// </summary>
     public String GradleVersion;
+
+    /// <summary>
+    /// Gradle batch to execute, normally gradlew.bat.
+    /// </summary>
     public String ToolName;
     public String GradlePlugin;
     public String AndroidAppLibName;

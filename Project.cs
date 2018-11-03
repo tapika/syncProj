@@ -952,7 +952,7 @@ public class Project
         }
 
         // false forces not to use multiprocessor compilation, which is VS default (no value)
-        if( conf.MultiProcessorCompilation )
+        if( Keyword != EKeyword.Android && conf.MultiProcessorCompilation )
             o.AppendLine("      <MultiProcessorCompilation" + sCond + ">true</MultiProcessorCompilation>");
 
         if (conf.AdditionalIncludeDirectories.Length != 0 )
@@ -1358,6 +1358,9 @@ public class Project
             if( !GradlePackage.IsProjectDirectoryDefault() )
                 o.AppendLine( "    <ProjectDirectory>" + GradlePackage.ProjectDirectory + "</ProjectDirectory>" );
 
+            if (GradlePackage.ToolName != null)
+                o.AppendLine("    <ToolName>" + GradlePackage.ToolName + "</ToolName>");
+
             o.AppendLine( "    </GradlePackage>" );
             o.AppendLine( "  </ItemDefinitionGroup>" );
         }
@@ -1450,6 +1453,9 @@ public class Project
 
             if (bAppendTargetName)
                 o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
+
+            if( conf.MultiProcessorCompilation )
+                o.AppendLine("    <UseMultiToolTask>true</UseMultiToolTask>");
 
             if (bAppendTargetExt)
                 o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");

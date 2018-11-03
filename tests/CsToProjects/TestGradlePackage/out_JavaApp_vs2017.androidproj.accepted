@@ -80,6 +80,7 @@
   <ApkFileName Condition="'$(Configuration)|$(Platform)'=='Release|x86'">$(Platform)\$(Configuration)\app-$(Platform)-$(Configuration).apk</ApkFileName>
     <GradleVersion>4.1</GradleVersion>
     <ProjectDirectory>$(ProjectDir)</ProjectDirectory>
+    <ToolName>gradlew.bat</ToolName>
     </GradlePackage>
   </ItemDefinitionGroup>
   <ImportGroup Label="ExtensionSettings" />

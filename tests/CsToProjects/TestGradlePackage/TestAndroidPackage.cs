@@ -47,7 +47,7 @@ class Builder: SolutionProjectBuilder
             "getSignInfo.bat"
         );
         GradleApkFileName("$(Platform)\\$(Configuration)\\app-$(Platform)-$(Configuration).apk");
-
+        GradleToolName("gradlew.bat");
     }
 
 

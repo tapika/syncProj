@@ -751,7 +751,9 @@
         </member>
         <member name="F:FileConfigurationInfo.MultiProcessorCompilation">
             <summary>
-            /MP (Build with Multiple Processes)
+             Build with Multiple Processes -
+                Windows: "/MP" - can be specified on file level, not sure why
+                Android: "UseMultiToolTask" - only on project level
             </summary>
         </member>
         <member name="F:FileConfigurationInfo.customBuildRule">
@@ -1450,6 +1452,11 @@
         <member name="F:GradlePackage.GradleVersion">
             <summary>
             Gradle version
+            </summary>
+        </member>
+        <member name="F:GradlePackage.ToolName">
+            <summary>
+            Gradle batch to execute, normally gradlew.bat.
             </summary>
         </member>
         <member name="T:TestStarter">
@@ -2198,6 +2205,12 @@
             </summary>
             <param name="apkPath">path</param>
         </member>
+        <member name="M:SolutionProjectBuilder.GradleToolName(System.String)">
+            <summary>
+            Sets Gradle tool name
+            </summary>
+            <param name="toolName">path</param>
+        </member>
         <member name="M:SolutionProjectBuilder.GradleAdditionalOptions(System.String)">
             <summary>
             Sets additional gradle options to be passed to Gradle.
@@ -2210,7 +2223,7 @@
             </summary>
             <param name="path">path</param>
         </member>
-        <member name="M:SolutionProjectBuilder.EnableMultiProcessBuild(System.Boolean)">
+        <member name="M:SolutionProjectBuilder.EnableMultiProcessorBuild(System.Boolean)">
             <summary>
             Enables multiprocessor build.
             </summary>

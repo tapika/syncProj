@@ -5,17 +5,23 @@ partial class Builder : SolutionProjectBuilder
 {
     static void Main(String[] args)
     {
-        project("out_TestMultiProcessorCompile");
-            platforms("Win32", "x64");
+        foreach (String p in sArray("windows", "android"))
+        {
+            project("out_enablemultiprocessor_" + p);
+            platforms("Win32");
+            kind("DynamicLibrary", p);
+            files("?test.cpp");
 
-        kind("ConsoleApp");
+            // Test that 'MinimalRebuild' gets produced.
+            filter("Debug");
+                symbols("on");
+            filter();
 
-        filter("Debug");
-            symbols("on");
+            EnableMultiProcessorBuild();
+        }
+    }
 
-        filter();
-        EnableMultiProcessBuild();
-        files("?test.cpp");
-    } //Main
-}; //class Builder
+    static String[] sArray(params String[] args) { return args; }
+};
+
 

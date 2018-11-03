@@ -2378,6 +2378,15 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Sets Gradle tool name
+    /// </summary>
+    /// <param name="toolName">path</param>
+    static public void GradleToolName(String toolName)
+    {
+        m_project.GradlePackage.ToolName = toolName;
+    }
+
+    /// <summary>
     /// Sets additional gradle options to be passed to Gradle.
     /// </summary>
     /// <param name="additionalOptions">options</param>
@@ -2404,7 +2413,7 @@ public class SolutionProjectBuilder
     /// Enables multiprocessor build.
     /// </summary>
     /// <param name="bValue">true to enable</param>
-    static public void EnableMultiProcessBuild( bool bValue = true )
+    static public void EnableMultiProcessorBuild( bool bValue = true )
     {
         foreach (var conf in getSelectedProjectConfigurations())
         {
