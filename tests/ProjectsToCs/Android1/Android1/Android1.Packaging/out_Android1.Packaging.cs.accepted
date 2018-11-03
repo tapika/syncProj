@@ -13,18 +13,9 @@ class Builder: SolutionProjectBuilder
                 uuid("27f70511-2269-4d45-9ad9-b673c642fff0");
                 vsver(2015);
                 references("../Android1.NativeActivity/Android1.NativeActivity.vcxproj", "4cf1dad5-e69d-426b-beb9-b29c40d3ac3d");
-                kind("WindowedApp","package");
+                kind("Application","antpackage");
                 useofstl("gnustl_static");
                 thumbmode();
-                characterset("Unicode");
-                optimize("speed");
-                flags( "NoPch" );
-                filter ( "Debug" );
-                    symbols("on");
-
-                filter ( "Release" );
-                    symbols("off");
-
                 filter ( "platforms:ARM" );
                     androidapilevel("android-19");
 

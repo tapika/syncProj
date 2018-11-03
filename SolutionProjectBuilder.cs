@@ -394,7 +394,7 @@ public class SolutionProjectBuilder
         m_project.ProjectName = name;
         m_project.language = "C++";
         String path = Path.Combine(m_scriptRelativeDir, name);
-        path = new Regex(@"[^\\/]+[\\/]..[\\/]").Replace(path, "");     // Remove extra upper folder references if any
+        path = new Regex(@"[^\\/]+[\\/]\.\.[\\/]").Replace(path, "");     // Remove extra upper folder references if any
         m_project.RelativePath = path;
 
         Project parent = m_solutionRoot;
@@ -986,47 +986,90 @@ public class SolutionProjectBuilder
     /// Specifies application type, one of following: 
     /// </summary>
     /// <param name="_kind">
-    /// "WindowedApp", "Application"        - Window application,
+    /// "Application"                       - Window application,
     /// "DynamicLibrary", "SharedLib"       - .dll,
     /// "StaticLibrary", "StaticLib"        - Static library (.lib or .a),
     /// "Utility"                           - Utility project,
     /// "ConsoleApp", "ConsoleApplication"  - Console application.
     /// </param>
-    /// <param name="os">"windows" (default), "android" or "package"</param>
+    /// <param name="os">
+    /// "windows"                           - For Windows OS
+    /// "android"                           - For Android / C++ project
+    /// "antpackage"                        - (Android) Ant package
+    /// "gradlepackage"                     - (Android) Gradle package
+    /// </param>
     static public void kind(String _kind, String os = null)
     {
         requireProjectSelected();
 
         if (os == null) os = "windows";
+
+        bool bIsPackagingProject = false;
+
         switch (os.ToLower())
         {
-            case "windows": 
+            case Project.keyword_Windows: 
                 if(m_project.Keyword == EKeyword.None)      // flags ("MFC") can also set this
                     m_project.Keyword = EKeyword.Win32Proj; 
                 break;
-            case "android": m_project.Keyword = EKeyword.Android; break;
-            case "package": m_project.Keyword = EKeyword.Package; break;
+            case Project.keyword_Android: 
+                m_project.Keyword = EKeyword.Android; 
+                break;
+            case Project.keyword_AntPackage: 
+                m_project.Keyword = EKeyword.AntPackage; 
+                bIsPackagingProject = true;
+                break;
+            case Project.keyword_GradlePackage: 
+                m_project.Keyword = EKeyword.GradlePackage; 
+                bIsPackagingProject = true;
+                break;
             default:
                 throw new Exception2("os value is not supported '" + os + "' - supported values are: windows, android, package");
         }
+        m_project.bIsPackagingProject = bIsPackagingProject;
 
         EConfigurationType type;
-        var enums = Enum.GetValues(typeof(EConfigurationType)).Cast<EConfigurationType>();
+        EConfigurationType[] enums = Enum.GetValues(typeof(EConfigurationType)).Cast<EConfigurationType>().ToArray();
         ESubSystem subsystem = ESubSystem.Windows;
 
-        switch (_kind)
+        String[] enumStrings = enums.Select(x => x.ToString().ToLower()).ToArray();
+        String kind = _kind.ToLower();
+        int idx = Array.IndexOf(enumStrings, kind);
+
+        if (idx == -1)
         {
-            case "ConsoleApplication":
-            case "ConsoleApp":          type = EConfigurationType.Application; subsystem = ESubSystem.Console; break;
-            case "WindowedApp":         type = EConfigurationType.Application; break;
-            case "Application":         type = EConfigurationType.Application; break;
-            case "SharedLib":           type = EConfigurationType.DynamicLibrary; break;
-            case "DynamicLibrary":      type = EConfigurationType.DynamicLibrary; break;
-            case "StaticLibrary":       type = EConfigurationType.StaticLibrary; break;
-            case "StaticLib":           type = EConfigurationType.StaticLibrary; break;
-            case "Utility":             type = EConfigurationType.Utility; m_project.Keyword = EKeyword.None; break;
+            // Aliases
+            if( kind == "sharedlib")
+                idx = Array.IndexOf(enumStrings, "dynamiclibrary");
+
+            if (kind == "staticlib")
+                idx = Array.IndexOf(enumStrings, "staticlibrary");
+            
+            if (kind == "consoleapp")
+                idx = Array.IndexOf(enumStrings, "consoleapplication");
+
+            // obsolete: Provided here just for compatibility with premake5. "application" should be preferred.
+            if (kind == "windowedapp")
+                idx = Array.IndexOf(enumStrings, "application");
+        }
+
+        if ( idx == -1 )
+            throw new Exception2("kind value is not supported '" + _kind + "' - supported values are: " + String.Join(",", enumStrings));
+
+        type = enums[idx];
+        switch (type)
+        {
+            case EConfigurationType.ConsoleApplication:
+                type = EConfigurationType.Application;
+                subsystem = ESubSystem.Console;
+                break;
+
+            case EConfigurationType.Utility:
+                m_project.Keyword = EKeyword.None;
+                break;
+
             default:
-                throw new Exception2("kind value is not supported '" + _kind + "' - supported values are: " + String.Join(",", enums.Select(x => x.ToString()) ));
+                break;
         }
 
         if (type == EConfigurationType.Utility )
@@ -1593,6 +1636,12 @@ public class SolutionProjectBuilder
                     case ".cxx":
                     case ".cpp":
                         fi.includeType = IncludeType.ClCompile; break;
+
+                    case ".java":
+                        fi.includeType = IncludeType.JavaCompile; break;
+
+                    case ".template":
+                        fi.includeType = IncludeType.GradleTemplate; break;
 
                     case ".h":
                         fi.includeType = IncludeType.ClInclude; break;
@@ -2303,6 +2352,49 @@ public class SolutionProjectBuilder
     { 
         bool isDeveloper = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software\\syncProj")?.GetValue("IsDeveloper")?.ToString() == "1";
         return isDeveloper;
+    }
+
+    /// <summary>
+    /// Sets gradle version
+    /// </summary>
+    /// <param name="v">version to use</param>
+    static public void GradleVersion( String v )
+    {
+        requireProjectSelected();
+        m_project.GradlePackage.GradleVersion = v;
+    }
+
+    /// <summary>
+    /// Sets Gradle Apk File path.
+    /// </summary>
+    /// <param name="apkPath">path</param>
+    static public void GradleApkFileName( String apkPath )
+    {
+        foreach( var conf in getSelectedProjectConfigurations( ) )
+            conf.ApkFileName = apkPath;
+    }
+
+    /// <summary>
+    /// Sets additional gradle options to be passed to Gradle.
+    /// </summary>
+    /// <param name="additionalOptions">options</param>
+    static public void GradleAdditionalOptions( String additionalOptions )
+    {
+        foreach( var conf in getSelectedProjectConfigurations() )
+            conf.AdditionalOptions = additionalOptions;
+    }
+
+    /// <summary>
+    /// Sets Gradle Project Directory. If not specified, uses project directory.
+    /// </summary>
+    /// <param name="path">path</param>
+    static public void GradleProjectDirectory( String path = "")
+    {
+        requireProjectSelected();
+        if( !Project.IsPathProjectOrSolutionRooted( path ) )
+            path = "$(ProjectDir)" + path;
+        
+        m_project.GradlePackage.ProjectDirectory = path;
     }
 
 };

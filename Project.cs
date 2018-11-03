@@ -30,7 +30,7 @@ public class Project
     public bool bIsFolder = false;
 
     /// <summary>
-    /// true if it's Android packaging project
+    /// true if it's Android Ant or Gradle packaging project (Set separately from Keyword, because might be parsed out from solution file)
     /// </summary>
     public bool bIsPackagingProject = false;
 
@@ -133,9 +133,28 @@ public class Project
     } //setToolsVersion
 
     public EKeyword Keyword = EKeyword.None;
+    public const String keyword_Windows = "windows";
+    public const String keyword_Android = "android";
+    public const String keyword_AntPackage = "antpackage";
+    public const String keyword_GradlePackage = "gradlepackage";
 
     /// <summary>
-    /// Gets target OS based on keyword.
+    /// Only if Keyword == GradlePackage
+    /// </summary>
+    GradlePackage gradlePackage;
+    public GradlePackage GradlePackage
+    { 
+        get {
+            if( gradlePackage == null )
+                gradlePackage = new GradlePackage();
+
+            return gradlePackage;
+        }
+    
+    }
+
+    /// <summary>
+    /// Gets target OS based on keyword, null if default. (windows or don't care)
     /// </summary>
     /// <returns></returns>
     public String getOs()
@@ -144,10 +163,12 @@ public class Project
         {
             case EKeyword.Android:
                 return "android";
-            case EKeyword.Package:
-                return "package";
+            case EKeyword.AntPackage:
+                return Project.keyword_AntPackage;
+            case EKeyword.GradlePackage:
+                return Project.keyword_GradlePackage;
             default:
-                return "windows";
+                return null;
         }
     } //getOs
 
@@ -190,10 +211,8 @@ public class Project
         if (bIsFolder)
             return path;
 
-        if (Keyword == EKeyword.Package)
-        {
+        if (Keyword == EKeyword.AntPackage || Keyword == EKeyword.GradlePackage)
             return path + ".androidproj";
-        }
 
         return path + getProjectExtension();
     } //getRelativePath
@@ -482,6 +501,19 @@ public class Project
     } //ExtractCompileOptions
 
     /// <summary>
+    /// Gets xml node by name.
+    /// </summary>
+    /// <param name="node">Xml node from where to get</param>
+    /// <param name="field">Xml tag to query</param>
+    /// <returns>object if xml node value if any, null if not defined</returns>
+    static object ElementValue(XElement node, String field)
+    { 
+        object oValue = node.Element(node.Document.Root.Name.Namespace + field)?.Value;
+        return oValue;
+    }
+
+
+    /// <summary>
     /// Copies field by "field" - name, from node.
     /// </summary>
     /// <returns>false if fails (value does not exists(</returns>
@@ -492,7 +524,7 @@ public class Project
 
         while (true)
         {
-            oValue = node.Element(node.Document.Root.Name.Namespace + field)?.Value;
+            oValue = ElementValue(node, field);
             if (oValue != null)
                 break;
 
@@ -763,8 +795,14 @@ public class Project
                                     if (!CopyField(project, field, node) && field == "Keyword")
                                     {
                                         if (Path.GetExtension(path).ToLower() == ".androidproj")
+                                        {
                                             // Android packaging projects does not have Keyword
-                                            project.Keyword = EKeyword.Package;
+                                            String buildType = ElementValue(node, "AndroidBuildType") as String;
+                                            if(buildType != null && buildType == "Gradle")
+                                                project.Keyword = EKeyword.GradlePackage;
+                                            else
+                                                project.Keyword = EKeyword.AntPackage;
+                                        }
                                     } //if
 
                                     if (project.ProjectGuid != null && loadLevel == 1)
@@ -1110,6 +1148,10 @@ public class Project
             projectPath = Path.GetDirectoryName(solution.path);
         projectPath = Path.Combine(projectPath, getRelativePath());
 
+        // Initialize ToolsVersion to default.
+        if( ToolsVersion == null )
+            SetFileFormatVersion( fileFormatVersion );
+
         o = new StringBuilder();
         o.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         o.AppendLine("<Project DefaultTargets=\"Build\" ToolsVersion=\"" + ToolsVersion + "\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">");
@@ -1130,9 +1172,13 @@ public class Project
 
         o.AppendLine("  <PropertyGroup Label=\"Globals\">");
 
-        bool bIsPackagingProject = Keyword == EKeyword.Package;
+        bool bIsAntPackagingProject = Keyword == EKeyword.AntPackage;
+        bool bIsGradlePackagingProject = Keyword == EKeyword.GradlePackage;
 
-        if (!bIsPackagingProject)
+        if(bIsGradlePackagingProject)
+            o.AppendLine("    <AndroidBuildType>Gradle</AndroidBuildType>");
+
+        if (!bIsAntPackagingProject && !bIsGradlePackagingProject)
             o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
 
         //
@@ -1140,7 +1186,7 @@ public class Project
         // of spurious warnings when the same filename is present in different
         // configurations.
         //
-        if (!bIsPackagingProject)
+        if (Keyword == EKeyword.None || Keyword == EKeyword.MFCProj || Keyword == EKeyword.Win32Proj || Keyword == EKeyword.Android )
             o.AppendLine("    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>");
 
         if (Keyword == EKeyword.Win32Proj || Keyword == EKeyword.Android)
@@ -1163,27 +1209,53 @@ public class Project
         if (bIsAndroidProject)
             o.AppendLine("    <DefaultLanguage>en-US</DefaultLanguage>");
 
-        if (bIsAndroidProject || bIsPackagingProject)
-            o.AppendLine("    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>");
+        if (bIsAndroidProject || bIsAntPackagingProject || bIsGradlePackagingProject )
+        {
+            String mvsv;
+            switch (fileFormatVersion)
+            {
+                case 2015: mvsv = "14.0"; break;
+                case 2017: mvsv = "15.0"; break;
+                // Try to predict the future somehow
+                default:   mvsv = (((fileFormatVersion - 2015) / 2) + 14).ToString() + ".0"; break;
+            }
+            o.AppendLine("    <MinimumVisualStudioVersion>" + mvsv + "</MinimumVisualStudioVersion>");
+        }
 
-        if (bIsPackagingProject)
+        if (bIsAntPackagingProject || bIsGradlePackagingProject)
             o.AppendLine("    <ProjectVersion>1.0</ProjectVersion>");
 
-        if (bIsPackagingProject)
-            o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
+        if( bIsAntPackagingProject || bIsGradlePackagingProject )
+        {
+            o.AppendLine( "    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>" );
+            // This is needed to disable ABI compatibility check when deploying to device.
+            // Otherwise results in error: Error installing the package. The package ABI '' is incompatible with the ABI 'arm64v8a' of device
+            o.AppendLine( "    <_PackagingProjectWithoutNativeComponent>true</_PackagingProjectWithoutNativeComponent>" );
+        }
 
         if (bIsAndroidProject)
             o.AppendLine("    <ApplicationType>Android</ApplicationType>");
 
         if (bIsAndroidProject)
-            o.AppendLine("    <ApplicationTypeRevision>2.0</ApplicationTypeRevision>");
+        {
+            String atv;
+            switch (fileFormatVersion)
+            {
+                case 2015: atv = "2.0"; break;
+                case 2017: atv = "3.0"; break;
+                // Try to predict the future somehow
+                default: atv = (((fileFormatVersion - 2015) / 2) + 2).ToString() + ".0"; break;
+            }
+
+            o.AppendLine("    <ApplicationTypeRevision>" + atv + "</ApplicationTypeRevision>");
+        }
 
         o.AppendLine("  </PropertyGroup>");
 
         // Some mysterious xml tag.
         String propsPath = "$(VCTargetsPath)\\Microsoft.Cpp";
 
-        if (Keyword == EKeyword.Package)
+        if (bIsAntPackagingProject || bIsGradlePackagingProject)
             propsPath = "$(AndroidTargetsPath)\\Android";
 
         o.AppendLine("  <Import Project=\"" + propsPath + ".Default.props\" />");
@@ -1198,20 +1270,26 @@ public class Project
 
             o.AppendLine("  <PropertyGroup " + condition(confName) + " Label=\"Configuration\">");
 
-            if (bIsPackagingProject)
+            switch (Keyword)
             {
-                o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
-                o.AppendLine("    <ConfigurationType>Application</ConfigurationType>"); // Why this line is needed anyway?
-                if (conf.AndroidAPILevel != null && conf.AndroidAPILevel != Configuration.getAndroidAPILevelDefault(confName))
-                    o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
-            }
-            else
-            {
-                o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
-                o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
+                case EKeyword.AntPackage:
+                    o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
+                    o.AppendLine("    <ConfigurationType>Application</ConfigurationType>"); // Why this line is needed anyway?
+                    if (conf.AndroidAPILevel != null && conf.AndroidAPILevel != Configuration.getAndroidAPILevelDefault(confName))
+                        o.AppendLine("    <AndroidAPILevel>" + conf.AndroidAPILevel + "</AndroidAPILevel>");
+                    break;
+
+                case EKeyword.GradlePackage:
+                    o.AppendLine("    <ConfigurationType>Application</ConfigurationType>");
+                    break;
+
+                default:
+                    o.AppendLine("    <ConfigurationType>" + conf.ConfigurationType.ToString() + "</ConfigurationType>");
+                    o.AppendLine("    <UseDebugLibraries>" + conf.UseDebugLibraries.ToString().ToLower() + "</UseDebugLibraries>");
+                    break;
             }
 
-            if (!bIsPackagingProject)
+            if (!bIsAntPackagingProject && !bIsGradlePackagingProject)
             {
                 String pts = conf.PlatformToolset;
                 if (pts == null) pts = conf.getPlatformToolsetDefault(this);
@@ -1249,14 +1327,40 @@ public class Project
 
         o.AppendLine("  <Import Project=\"" + propsPath + ".props\" />");
 
-        if (Keyword == EKeyword.Package)
+        if (bIsGradlePackagingProject)
         {
-            o.AppendLine("  <ImportGroup Label=\"ExtensionSettings\" />");
+            o.AppendLine( "  <ItemDefinitionGroup>" );
+            o.AppendLine( "    <GradlePackage>" );
+            
+            foreach( String confName in getSortedConfigurations( false ) )
+            {
+                int iConf = configurations.IndexOf( confName );
+                Configuration conf = projectConfig[iConf];
+
+                if( conf.ApkFileName != null )
+                    o.AppendLine( "  <ApkFileName " + condition( confName ) + ">" + conf.ApkFileName + "</ApkFileName>" );
+            } //foreach
+
+            if( GradlePackage.GradleVersion != null)
+                o.AppendLine( "    <GradleVersion>" + GradlePackage.GradleVersion + "</GradleVersion>" );
+
+            if( !GradlePackage.IsProjectDirectoryDefault() )
+                o.AppendLine( "    <ProjectDirectory>" + GradlePackage.ProjectDirectory + "</ProjectDirectory>" );
+
+            o.AppendLine( "    </GradlePackage>" );
+            o.AppendLine( "  </ItemDefinitionGroup>" );
         }
-        else
+
+        switch (Keyword)
         {
-            o.AppendLine("  <ImportGroup Label=\"ExtensionSettings\">");
-            o.AppendLine("  </ImportGroup>");
+            case EKeyword.GradlePackage:
+            case EKeyword.AntPackage:
+                o.AppendLine("  <ImportGroup Label=\"ExtensionSettings\" />");
+                break;
+            default:
+                o.AppendLine("  <ImportGroup Label=\"ExtensionSettings\">");
+                o.AppendLine("  </ImportGroup>");
+                break;
         }
 
         if (Keyword == EKeyword.Android)
@@ -1264,12 +1368,12 @@ public class Project
             o.AppendLine("  <ImportGroup Label=\"Shared\">");
             o.AppendLine("  </ImportGroup>");
         }
-        else if (Keyword == EKeyword.Package)
+        else if (Keyword == EKeyword.AntPackage)
         {
             o.AppendLine("  <ImportGroup Label=\"Shared\" />");
         }
 
-        if (!bIsPackagingProject)
+        if (!bIsAntPackagingProject && !bIsGradlePackagingProject)
             foreach (String confName in getSortedConfigurations(true))
             {
                 o.AppendLine("  <ImportGroup Label=\"PropertySheets\" Condition=\"'$(Configuration)|$(Platform)'=='" + confName + "'\">");
@@ -1282,64 +1386,77 @@ public class Project
         //
         o.AppendLine("  <PropertyGroup Label=\"UserMacros\" />");
 
-        if (bIsPackagingProject)
+        if (bIsAntPackagingProject)
             o.AppendLine("  <PropertyGroup />");
 
-        if (!bIsPackagingProject)
-            foreach (String confName in getSortedConfigurations(false))
+        foreach (String confName in getSortedConfigurations(false))
+        {
+            int iConf = configurations.IndexOf(confName);
+            Configuration conf = projectConfig[iConf];
+
+            bool bAppendLinkIncremental = Keyword != EKeyword.Android;
+            bool bAppendOutDir = conf.OutDir != null && conf.OutDir != conf.getOutDirDefault(this);
+            bool bAppendIntDir = conf.IntDir != null && conf.IntDir != conf.getOutDirDefault(this);
+            bool bAppendTargetName = conf.TargetName != null && conf.TargetName != conf.getTargetNameDefault(this);
+            bool bAppendTargetExt = conf.TargetExt != null;
+            bool bAppendAny = conf.IncludePath != "";
+            if (bAppendAny)
+                bAppendAny = conf.LibraryPath != "";
+
+            // Empty node.
+            if (!(bAppendLinkIncremental || bAppendOutDir || bAppendIntDir || bAppendTargetName || bAppendTargetExt || bAppendAny))
             {
-                int iConf = configurations.IndexOf(confName);
-                Configuration conf = projectConfig[iConf];
+                o.AppendLine("  <PropertyGroup " + condition(confName) + " />");
+                continue;
+            }
 
-                bool bAppendLinkIncremental = Keyword != EKeyword.Android;
-                bool bAppendOutDir = conf.OutDir != null && conf.OutDir != conf.getOutDirDefault(this);
-                bool bAppendIntDir = conf.IntDir != null && conf.IntDir != conf.getOutDirDefault(this);
-                bool bAppendTargetName = conf.TargetName != null && conf.TargetName != conf.getTargetNameDefault(this);
-                bool bAppendTargetExt = conf.TargetExt != null;
-                bool bAppendAny = conf.IncludePath != "";
-                if (bAppendAny)
-                    bAppendAny = conf.LibraryPath != "";
+            o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
 
-                // Empty node.
-                if (!(bAppendLinkIncremental || bAppendOutDir || bAppendIntDir || bAppendTargetName || bAppendTargetExt || bAppendAny))
+            if (bAppendLinkIncremental)
+                o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
+
+            if( bAppendOutDir )
+            {
+                String outDir = conf.OutDir;
+
+                if( Keyword == EKeyword.Android || Keyword == EKeyword.GradlePackage || Keyword == EKeyword.AntPackage )
                 {
-                    o.AppendLine("  <PropertyGroup " + condition(confName) + " />");
-                    continue;
+                    // Visual studio bug: Debugging fails to attach if directory is not starting with $(ProjectDir) or $(SolutionDir)
+                    // or Access to the path 'bin\Debug_ARM\.gdb' is denied.
+                    // For Windows projects specifying using relative path implies $(ProjectDir) prefix before that.
+                    if( !IsPathProjectOrSolutionRooted(outDir) )
+                        outDir = "$(ProjectDir)" + outDir;
                 }
+                
+                o.AppendLine( "    <OutDir>" + outDir + "</OutDir>" );
+            }
 
-                o.AppendLine("  <PropertyGroup " + condition(confName) + ">");
+            if (bAppendIntDir)
+                o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
 
-                if (bAppendLinkIncremental)
-                    o.AppendLine("    <LinkIncremental>" + conf.LinkIncremental.ToString().ToLower() + "</LinkIncremental>");
+            if(conf.IncludePath != "")
+                o.AppendLine("    <IncludePath>" + conf.IncludePath + ";$(IncludePath)</IncludePath>");
 
-                if (bAppendOutDir)
-                    o.AppendLine("    <OutDir>" + conf.OutDir + "</OutDir>");
+            if (bAppendTargetName)
+                o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
 
-                if (bAppendIntDir)
-                    o.AppendLine("    <IntDir>" + conf.IntDir + "</IntDir>");
+            if (bAppendTargetExt)
+                o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
 
-                if(conf.IncludePath != "")
-                    o.AppendLine("    <IncludePath>" + conf.IncludePath + ";$(IncludePath)</IncludePath>");
+            if (conf.LibraryPath != "")
+                o.AppendLine("    <LibraryPath>" + conf.LibraryPath + ";$(LibraryPath)</LibraryPath>");
 
-                if (bAppendTargetName)
-                    o.AppendLine("    <TargetName>" + conf.TargetName + "</TargetName>");
+            o.AppendLine("  </PropertyGroup>");
+        } //for
 
-                if (bAppendTargetExt)
-                    o.AppendLine("    <TargetExt>" + conf.TargetExt + "</TargetExt>");
-
-                if (conf.LibraryPath != "")
-                    o.AppendLine("    <LibraryPath>" + conf.LibraryPath + ";$(LibraryPath)</LibraryPath>");
-
-                o.AppendLine("  </PropertyGroup>");
-            } //for
-
+        if( !bIsGradlePackagingProject )
         for (int iConf = 0; iConf < configurations.Count; iConf++)
         {
             String confName = configurations[iConf];
             Configuration conf = projectConfig[iConf];
             o.AppendLine("  <ItemDefinitionGroup " + condition(confName) + ">");
 
-            if (bIsPackagingProject)
+            if (bIsAntPackagingProject)
             {
                 o.AppendLine("    <AntPackage>");
                 o.AppendLine("      <AndroidAppLibName>$(RootNamespace)</AndroidAppLibName>");
@@ -1599,6 +1716,16 @@ public class Project
 
         String projectsFile = o.ToString();
 
+
+        //-----------------------------------------------------------------------------------------------------------
+        // For android projects we don't need to generate .filters file at all.
+        //-----------------------------------------------------------------------------------------------------------
+        if (Keyword == EKeyword.GradlePackage)
+        { 
+            UpdateFile(projectPath, projectsFile, uinfo, false);
+            return;
+        }
+
         //-----------------------------------------------------------------------------------------------------------
         // .filters file generation.
         //-----------------------------------------------------------------------------------------------------------
@@ -1753,6 +1880,22 @@ public class Project
             return true;
         } //if-else
     } //UpdateFile
+
+    /// <summary>
+    /// Checks if path is rooted against SolutionDir or ProjectDir
+    /// </summary>
+    /// <param name="path">path. By default same as project directory.</param>
+    /// <returns>true if rooted.</returns>
+    public static bool IsPathProjectOrSolutionRooted( String path)
+    {
+        if( path.StartsWith( "$(ProjectDir)", StringComparison.CurrentCultureIgnoreCase ) ||
+            path.StartsWith( "$(SolutionDir)", StringComparison.CurrentCultureIgnoreCase ) )
+            return true;
+
+        return false;
+    }
+
+
 
 } //Project
 

@@ -1,0 +1,191 @@
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+buildscript {
+    // gradle 4.1 or higher
+    repositories { google(); jcenter() }
+    dependencies { classpath 'com.android.tools.build:gradle:3.0.1' }
+}
+
+allprojects { repositories { google(); jcenter() } }
+
+// Android Application
+apply plugin: 'com.android.application'
+
+
+android {
+    compileSdkVersion 26
+
+    defaultConfig {
+        // Your application identifier
+        applicationId "com.example.my.androidstudiojavagradle"
+
+        //
+        // https://developer.android.com/guide/topics/manifest/uses-sdk-element.html?utm_campaign=adp_series_sdkversion_010616&utm_source=medium&utm_medium=blog#ApiLevels
+        //
+        minSdkVersion 21
+        targetSdkVersion 26
+
+        //
+        // https://developer.android.com/studio/publish/versioning.html
+        //
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            // Just use one run-time configurable signing configuration.
+            signingConfig signingConfigs.debug
+        }
+
+        debug {
+            debuggable = true
+        }
+    }
+
+    sourceSets {
+        debug.jniLibs.srcDirs   = [ '../bin/Debug' ]
+        release.jniLibs.srcDirs = [ '../bin/Release' ]
+    }
+
+    //
+    // https://stackoverflow.com/questions/19268647/gradle-android-build-for-different-processor-architectures
+    // https://developer.android.com/ndk/guides/abis.html
+    //
+    flavorDimensions "abi"
+
+    productFlavors {
+        // Use same configuration names as in Visual Studio, $(Platform) tag.
+        arm {
+            dimension "abi"
+            ndk {
+                abiFilter "armeabi-v7a"
+            }
+        }
+        arm64 {
+            dimension "abi"
+            ndk {
+                abiFilter "arm64-v8a"
+            }
+        }
+        x86 {
+            dimension "abi"
+            ndk {
+                abiFilter "x86"
+            }
+        }
+        x64 {
+            dimension "abi"
+            ndk {
+                abiFilter "x86_64"
+            }
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            // Cannot specify folder name here, will have problems with incremental build.
+            // Force not to use 'unsigned.apk' for release builds.
+            output.outputFileName = new File("app-" + variant.flavorName + "-" + variant.buildType.name + ".apk")
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.assemble.doLast {
+            if (file(getBatch("postBuild")).exists())
+                postBuildAction.execute()
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+}
+
+//------------------------------------------------------------------------------------------------
+// Helper functions
+//------------------------------------------------------------------------------------------------
+
+//
+//  Returns array for CommandLine, path, product favour (arm/arm64/...), configuration (debug / release)
+//
+String[] getCommandLineArgs()
+{
+    String taskReqStr = getGradle().getStartParameter().getTaskRequests().toString()
+    Pattern pattern = Pattern.compile("(assemble|generate)(\\w+)(Release|Debug)")
+    Matcher matcher = pattern.matcher(taskReqStr)
+    if (!matcher.find())
+        return []
+
+    return [matcher.group(2), matcher.group(3) ]
+}
+
+String getBatch( String batchName )
+{
+    def batch = projectDir.toString() + '\\' + batchName + '.bat'
+    return batch
+}
+
+task postBuildAction(type: Exec) {
+    def args = new LinkedList<String>( [ getBatch('postBuild') ] );
+    args.addAll(getCommandLineArgs());
+    commandLine args.toArray();
+}
+
+//
+//  Executes batch file and gets keystore, password, keyalias string from batch.
+//
+String[] getSignInfo() {
+    def stdout = new ByteArrayOutputStream()
+
+    // Form batch to execute with variant & configuration
+    String cmd = '/c "' + getBatch("getSignInfo")
+    for ( String a : getCommandLineArgs())
+        cmd += " " + a
+    // '&& exit /b' - Returns exit code from batch back to Gradle
+    cmd += ' && exit /b"'
+
+    def exitCode= exec {
+        executable = 'cmd'
+        args = [ cmd ]
+        standardOutput = stdout
+        ignoreExitValue = true
+    }.exitValue
+
+    String configStr = stdout.toString();
+    // Batch can trigger errors using 'exit /b 1' kind of return
+    if( exitCode != 0 ) {
+        println configStr
+        throw new GradleException( "getSingInfo batch reported an error - see message above" )
+    }
+
+    String[] lines = configStr.split("\\r?\\n");
+    return lines
+}
+
+allprojects {
+    afterEvaluate { project ->
+        String[] lines = getSignInfo()
+
+        int n = lines.length
+        int nToPrint = n - 3
+        if( n < 3 )
+            nToPrint = n
+
+        // Last three lines are configuring signing, first lines will
+        // be just printed out.
+        for( int i = 0; i < nToPrint; i++)
+            println lines[i]
+
+        if( n < 3 )
+            return;
+
+        android.signingConfigs.each {
+            it.storeFile = file(lines[n-3])
+            it.storePassword = lines[n-2]
+            it.keyAlias = lines[n-1]
+            it.keyPassword = lines[n-2]
+        }
+   }
+}

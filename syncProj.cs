@@ -562,6 +562,24 @@ public class SolutionOrProject
             o.AppendLine(head + "    platforms" + arO + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    solutionScript(\"" + fileName + ".cs" + "\");");
 
+            //
+            // Packaging projects cannot include custom build steps, we include them from solution update.
+            //
+            foreach( Project p in sln.projects )
+            {
+                if( !p.bIsPackagingProject )
+                    continue;
+
+                String name = Path.GetFileNameWithoutExtension( p.RelativePath );
+                String dir = Path.GetDirectoryName( p.RelativePath );
+
+                String fileInclude = name;
+                if( outPrefix != "" ) fileInclude = outPrefix + name;
+                fileInclude = Path.Combine( dir, fileInclude + "." + format );
+                fileInclude = fileInclude.Replace("\\", "\\\\");
+                o.AppendLine(head + "        projectScript(\"" + fileInclude + "\");");
+            }
+
             String wasInSubGroup = "";
             List<String> groupParts = new List<string>();
 
@@ -639,6 +657,9 @@ public class SolutionOrProject
             } //foreach
         }
         else {
+            // ---------------------------------------------------------------------------------
+            //  Building project
+            // ---------------------------------------------------------------------------------
             List<FileInfo> projReferences = proj.files.Where(x => x.includeType == IncludeType.ProjectReference).ToList();
 
             // ---------------------------------------------------------------------------------
@@ -675,8 +696,8 @@ public class SolutionOrProject
             if (format != "lua")
                 o.AppendLine(head + "    vsver" + brO + proj.fileFormatVersion + brC);
             
-            // Packaging projects cannot have custom build step.
-            if( bCsScript && proj.Keyword != EKeyword.Package)
+            // Packaging projects cannot have custom build step at this moment
+            if( bCsScript && !proj.bIsPackagingProject)
                 o.AppendLine(head + "    projectScript(\"" + fileName + ".cs" + "\");");
 
             // ---------------------------------------------------------------------------------
@@ -705,20 +726,29 @@ public class SolutionOrProject
                     p.ConfigurationType = EConfigurationType.ConsoleApplication;
             
             ConfigationSpecificValue(proj, proj.projectConfig, "ConfigurationType", lines2dump, (s) => {
-                    String r = typeof(EConfigurationType).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
-                    if( format == "lua" )
-                        return "kind" + brO + "\"" + r + "\"" + brC;
-                    else
-                        return "kind" + brO + "\"" + r + "\",\"" + proj.getOs() + "\"" + brC;
+                String ctype = typeof(EConfigurationType).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
+                if (format == "lua")
+                {
+                    return "kind" + brO + "\"" + ctype + "\"" + brC;
+                }
+                else
+                {
+                    String os = proj.getOs();
+                    String r = "kind" + brO + "\"" + ctype + "\"";
+                    if ( os != null ) r += ",\"" + os + "\"";
+                    r += brC;
+                    return r;
+                }
             } );
 
             proj.projectConfig.Where(x => x.ConfigurationType == EConfigurationType.ConsoleApplication).ToList().ForEach(x => x.ConfigurationType = EConfigurationType.Application);
 
-            ConfigationSpecificValue(proj, proj.projectConfig, "UseDebugLibraries", lines2dump, (s) => {
-                return "symbols" + brO + "\"" + ((s == "True") ? "on" : "off") + "\"" + brC;
-            });
+            if( !proj.bIsPackagingProject )
+                ConfigationSpecificValue(proj, proj.projectConfig, "UseDebugLibraries", lines2dump, (s) => {
+                    return "symbols" + brO + "\"" + ((s == "True") ? "on" : "off") + "\"" + brC;
+                });
 
-            if (proj.Keyword == EKeyword.Package || proj.Keyword == EKeyword.Android)
+            if (proj.Keyword == EKeyword.AntPackage || proj.Keyword == EKeyword.Android)
             {
                 // If we have at least one api level set, we figure out the rest (defaults), and then we set up api level correctlt everywhere.
                 bool bUsesApiLevel = proj.projectConfig.Where(x => x.AndroidAPILevel != null).FirstOrDefault() != null;
@@ -762,10 +792,11 @@ public class SolutionOrProject
                 return "toolset" + brO + "\"" + s + "\"" + brC;
             });
 
-            ConfigationSpecificValue(proj, proj.projectConfig, "CharacterSet", lines2dump, (s) => {
-                String r = typeof(ECharacterSet).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
-                return "characterset" + brO + "\"" + r + "\"" + brC;
-            });
+            if (!proj.bIsPackagingProject)
+                ConfigationSpecificValue(proj, proj.projectConfig, "CharacterSet", lines2dump, (s) => {
+                    String r = typeof(ECharacterSet).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
+                    return "characterset" + brO + "\"" + r + "\"" + brC;
+                });
 
             ConfigationSpecificValue(proj, proj.projectConfig, "UseOfMfc", lines2dump, (s) => {
                 if (s == "Static")
@@ -781,11 +812,12 @@ public class SolutionOrProject
             });
             ConfigationSpecificValue(proj, proj.projectConfig, "TargetName", lines2dump, (s) => { return "targetname" + brO + "\"" + s + "\"" + brC; });
             ConfigationSpecificValue(proj, proj.projectConfig, "TargetExt", lines2dump, (s) => { return "targetextension" + brO + "\"" + s + "\"" + brC; });
-            
-            ConfigationSpecificValue(proj, proj.projectConfig, "Optimization", lines2dump, (s) => {
-                String r = typeof(EOptimization).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
-                return "optimize" + brO + "\"" + r + "\"" + brC; 
-            });
+
+            if (!proj.bIsPackagingProject)
+                ConfigationSpecificValue(proj, proj.projectConfig, "Optimization", lines2dump, (s) => {
+                    String r = typeof(EOptimization).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
+                    return "optimize" + brO + "\"" + r + "\"" + brC; 
+                });
 
             // Can be used only to enabled, for .lua - ConfigationSpecificValue should be changed to operate on some default (false) value.
             ConfigationSpecificValue(proj, proj.projectConfig, "WholeProgramOptimization", lines2dump, (s) => {
@@ -961,7 +993,7 @@ public class SolutionOrProject
     }
 
 
-    /// <param name="proj"></param>
+    /// <param name="proj">Project</param>
     /// <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
     /// <param name="fileName">name of file of which configuration is being parsed.</param>
     /// <param name="lines2dump">lines to dump</param>
@@ -970,6 +1002,7 @@ public class SolutionOrProject
         IncludeType includeType = IncludeType.ClCompile, String fileName = "")
     {
         List<FileConfigurationInfo> configList = config.ToList();
+        bool bIsPackagingProject = proj.Keyword == EKeyword.AntPackage || proj.Keyword == EKeyword.GradlePackage;
 
         if (proj.projectConfig == config)
         {
@@ -994,7 +1027,7 @@ public class SolutionOrProject
         });
 
         // For custom build type we dont have pchheader info
-        if (includeType == IncludeType.ClCompile)
+        if (includeType == IncludeType.ClCompile && !bIsPackagingProject)
         {
             ConfigationSpecificValue(proj, configList, "PrecompiledHeaderFile", lines2dump, (s) =>
             {

@@ -1,0 +1,3 @@
+syncProj exited with no error
+TestAndroidPackage.cs :
+8 files updated

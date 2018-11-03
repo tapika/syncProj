@@ -220,7 +220,17 @@ public enum IncludeType
     /// <summary>
     /// C# - source codes to compile
     /// </summary>
-    Compile
+    Compile,
+
+    /// <summary>
+    /// Android / Gradle project, *.template files.
+    /// </summary>
+    GradleTemplate,
+
+    /// <summary>
+    /// .java - source codes to compile
+    /// </summary>
+    JavaCompile
 }
 
 /// <summary>
@@ -572,7 +582,7 @@ public enum EConfigurationType
     /// <summary>
     /// .exe
     /// </summary>
-    [FunctionName("WindowedApp")]
+    [FunctionName("Application")]
     Application = 0,
 
     /// <summary>
@@ -586,6 +596,12 @@ public enum EConfigurationType
     /// </summary>
     [FunctionName("StaticLib")]
     StaticLibrary,
+
+    /// <summary>
+    /// Android gradle project: Library (.aar/.jar)
+    /// </summary>
+    [FunctionName("Library")]
+    Library,
 
     /// <summary>
     /// Utility project
@@ -956,6 +972,9 @@ public class BuildEvent
 
 /// <summary>
 /// All values set by default are Visual Studio default.
+/// 
+/// Configuration class includes everything what cannot be configured on individual file level.
+/// If configuration option can be configured on file level, it should be declared in FileConfigurationInfo.
 /// </summary>
 public class Configuration : FileConfigurationInfo
 {
@@ -1255,6 +1274,16 @@ public class Configuration : FileConfigurationInfo
     /// Prelink-build event
     /// </summary>
     public BuildEvent PreLinkEvent = new BuildEvent();
+
+    /// <summary>
+    /// gradle package .apk path
+    /// </summary>
+    public String ApkFileName;
+
+    /// <summary>
+    /// gradle package options.
+    /// </summary>
+    public String AdditionalOptions;
 }
 
 /// <summary>
@@ -1266,11 +1295,6 @@ public enum EKeyword
     /// For sub-folders for example (Also default value)
     /// </summary>
     None = 0,
-
-    /// <summary>
-    /// Typically set for Android packaging project.
-    /// </summary>
-    Package,
 
     /// <summary>
     /// Windows project (32 or 64 bit)
@@ -1285,7 +1309,17 @@ public enum EKeyword
     /// <summary>
     /// Windows application with MFC support
     /// </summary>
-    MFCProj
+    MFCProj,
+
+    /// <summary>
+    /// Android packaging project (does not exists on file format level)
+    /// </summary>
+    AntPackage,
+
+    /// <summary>
+    /// Typically set for Android packaging project. (does not exists on file format level)
+    /// </summary>
+    GradlePackage
 }
 
 /// <summary>
@@ -1314,5 +1348,25 @@ public enum EUseOfMfc
     _false
 }
 
+public class GradlePackage
+{
+    public String ProjectDirectory;
 
+    public bool IsProjectDirectoryDefault()
+    {
+        if( ProjectDirectory == null || ProjectDirectory == "$(ProjectDir)app\\" )
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gradle version
+    /// </summary>
+    public String GradleVersion;
+    public String ToolName;
+    public String GradlePlugin;
+    public String AndroidAppLibName;
+    public String ApplicationName;
+}
 

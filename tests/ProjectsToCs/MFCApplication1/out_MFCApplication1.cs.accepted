@@ -15,7 +15,7 @@ class Builder: SolutionProjectBuilder
                 projectScript("out_MFCApplication1.cs");
                 flags("MFC");
                 systemversion("8.1");
-                kind("WindowedApp","windows");
+                kind("Application");
                 toolset("v140");
                 characterset("Unicode");
                 pchheader("stdafx.h");

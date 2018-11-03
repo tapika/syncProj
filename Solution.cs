@@ -298,10 +298,24 @@ public class Solution
 
         o.AppendLine("Microsoft Visual Studio Solution File, Format Version " + formatVersion);
 
-        if (verTag >= 2015)
-            verTag -= 2015 - 14;
+        int verTag2;
+        switch (verTag)
+        {
+            case 2015:
+                verTag2 = 14;
+                break;
 
-        o.AppendLine("# Visual Studio " + verTag.ToString());
+            case 2017:
+                verTag2 = 15;
+                break;
+
+            default:
+                // Try to predict the future here...
+                verTag2 = 14 + (verTag - 2015) / 2;
+                break;
+        }
+
+        o.AppendLine("# Visual Studio " + verTag2.ToString());
 
         // For some reason must be specified, otherwise Visual studio will try to save project after load.
         if (fileFormatVersion >= 2015)
@@ -373,9 +387,8 @@ public class Solution
                 bool bPeformBuild = true;
                 bool? bPerformDeploy = null;
 
-                if (p.Keyword == EKeyword.Package)
+                if (p.bIsPackagingProject)
                     bPerformDeploy = true;
-
 
                 if (p.slnConfigurations != null && iConf < p.slnConfigurations.Count)
                 {

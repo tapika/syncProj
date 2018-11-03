@@ -80,7 +80,7 @@
         </member>
         <member name="F:Project.bIsPackagingProject">
             <summary>
-            true if it's Android packaging project
+            true if it's Android Ant or Gradle packaging project (Set separately from Keyword, because might be parsed out from solution file)
             </summary>
         </member>
         <member name="F:Project.bDefinedAsExternal">
@@ -115,9 +115,14 @@
             </summary>
             <param name="ver"></param>
         </member>
+        <member name="F:Project.gradlePackage">
+            <summary>
+            Only if Keyword == GradlePackage
+            </summary>
+        </member>
         <member name="M:Project.getOs">
             <summary>
-            Gets target OS based on keyword.
+            Gets target OS based on keyword, null if default. (windows or don't care)
             </summary>
             <returns></returns>
         </member>
@@ -248,6 +253,14 @@
             <param name="file2compile">compiler options to fill out</param>
             <param name="subField">Into which field to enter if non null</param>
         </member>
+        <member name="M:Project.ElementValue(System.Xml.Linq.XElement,System.String)">
+            <summary>
+            Gets xml node by name.
+            </summary>
+            <param name="node">Xml node from where to get</param>
+            <param name="field">Xml tag to query</param>
+            <returns>object if xml node value if any, null if not defined</returns>
+        </member>
         <member name="M:Project.CopyField(System.Object,System.String,System.Xml.Linq.XElement)">
             <summary>
             Copies field by "field" - name, from node.
@@ -311,6 +324,13 @@
             <param name="newFileContents">new file contents to save</param>
             <param name="force">true if force to save file</param>
             <returns>true if file was updated.</returns>
+        </member>
+        <member name="M:Project.IsPathProjectOrSolutionRooted(System.String)">
+            <summary>
+            Checks if path is rooted against SolutionDir or ProjectDir
+            </summary>
+            <param name="path">path. By default same as project directory.</param>
+            <returns>true if rooted.</returns>
         </member>
         <member name="T:FunctionNameAttribute">
             <summary>
@@ -507,6 +527,16 @@
         <member name="F:IncludeType.Compile">
             <summary>
             C# - source codes to compile
+            </summary>
+        </member>
+        <member name="F:IncludeType.GradleTemplate">
+            <summary>
+            Android / Gradle project, *.template files.
+            </summary>
+        </member>
+        <member name="F:IncludeType.JavaCompile">
+            <summary>
+            .java - source codes to compile
             </summary>
         </member>
         <member name="T:EDebugInformationFormat">
@@ -796,6 +826,11 @@
             .lib or .a
             </summary>
         </member>
+        <member name="F:EConfigurationType.Library">
+            <summary>
+            Android gradle project: Library (.aar/.jar)
+            </summary>
+        </member>
         <member name="F:EConfigurationType.Utility">
             <summary>
             Utility project
@@ -1080,6 +1115,9 @@
         <member name="T:Configuration">
             <summary>
             All values set by default are Visual Studio default.
+            
+            Configuration class includes everything what cannot be configured on individual file level.
+            If configuration option can be configured on file level, it should be declared in FileConfigurationInfo.
             </summary>
         </member>
         <member name="F:Configuration.ConfigurationType">
@@ -1293,6 +1331,16 @@
             Prelink-build event
             </summary>
         </member>
+        <member name="F:Configuration.ApkFileName">
+            <summary>
+            gradle package .apk path
+            </summary>
+        </member>
+        <member name="F:Configuration.AdditionalOptions">
+            <summary>
+            gradle package options.
+            </summary>
+        </member>
         <member name="T:EKeyword">
             <summary>
             Tags platform
@@ -1301,11 +1349,6 @@
         <member name="F:EKeyword.None">
             <summary>
             For sub-folders for example (Also default value)
-            </summary>
-        </member>
-        <member name="F:EKeyword.Package">
-            <summary>
-            Typically set for Android packaging project.
             </summary>
         </member>
         <member name="F:EKeyword.Win32Proj">
@@ -1321,6 +1364,16 @@
         <member name="F:EKeyword.MFCProj">
             <summary>
             Windows application with MFC support
+            </summary>
+        </member>
+        <member name="F:EKeyword.AntPackage">
+            <summary>
+            Android packaging project (does not exists on file format level)
+            </summary>
+        </member>
+        <member name="F:EKeyword.GradlePackage">
+            <summary>
+            Typically set for Android packaging project. (does not exists on file format level)
             </summary>
         </member>
         <member name="T:EUseOfMfc">
@@ -1346,6 +1399,11 @@
         <member name="F:EUseOfMfc._false">
             <summary>
             Use Standard Windows Libraries (No MFC), can be serialized for Utility project type.
+            </summary>
+        </member>
+        <member name="F:GradlePackage.GradleVersion">
+            <summary>
+            Gradle version
             </summary>
         </member>
         <member name="T:TestStarter">
@@ -1729,13 +1787,18 @@
             Specifies application type, one of following: 
             </summary>
             <param name="_kind">
-            "WindowedApp", "Application"        - Window application,
+            "Application"                       - Window application,
             "DynamicLibrary", "SharedLib"       - .dll,
             "StaticLibrary", "StaticLib"        - Static library (.lib or .a),
             "Utility"                           - Utility project,
             "ConsoleApp", "ConsoleApplication"  - Console application.
             </param>
-            <param name="os">"windows" (default), "android" or "package"</param>
+            <param name="os">
+            "windows"                           - For Windows OS
+            "android"                           - For Android / C++ project
+            "antpackage"                        - (Android) Ant package
+            "gradlepackage"                     - (Android) Gradle package
+            </param>
         </member>
         <member name="M:SolutionProjectBuilder.toolset(System.String)">
             <summary>
@@ -2077,6 +2140,30 @@
             Returns true if it's developer of syncProj.
             </summary>
         </member>
+        <member name="M:SolutionProjectBuilder.GradleVersion(System.String)">
+            <summary>
+            Sets gradle version
+            </summary>
+            <param name="v">version to use</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.GradleApkFileName(System.String)">
+            <summary>
+            Sets Gradle Apk File path.
+            </summary>
+            <param name="apkPath">path</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.GradleAdditionalOptions(System.String)">
+            <summary>
+            Sets additional gradle options to be passed to Gradle.
+            </summary>
+            <param name="additionalOptions">options</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.GradleProjectDirectory(System.String)">
+            <summary>
+            Sets Gradle Project Directory. If not specified, uses project directory.
+            </summary>
+            <param name="path">path</param>
+        </member>
         <member name="T:UpdateInfo">
             <summary>
             Info about updated files.
@@ -2152,7 +2239,7 @@
             <param name="outPrefix">Output prefix (To add before project name)</param>
         </member>
         <member name="M:SolutionOrProject.UpdateConfigurationEntries(Project,System.Collections.Generic.IEnumerable{FileConfigurationInfo},Dictionary2{System.String,System.Collections.Generic.List{System.String}},IncludeType,System.String)">
-            <param name="proj"></param>
+            <param name="proj">Project</param>
             <param name="config">Either project global configuration entries (Project.projectConfig) or file specified entries (FileInfo.fileConfig)</param>
             <param name="fileName">name of file of which configuration is being parsed.</param>
             <param name="lines2dump">lines to dump</param>

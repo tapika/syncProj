@@ -13,7 +13,7 @@ class Builder: SolutionProjectBuilder
                 uuid("74657374-7072-6F6A-0000-000000000000");
                 vsver(2015);
                 projectScript("out_testproj.cs");
-                kind("WindowedApp","windows");
+                kind("Application");
                 symbols("off");
                 toolset("v140");
                 characterset("Unicode");

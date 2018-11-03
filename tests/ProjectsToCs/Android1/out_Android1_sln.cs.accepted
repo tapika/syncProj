@@ -12,6 +12,7 @@ class Builder: SolutionProjectBuilder
                 configurations(  "Debug","Release" );
                 platforms( "ARM","ARM64","x64","x86" );
                 solutionScript("out_Android1_sln.cs");
+                    projectScript("Android1\\Android1.Packaging\\out_Android1.Packaging.cs");
 
                 group("Android1");
 

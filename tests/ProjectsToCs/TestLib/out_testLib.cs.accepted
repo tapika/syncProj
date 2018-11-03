@@ -13,7 +13,7 @@ class Builder: SolutionProjectBuilder
                 uuid("74657374-4C69-6200-0000-000000000000");
                 vsver(2015);
                 projectScript("out_testLib.cs");
-                kind("StaticLib","windows");
+                kind("StaticLib");
                 symbols("off");
                 toolset("v140");
                 characterset("Unicode");
