@@ -833,9 +833,26 @@ partial class Script
                 }
             } //foreach
 
+            if (slnFile != null && Path.GetExtension(slnFile).ToLower() == ".cs")
+            {
+                try
+                {
+                    Console.WriteLine(slnFile + " :");
+                    SolutionProjectBuilder.invokeScript(slnFile);
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    SolutionProjectBuilder.ConsolePrintException(ex, args);
+                }
+                return -2;
+            } //if
+
             if (slnFile == null || formats.Count == 0)
             {
-                Console.WriteLine("Usage: syncProj <.sln or .vcxproj file> (-lua|-cs) [-o file]");
+                Console.WriteLine("Usage(1): syncProj <.sln or .vcxproj file> (-lua|-cs) [-o file]");
+                Console.WriteLine("");
+                Console.WriteLine("         Parses solution or project and generates premake5 .lua script or syncProj C# script.");
                 Console.WriteLine("");
                 Console.WriteLine(" -cs     - C# script output");
                 Console.WriteLine(" -lua    - premake5's lua script output");
@@ -843,6 +860,10 @@ partial class Script
                 Console.WriteLine(" -o      - sets output file (without extension)");
                 Console.WriteLine(" -p      - sets prefix for all output files");
                 Console.WriteLine(" -sln    - does not processed projects");
+                Console.WriteLine("");
+                Console.WriteLine("Usage(2): syncProj <.cs>");
+                Console.WriteLine("");
+                Console.WriteLine("         Executes syncProj C# script.");
                 Console.WriteLine("");
                 return -2;
             }

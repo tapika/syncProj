@@ -58,7 +58,7 @@ public class CsScript
         String pdb = tempDll + ".pdb";
         tempDll += ".dll";
 
-        bool bCompileDll = !bCompileNextToCs;
+        bool bCompileDll = true;
 
         // Compile .dll only if .cs is newer than .dll.
         if (bCompileDll && File.Exists(tempDll))
