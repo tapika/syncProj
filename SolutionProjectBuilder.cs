@@ -805,12 +805,28 @@ public class SolutionProjectBuilder
     {
         requireProjectSelected();
 
-        foreach (String file in files)
+        foreach (String _file in files)
         {
+            bool bMandatory = true;
+            
+            String file;
+            if (_file.StartsWith("?"))
+            {
+                file = _file.Substring(1);
+                bMandatory = false;
+            }
+            else
+                file = _file;
+        
             // If file already exists in project, we just ignore and continue.
             bool bExist = m_project.files.Where(x => x.relativePath == file).FirstOrDefault() != null ;
             if (bExist)
                 continue;
+
+            if (bMandatory && !File.Exists(file))
+                throw new Exception2("File '" + file + "' does not exist." +
+                    "If file is generated during project build, please mark it as optional with '?' character in front of filename - for example files(\"?temp.txt\") "
+                );
 
             FileInfo fi = new FileInfo() { relativePath = file };
 
