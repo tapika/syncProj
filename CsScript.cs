@@ -134,6 +134,11 @@ public class CsScript
                 times.Add(File.GetLastAccessTime(refDll).Ticks);
         }
 
+        // If syncProj.exe also changed, requires recompiling all .dll's.
+        // GetEntryAssembly() returns null during unit testing.
+        String exeFile = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        times.Add(File.GetLastAccessTime(exeFile).Ticks);
+
         times.Sort();
 
         //---------------------------------------------------------------------------------------------------

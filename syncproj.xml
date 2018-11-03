@@ -1718,7 +1718,7 @@
             </summary>
             <param name="name">Project name</param>
         </member>
-        <member name="M:SolutionProjectBuilder.selectDefaultToolset">
+        <member name="M:SolutionProjectBuilder.selectDefaultToolset(System.Boolean)">
             <summary>
             Selects default toolset after vsver or kind project definition.
             </summary>
@@ -1853,7 +1853,7 @@
             "gradlepackage"                     - (Android) Gradle package
             </param>
         </member>
-        <member name="M:SolutionProjectBuilder.toolset(System.String)">
+        <member name="M:SolutionProjectBuilder.toolset(System.String,System.Boolean)">
             <summary>
             Selects the compiler, linker, etc. which are used to build a project or configuration.
             </summary>
@@ -1862,6 +1862,7 @@
                 'v140' - for Visual Studio 2015.<para />
                 'v120' - for Visual Studio 2013.<para />
             </param>
+            <param name="force">true - to force set, false - set only if not yet selected.</param>
         </member>
         <member name="M:SolutionProjectBuilder.toolsetCheck">
             <summary>

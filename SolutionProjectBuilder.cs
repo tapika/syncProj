@@ -458,7 +458,7 @@ public class SolutionProjectBuilder
     /// <summary>
     /// Selects default toolset after vsver or kind project definition.
     /// </summary>
-    static void selectDefaultToolset()
+    static void selectDefaultToolset( bool force = false )
     {
         if (m_project.Keyword == EKeyword.Win32Proj || m_project.Keyword == EKeyword.MFCProj)
         {
@@ -466,11 +466,11 @@ public class SolutionProjectBuilder
             {
                 switch (m_project.fileFormatVersion)
                 {
-                    case 2010: toolset("v100"); break;
-                    case 2012: toolset("v110"); break;
-                    case 2013: toolset("v120"); break;
-                    case 2015: toolset("v140"); break;
-                    case 2017: toolset("v141"); break;
+                    case 2010: toolset("v100", force); break;
+                    case 2012: toolset("v110", force); break;
+                    case 2013: toolset("v120", force); break;
+                    case 2015: toolset("v140", force); break;
+                    case 2017: toolset("v141", force); break;
                     default:
                         // Try to guess the future. 2019 => "v160" ?
                         toolset("v" + (((m_project.fileFormatVersion - 2019) + 16) * 10).ToString());
@@ -492,6 +492,9 @@ public class SolutionProjectBuilder
         if (m_project != null)
         {
             m_project.SetFileFormatVersion(vsVersion);
+
+            // Reselect default toolset, if file format version changed.
+            selectDefaultToolset();
         }
         else 
         {
@@ -1104,10 +1107,16 @@ public class SolutionProjectBuilder
     ///     'v140' - for Visual Studio 2015.<para />
     ///     'v120' - for Visual Studio 2013.<para />
     /// </param>
-    static public void toolset(String toolset)
+    /// <param name="force">true - to force set, false - set only if not yet selected.</param>
+    static public void toolset(String toolset, bool force = false)
     {
         foreach (var conf in getSelectedProjectConfigurations())
+        {
+            if (!force && conf.PlatformToolset != null)
+                continue;
+
             conf.PlatformToolset = toolset;
+        }
 
         toolsetCheck();
     }
@@ -1125,6 +1134,7 @@ public class SolutionProjectBuilder
         if (m_project.Keyword == EKeyword.Win32Proj || m_project.Keyword == EKeyword.MFCProj)
             supportedToolsets = new String[] {
                     "v90", "v100", "v110", "v110_xp", "v120", "v120_xp", "v140", "v140_xp", "v141", "v141_xp",
+                    "v140_clang_c2",
                     // Theoretical vs2019 support :-)
                     "v160", "v160_xp" 
             };
