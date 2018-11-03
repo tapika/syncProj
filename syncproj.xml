@@ -1432,7 +1432,7 @@
             Gets directory and/or filename under which script is currently executing. This is either determined from script executed by invokeScript
             or C# initial script location (script which created SolutionProjectBuilder)
             </summary>
-            <returns></returns>
+            <returns>Empty string if no script is yet executing</returns>
         </member>
         <member name="F:SolutionProjectBuilder.m_scriptRelativeDir">
             <summary>

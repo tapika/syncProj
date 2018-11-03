@@ -1,0 +1,3 @@
+syncProj exited with ERROR: -2
+NoProjectSelected.cs :
+NoProjectSelected.cs(10,13): error: Project not specified (Use project("name" to specify new project)

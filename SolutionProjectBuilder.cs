@@ -94,9 +94,12 @@ public class SolutionProjectBuilder
     /// Gets directory and/or filename under which script is currently executing. This is either determined from script executed by invokeScript
     /// or C# initial script location (script which created SolutionProjectBuilder)
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Empty string if no script is yet executing</returns>
     public static String getExecutingScript( bool bDirectory = true, bool bFilename = false, bool bExtension = false)
     {
+        if( m_currentlyExecutingScriptPath == "" )
+            return "";
+
         if( bDirectory && bFilename ) 
             return m_currentlyExecutingScriptPath;
 
@@ -136,10 +139,7 @@ public class SolutionProjectBuilder
             path = Path2.GetScriptPath(3);
 
         if (path != null)
-        {
             m_workPath = Path.GetDirectoryName(path);
-            m_currentlyExecutingScriptPath = path;
-        }
         //Console.WriteLine(m_workPath);
     }
 
@@ -702,7 +702,10 @@ public class SolutionProjectBuilder
             // By default search from same place where script is.
             dir = SolutionProjectBuilder.getExecutingScript();
 
-            fullPath = Path.Combine(dir, path);
+            if( dir == "" )
+                fullPath = Path.GetFullPath( path );
+            else
+                fullPath = Path.Combine(dir, path);
         }
 
         CsScript.RunScript(fullPath, bCompileOnly, true, out errors, "no_exception_handling");
