@@ -1561,6 +1561,12 @@
             Gets exception message
             </summary>
         </member>
+        <member name="P:Exception2.StackTrace">
+            <summary>
+            Format stack trace so it would be double clickable in Visual studio output window.
+            http://stackoverflow.com/questions/12301055/double-click-to-go-to-source-in-output-window
+            </summary>
+        </member>
         <member name="M:Path2.GetScriptPath(System.Int32)">
             <summary>
             Gets source code full path of script, executing given function.

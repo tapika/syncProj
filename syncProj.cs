@@ -1229,6 +1229,33 @@ public class Exception2 : Exception
             return msg;
         }
     }
+
+    /// <summary>
+    /// Format stack trace so it would be double clickable in Visual studio output window.
+    /// http://stackoverflow.com/questions/12301055/double-click-to-go-to-source-in-output-window
+    /// </summary>
+    public override string StackTrace
+    {
+        get
+        {
+            String s = "";
+
+            for( int i = 0; i < strace.FrameCount; i++ )
+            {
+                StackFrame sf = strace.GetFrame(i);
+                String f = sf.GetFileName();
+                // Omit stack trace if filename is not known (Simplify output)
+                if (f != null)
+                {
+                    s += f + "(" + sf.GetFileLineNumber() + "," + sf.GetFileColumnNumber() + "): ";
+                    s += sf.GetMethod() + "\r\n";
+                }
+            }
+
+            return s;
+        }
+    }
+
 };
 
 

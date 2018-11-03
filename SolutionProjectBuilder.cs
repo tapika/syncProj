@@ -301,7 +301,7 @@ public class SolutionProjectBuilder
         {
             m_project.SetFileFormatVersion(vsVersion);
 
-            using (new UsingSyncProj(1))
+            using (new UsingSyncProj(4))
             {
                 switch (vsVersion)
                 {
