@@ -3,3 +3,5 @@
 /Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
 /syncproj.exe.config
 *.pdb
+/syncProjCache
+/syncproj.csproj.user

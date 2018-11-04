@@ -174,6 +174,10 @@ public class Solution
                 p.ProjectDependencies = new Regex("\\s*?({[A-F0-9-]+}) = ({[A-F0-9-]+})[\r\n]+", RegexOptions.Multiline).Matches(depsv).Cast<Match>().Select(x => x.Groups[1].Value).ToList();
             } //foreach
 
+            // Defining language removes the need of project extension
+            if (p.language != null)
+                p.RelativePath = Path.Combine(Path.GetDirectoryName(p.RelativePath), Path.GetFileNameWithoutExtension(p.RelativePath));
+            
             // Even thus solution does have project name written down - VS ignores that name completely - it uses .vcxproj's ProjectName instead.
             if (!p.bIsFolder)
                 p.ProjectName = Path.GetFileNameWithoutExtension(p.RelativePath);
@@ -260,6 +264,16 @@ public class Solution
             return "";
         }
         ));
+
+        s.solutionRoot = new Project();
+
+        // All projects which don't have root will become attached to root.
+        foreach (Project p in s.projects)
+            if (p.parent == null)
+            {
+                p.parent = s.solutionRoot;
+                s.solutionRoot.nodes.Add(p);
+            }
 
         return s;
     } //LoadSolution
