@@ -1619,6 +1619,13 @@
             Saves solution into .sln file. Where to save is defined by path.
             </summary>
         </member>
+        <member name="M:Solution.RemoveEmptyFolders(Project)">
+            <summary>
+            Removes empty folder nodes from solution.
+            </summary>
+            <param name="p">Must be null on first call</param>
+            <returns>true if p was removed, should not be used by caller</returns>
+        </member>
         <member name="T:SolutionProjectBuilder">
             <summary>
             Helper class for generating solution or projects.

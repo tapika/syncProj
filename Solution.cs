@@ -195,7 +195,7 @@ public class Solution
             
             // Even thus solution does have project name written down - VS ignores that name completely - it uses .vcxproj's ProjectName instead.
             if (!p.bIsFolder)
-                p.ProjectName = Path.GetFileNameWithoutExtension(p.RelativePath);
+                p.ProjectName = Path.GetFileName(p.RelativePath);
 
             s.projects.Add(p);
             return "";
@@ -550,6 +550,37 @@ public class Solution
             uinfo.MarkFileUpdated(slnPath, true);
         } //if-else
     } //SaveSolution
+
+
+    /// <summary>
+    /// Removes empty folder nodes from solution.
+    /// </summary>
+    /// <param name="p">Must be null on first call</param>
+    /// <returns>true if p was removed, should not be used by caller</returns>
+    public bool RemoveEmptyFolders(Project p = null)
+    {
+        if (p == null)
+            p = solutionRoot;
+
+        for (int i = 0; i < p.nodes.Count;i++)
+        {
+            var p2 = p.nodes[i];
+            if (p2.bIsFolder)
+                if (RemoveEmptyFolders(p2))
+                    i--;
+        }
+
+        if (p.nodes.Count == 0 && p.bIsFolder)
+        {
+            p.parent.nodes.Remove(p);
+            p.parent = null;
+            projects.Remove(p);
+            return true;
+        }
+
+        return false;
+    }
+
 
 
 } //class Solution
