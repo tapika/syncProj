@@ -118,7 +118,22 @@ public class Solution
         if (vsNumber > 2000)
             s.fileFormatVersion = vsNumber;
         else
-            s.fileFormatVersion = vsNumber - 14 + 2015;     // Visual Studio 14 => vs2015, formula might not be applicable for future vs versions.
+        {
+            switch (vsNumber)
+            {
+                case 14:
+                    s.fileFormatVersion = 2015;
+                    break;
+                case 15:
+                    s.fileFormatVersion = 2017;
+                    break;
+                default:
+                    // Every two years new release ?
+                    s.fileFormatVersion = (vsNumber - 14) * 2 + 2015;
+                    break;
+            }
+
+        }
 
         foreach (String line in new String[] { "VisualStudioVersion", "MinimumVisualStudioVersion" })
         {
