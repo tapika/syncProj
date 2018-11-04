@@ -375,9 +375,23 @@ public class Solution
                 o.AppendLine("	ProjectSection(ProjectDependencies) = postProject");
                 foreach (String depProjName in p.ProjectDependencies)
                 {
-                    Project dproj = projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
-                    if (dproj != null)
-                        o.AppendLine("		" + dproj.ProjectGuid.ToUpper() + " = " + dproj.ProjectGuid.ToUpper());
+                    String guid = null;
+
+                    // Dependency specified by {guid}
+                    if (SolutionProjectBuilder.guidMatcher.Match(depProjName).Success)
+                    {
+                        guid = depProjName;
+                    }
+                    else
+                    {
+                        // Dependency specified by project name
+                        Project dproj = projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
+                        if (dproj != null)
+                            guid = dproj.ProjectGuid.ToUpper();
+                    }
+
+                    if(guid != null)
+                        o.AppendLine("		" + guid + " = " + guid);
                 }
                 o.AppendLine("	EndProjectSection");
             } //if

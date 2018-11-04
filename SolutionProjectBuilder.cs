@@ -632,7 +632,7 @@ public class SolutionProjectBuilder
             m_project.language = lang;
     } //language
 
-    static Regex guidMatcher = new Regex("^[{(]?([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})[)}]?$");
+    public static Regex guidMatcher = new Regex("^[{(]?([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})[)}]?$");
 
     /// <summary>
     /// Specify one or more non-linking project build order dependencies.
