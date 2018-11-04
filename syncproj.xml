@@ -156,6 +156,12 @@
             if null - RelativePath includes file extension, if non-null - "C++" or "C#" - defines project file extension.
             </summary>
         </member>
+        <member name="M:Project.getLanguage">
+            <summary>
+            Gets programming language of project.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Project.getRelativePath">
             <summary>
             gets relative path based on programming language

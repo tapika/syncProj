@@ -1,2 +1,5 @@
 ﻿/.vs/
 /obj/
+/Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+/syncproj.exe.config
+*.pdb

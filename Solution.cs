@@ -174,6 +174,10 @@ public class Solution
                 p.ProjectDependencies = new Regex("\\s*?({[A-F0-9-]+}) = ({[A-F0-9-]+})[\r\n]+", RegexOptions.Multiline).Matches(depsv).Cast<Match>().Select(x => x.Groups[1].Value).ToList();
             } //foreach
 
+            // Even thus solution does have project name written down - VS ignores that name completely - it uses .vcxproj's ProjectName instead.
+            if (!p.bIsFolder)
+                p.ProjectName = Path.GetFileNameWithoutExtension(p.RelativePath);
+
             s.projects.Add(p);
             return "";
         }
@@ -396,30 +400,37 @@ public class Solution
                     mappedConf = p.slnConfigurations[iConf];
                 }
                 else {
-                    //
-                    // Try to map configuration by ourselfs. Map x86 to Win32 automatically.
-                    //
-                    if (!p.configurations.Contains(conf))
+                    if (p.bDefinedAsExternal)
                     {
-                        String[] confPlat = conf.Split('|');
-
-                        if (projConfs.Contains(confPlat[0]) && confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
+                        // Hack - assume one to one mapping for timebeing.
+                        mappedConf = conf;
+                    } else
+                    {
+                        //
+                        // Try to map configuration by ourselfs. Map x86 to Win32 automatically.
+                        //
+                        if (!p.configurations.Contains(conf))
                         {
-                            mappedConf = confPlat[0] + '|' + "Win32";
-                        }
-                        else
-                        {
-                            // Configuration cannot be mapped (E.g. Solution has "Debug|Arm", project supports only "Debug|Win32".
-                            // We disable project build, but try to map configuration anyway - otherwise Visual Studio will 
-                            // try to save solution by itself.
-                            bPeformBuild = false;
-                            bPerformDeploy = null;
+                            String[] confPlat = conf.Split('|');
 
-                            mappedConf = p.configurations.Where(x => x.StartsWith(confPlat[0])).FirstOrDefault();
-                            if (mappedConf == null)
-                                mappedConf = p.configurations[0];
-                        } //if-else
-                    } //if
+                            if (projConfs.Contains(confPlat[0]) && confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
+                            {
+                                mappedConf = confPlat[0] + '|' + "Win32";
+                            }
+                            else
+                            {
+                                // Configuration cannot be mapped (E.g. Solution has "Debug|Arm", project supports only "Debug|Win32".
+                                // We disable project build, but try to map configuration anyway - otherwise Visual Studio will 
+                                // try to save solution by itself.
+                                bPeformBuild = false;
+                                bPerformDeploy = null;
+
+                                mappedConf = p.configurations.Where(x => x.StartsWith(confPlat[0])).FirstOrDefault();
+                                if (mappedConf == null)
+                                    mappedConf = p.configurations[0];
+                            } //if-else
+                        } //if
+                    }
                 }
 
                 if (p.slnBuildProject != null && iConf < p.slnBuildProject.Count)

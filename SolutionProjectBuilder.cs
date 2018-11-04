@@ -524,7 +524,7 @@ public class SolutionProjectBuilder
             if (!Path.IsPathRooted(_path))
                 absPath = Path.Combine(m_project.getProjectFolder(), _path);
 
-            if( !Directory.Exists( absPath ) )
+            if(!m_project.bDefinedAsExternal && !Directory.Exists( absPath ) )
                 throw new Exception2( "Path '" + _path + "' does not exists");
 
             // Measure relative path against solution path if that one is present or against working path.
@@ -621,9 +621,12 @@ public class SolutionProjectBuilder
                 throw new Exception2("Language '" + lang + "' is not supported");
         } //switch
 
-        // Set up default compilation language
-        foreach (var conf in getSelectedConfigurations(false))
-            conf.CompileAs = compileAs;
+        if (!m_project.bDefinedAsExternal)
+        {
+            // Set up default compilation language
+            foreach (var conf in getSelectedConfigurations(false))
+                conf.CompileAs = compileAs;
+        }
 
         if (!bLastSetFilterWasFileSpecific)
             m_project.language = lang;
@@ -1094,10 +1097,13 @@ public class SolutionProjectBuilder
             }
         }
 
-        foreach (var conf in getSelectedProjectConfigurations())
+        if (!m_project.bDefinedAsExternal)
         {
-            conf.ConfigurationType = type;
-            conf.SubSystem = subsystem;
+            foreach (var conf in getSelectedProjectConfigurations())
+            {
+                conf.ConfigurationType = type;
+                conf.SubSystem = subsystem;
+            }
         }
 
         selectDefaultToolset();

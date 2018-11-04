@@ -589,7 +589,7 @@ public class SolutionOrProject
                     continue;
 
                 String projectPath = Path.Combine(outDir, p.RelativePath);
-                if(bProcessProjects)
+                if(bProcessProjects && !p.bDefinedAsExternal)
                     UpdateProjectScript(uinfo, projectPath, p, null, format, false, outPrefix);
                     
                 // Defines group / in which sub-folder we are.
@@ -611,7 +611,7 @@ public class SolutionOrProject
                 String dir = Path.GetDirectoryName(p.RelativePath);
                 o.AppendLine();
 
-                if (bProcessProjects)
+                if (!p.bDefinedAsExternal && bProcessProjects)
                 {
                     String fileInclude = name;
                     if (outPrefix != "") fileInclude = outPrefix + name;
@@ -634,7 +634,7 @@ public class SolutionOrProject
                     o.AppendLine(head + "    externalproject" + brO + "\"" + name + "\"" + brC);
                     o.AppendLine(head + "        location" + brO + "\"" + dir.Replace("\\", "/") + "\"" + brC);
                     o.AppendLine(head + "        uuid" + brO + "\"" + p.ProjectGuid.Substring(1, p.ProjectGuid.Length - 2) + "\"" + brC);
-                    o.AppendLine(head + "        language" + brO + "\"C++\"" + brC);
+                    o.AppendLine(head + "        language" + brO + "\"" + p.getLanguage() + "\"" + brC);
                     o.AppendLine(head + "        kind" + brO + "\"SharedLib\"" + brC);
                 } //if-else
 
