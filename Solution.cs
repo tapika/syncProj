@@ -295,11 +295,24 @@ public class Solution
 
 
     /// <summary>
+    /// Saves solution into file.
+    /// </summary>
+    public void SaveSolution(String _path)
+    {
+        SaveSolution(new UpdateInfo(), _path);
+    }
+
+    /// <summary>
     /// Saves solution into .sln file. Where to save is defined by path.
     /// </summary>
-    public void SaveSolution(UpdateInfo uinfo)
+    /// <param name="_path">path to .sln, null if use from 'path' variable.</param>
+    /// <param name="uinfo">Update information</param>
+    public void SaveSolution(UpdateInfo uinfo, String _path = null)
     {
-        String slnPath = path;
+        String slnPath = _path;
+
+        if (_path == null)
+            slnPath = path;
 
         //
         //  For all projects which does not have uuid, we generated uuid based on project name.
@@ -603,6 +616,57 @@ public class Solution
         }
     }
 
+
+    /// <summary>
+    /// Lambda function gets called for each project, return true or false to enable/disable project build, null if don't change
+    /// </summary>
+    /// <param name="func">Callback function, which selects / deselects project for building</param>
+    public void EnableProjectBuild(Func<Project, bool?> func)
+    {
+        foreach (Project p in projects)
+        {
+            bool? enable = func(p);
+
+            if (!enable.HasValue)
+                continue;
+
+            var l = p.slnBuildProject;
+            for (int i = 0; i < l.Count; i++)
+                l[i] = enable.Value;
+        }
+    }
+
+
+    /// <summary>
+    /// Clone Solution.
+    /// </summary>
+    /// <returns>new solution</returns>
+    public Solution Clone()
+    {
+        Solution s = (Solution)ReflectionEx.DeepClone(this);
+
+        for (int iProject = 0; iProject < s.projects.Count; iProject++)
+        {
+            Project newp = s.projects[iProject];
+            newp.solution = s;
+            Project oldp = projects[iProject];
+
+            // References either solutionRoot or some of project.
+            if (oldp.parent == solutionRoot)
+            {
+                newp.parent = s.solutionRoot;
+                s.solutionRoot.nodes.Add(newp);
+            }
+            else
+                newp.parent = s.projects[projects.IndexOf(oldp.parent)];
+
+            // References solution projects.
+            for (int i = 0; i < oldp.nodes.Count; i++)
+                newp.nodes.Add(s.projects[projects.IndexOf(oldp.nodes[i])]);
+        }
+
+        return s;
+    }
 
 
 } //class Solution

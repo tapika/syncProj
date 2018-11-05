@@ -1962,7 +1962,13 @@ public class Project
         return false;
     }
 
-
+    /// <summary>
+    /// Clones project
+    /// </summary>
+    public Project Clone()
+    {
+        return (Project)ReflectionEx.DeepClone(this);
+    }
 
 } //Project
 

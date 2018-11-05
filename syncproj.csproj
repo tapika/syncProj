@@ -71,6 +71,7 @@
     <Compile Include="HelperFunctions.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="ProjectTypes.cs" />
+    <Compile Include="ReflectionEx.cs" />
     <Compile Include="SelfTest.cs" />
     <Compile Include="Solution.cs" />
     <Compile Include="SolutionProjectBuilder.cs" />
