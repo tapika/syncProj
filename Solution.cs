@@ -581,6 +581,28 @@ public class Solution
         return false;
     }
 
+    /// <summary>
+    /// By default after solution is loaded - all dependent projects are specified by project guids.
+    /// This function will replace project guids with project names.
+    /// </summary>
+    public void ChangeProjectDependenciesFromGuidsToNames()
+    {
+        foreach (Project p in projects)
+        {
+            if (p.ProjectDependencies == null)
+                continue;
+
+            for (int i = 0; i < p.ProjectDependencies.Count; i++)
+            {
+                Project depp = projects.Where(x => x.ProjectGuid == p.ProjectDependencies[i]).FirstOrDefault();
+                if (depp == null)
+                    throw new Exception("Project '" + p.ProjectName + "' has dependency on project guid '" + p.ProjectDependencies[i] + "' which does not exists in solution");
+
+                p.ProjectDependencies[i] = depp.ProjectName;
+            }
+        }
+    }
+
 
 
 } //class Solution

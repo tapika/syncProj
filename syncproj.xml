@@ -1626,6 +1626,12 @@
             <param name="p">Must be null on first call</param>
             <returns>true if p was removed, should not be used by caller</returns>
         </member>
+        <member name="M:Solution.ChangeProjectDependenciesFromGuidsToNames">
+            <summary>
+            By default after solution is loaded - all dependent projects are specified by project guids.
+            This function will replace project guids with project names.
+            </summary>
+        </member>
         <member name="T:SolutionProjectBuilder">
             <summary>
             Helper class for generating solution or projects.
