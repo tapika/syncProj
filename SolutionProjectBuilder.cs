@@ -186,7 +186,7 @@ public class SolutionProjectBuilder
             if (!bSaveGeneratedProjects && !bForce)
                 return;
 
-            UpdateInfo uinfo = new UpdateInfo();
+            UpdateInfo uinfo = new UpdateInfo(true);
 
             if (m_solutions.Count != 0)
             {
@@ -612,6 +612,7 @@ public class SolutionProjectBuilder
         {
             case null:
                 compileAs = ECompileAs.Default;
+                lang = "C++";       // File extension will be .vcxproj anyway, but to what to compile file will be left to VS.
                 break;
             case "C":  
                 compileAs = ECompileAs.CompileAsC;

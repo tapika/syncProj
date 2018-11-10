@@ -1530,11 +1530,6 @@
             Reflection helper class.
             </summary>
         </member>
-        <member name="M:ReflectionEx.GetUnderlyingType(System.Reflection.MemberInfo)">
-            <summary>
-            Gets type of member
-            </summary>
-        </member>
         <member name="M:ReflectionEx.GetFieldsAndProperties(System.Type)">
             <summary>
             Gets fields and properties into one array.

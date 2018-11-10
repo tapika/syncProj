@@ -1,3 +1,6 @@
 syncProj exited with no error
 TestProject.cs :
+File updated: out_test.sln
+File updated: out_test_windows.vcxproj.filters
+File updated: out_test_windows.vcxproj
 3 files updated

@@ -1,3 +1,22 @@
 syncProj exited with no error
 TestAllKinds.cs :
+File updated: out_TestAllKinds.sln
+File updated: out_ProjectConsoleApp.vcxproj.filters
+File updated: out_ProjectConsoleApp.vcxproj
+File updated: out_ProjectWindowedApp.vcxproj.filters
+File updated: out_ProjectWindowedApp.vcxproj
+File updated: out_ProjectApplication.vcxproj.filters
+File updated: out_ProjectApplication.vcxproj
+File updated: out_ProjectSharedLib.vcxproj.filters
+File updated: out_ProjectSharedLib.vcxproj
+File updated: out_ProjectDynamicLibrary.vcxproj.filters
+File updated: out_ProjectDynamicLibrary.vcxproj
+File updated: out_ProjectStaticLibrary.vcxproj.filters
+File updated: out_ProjectStaticLibrary.vcxproj
+File updated: out_ProjectStaticLib.vcxproj.filters
+File updated: out_ProjectStaticLib.vcxproj
+File updated: out_ProjectUtility.vcxproj.filters
+File updated: out_ProjectUtility.vcxproj
+File updated: out_ProjectConsoleApplication.vcxproj.filters
+File updated: out_ProjectConsoleApplication.vcxproj
 19 files updated

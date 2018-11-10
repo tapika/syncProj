@@ -256,7 +256,7 @@ public class Project
     {
         switch (language)
         {
-            default: return ".vcxproj";
+            default: return "";
             case "C": return ".vcxproj";
             case "C++": return ".vcxproj";
             case "C#": return ".csproj";
@@ -751,11 +751,11 @@ public class Project
     /// <param name="loadLevel">1 if interested only in guid</param>
     static public Project LoadProject(Solution solution, String path, Project project = null, int loadLevel = 0 )
     {
-        if (path == null)
-            path = Path.Combine(Path.GetDirectoryName(solution.path) , project.RelativePath);
-
         if (project == null)
             project = new Project() { solution = solution };
+
+        if (path == null)
+            path = project.getFullPath();
 
         // .csproj loading is not supported at the moment.
         if (project.language == "C#" || !File.Exists(path))
@@ -763,6 +763,7 @@ public class Project
             project.bDefinedAsExternal = true;
             return project;
         }
+        project.bDefinedAsExternal = false;
 
         XDocument p = XDocument.Load(path);
 

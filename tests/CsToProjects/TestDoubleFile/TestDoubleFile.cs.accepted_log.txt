@@ -1,3 +1,5 @@
 syncProj exited with no error
 TestDoubleFile.cs :
+File updated: out_DoubleFile.vcxproj.filters
+File updated: out_DoubleFile.vcxproj
 2 files updated

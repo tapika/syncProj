@@ -1,3 +1,5 @@
 syncProj exited with no error
 TestSubFolderGeneration.cs :
+File updated: out_test_windows.vcxproj.filters
+File updated: out_test_windows.vcxproj
 2 files updated

@@ -1,3 +1,5 @@
 syncProj exited with no error
 TestLanguages.cs :
+File updated: out_languages.vcxproj.filters
+File updated: out_languages.vcxproj
 2 files updated

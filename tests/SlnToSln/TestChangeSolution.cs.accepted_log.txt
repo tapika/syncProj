@@ -1,0 +1,6 @@
+syncProj exited with no error
+TestChangeSolution.cs :
+_consApp1 depends on:
+  -_classLib1
+Exception: Project '_consApp1' has dependency on project guid '_classLib1' which does not exists in solution
+2 files updated

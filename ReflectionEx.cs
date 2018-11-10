@@ -11,29 +11,6 @@ using System.Reflection;
 public static class ReflectionEx
 {
     /// <summary>
-    /// Gets type of member
-    /// </summary>
-    public static Type GetUnderlyingType(this MemberInfo member)
-    {
-        Type type;
-        switch (member.MemberType)
-        {
-            case MemberTypes.Field:
-                type = ((FieldInfo)member).FieldType;
-                break;
-            case MemberTypes.Property:
-                type = ((PropertyInfo)member).PropertyType;
-                break;
-            case MemberTypes.Event:
-                type = ((EventInfo)member).EventHandlerType;
-                break;
-            default:
-                throw new ArgumentException("member must be if type FieldInfo, PropertyInfo or EventInfo", "member");
-        }
-        return Nullable.GetUnderlyingType(type) ?? type;
-    }
-
-    /// <summary>
     /// Gets fields and properties into one array.
     /// Order of properties / fields will be preserved in order of appearance in class / struct. (MetadataToken is used for sorting such cases)
     /// </summary>
@@ -60,13 +37,10 @@ public static class ReflectionEx
         {
             return (member as PropertyInfo).GetValue(target, null);
         }
-        else if (member is FieldInfo)
+        else 
+        //if (member is FieldInfo)
         {
             return (member as FieldInfo).GetValue(target);
-        }
-        else
-        {
-            throw new Exception("member must be either PropertyInfo or FieldInfo");
         }
     }
 
@@ -86,10 +60,6 @@ public static class ReflectionEx
         {
             (member as FieldInfo).SetValue(target, value);
         }
-        else
-        {
-            throw new Exception("destinationMember must be either PropertyInfo or FieldInfo");
-        }
     }
 
     /// <summary>
@@ -101,9 +71,6 @@ public static class ReflectionEx
     /// <returns>full copy of object.</returns>
     public static object DeepClone(this object obj)
     {
-        if (obj == null)
-            return null;
-
         Type type = obj.GetType();
 
         if (obj is IList)
@@ -121,17 +88,17 @@ public static class ReflectionEx
         {
             return obj;
         }
-        else if (type.IsArray)
-        {
-            Type elementType = Type.GetType(type.FullName.Replace("[]", string.Empty));
-            var array = obj as Array;
-            Array copied = Array.CreateInstance(elementType, array.Length);
+        //else if (type.IsArray)
+        //{
+        //    Type elementType = Type.GetType(type.FullName.Replace("[]", string.Empty));
+        //    var array = obj as Array;
+        //    Array copied = Array.CreateInstance(elementType, array.Length);
 
-            for (int i = 0; i < array.Length; i++)
-                copied.SetValue(DeepClone(array.GetValue(i)), i);
+        //    for (int i = 0; i < array.Length; i++)
+        //        copied.SetValue(DeepClone(array.GetValue(i)), i);
 
-            return Convert.ChangeType(copied, obj.GetType());
-        }
+        //    return Convert.ChangeType(copied, obj.GetType());
+        //}
         else if (type.IsClass)
         {
             object toret = Activator.CreateInstance(obj.GetType());
@@ -174,8 +141,8 @@ public static class ReflectionEx
         else
         {
             // Don't know that type, don't know how to clone it.
-            if (Debugger.IsAttached)
-                Debugger.Break();
+            //if (Debugger.IsAttached)
+            //    Debugger.Break();
 
             return null;
         }

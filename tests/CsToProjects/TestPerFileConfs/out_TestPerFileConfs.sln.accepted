@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_on_vs2013", "out_TestWindows_symbols_on_vs2013.vcxproj", "{3A5B9DCD-0E2D-C759-0517-20B36F2C760A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_off_vs2013", "out_TestWindows_symbols_off_vs2013.vcxproj", "{8092AF58-48EC-7533-FDF6-6F6B4E45096A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_on_vs2010", "out_TestWindows_symbols_on_vs2010.vcxproj", "{77FD22D2-8E7C-B25F-6514-1739F1D9E6C0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_off_vs2010", "out_TestWindows_symbols_off_vs2010.vcxproj", "{2B81C3DD-C780-0F0C-3C87-A189479EAEF8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestAndroid_symbols_off_vs2015", "out_TestAndroid_symbols_off_vs2015.vcxproj", "{F603F030-73BB-5C6B-759B-08DFF3C8B83D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_on_vs2017", "out_TestWindows_symbols_on_vs2017.vcxproj", "{A732DA6E-74C6-4B92-3881-35A006A99120}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal

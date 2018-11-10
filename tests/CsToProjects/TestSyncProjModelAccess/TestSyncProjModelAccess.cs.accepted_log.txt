@@ -19,4 +19,7 @@ x86\subdir\4.asm
 Exception: 'File not found: 'does_not_exists' - please specify correct filename. Should be registered via 'files' function.'
 --------- List of files by pattern 'does_not_exists' ---------
 --------- List of files by pattern 'does_not_exists_with_pattern/**' ---------
+File updated: out_TestSyncProjModelAccess.sln
+File updated: out_TestSyncProjModelAccess.vcxproj.filters
+File updated: out_TestSyncProjModelAccess.vcxproj
 3 files updated

@@ -12,6 +12,14 @@ partial class Builder : SolutionProjectBuilder
             platforms( "Win32" );
             CCpp_CodeGeneration_RuntimeLibrary( (ERuntimeLibrary) Enum.Parse( type, name ) );
         }
+
+        type = typeof(ECLRSupport);
+        foreach (String name in Enum.GetNames(type))
+        {
+            project("out_clr_" + name.ToLower());
+            platforms("Win32");
+            commonLanguageRuntime((ECLRSupport)Enum.Parse(type, name));
+        }
     } //Main
 }; //class Builder
 

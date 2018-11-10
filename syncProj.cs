@@ -89,6 +89,7 @@ public class UpdateInfo
     /// <param name="bWasSaved">true if file was saved, false if file is up-to-date</param>
     public void MarkFileUpdated(String path, bool bWasSaved)
     {
+        path = Path.GetFullPath(path);
         if (!bWasSaved)
         {
             filesUpToDate.Add(path);
@@ -109,6 +110,7 @@ public class UpdateInfo
     /// <summary>
     /// Prints summary about update
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public void DisplaySummary()
     {
         // When testing is in progress we don't want detailed information on what was updated as what was not updated, as long as
@@ -588,15 +590,16 @@ public class SolutionOrProject
                 if (p.IsSubFolder())
                     continue;
 
-                String projectPath = Path.Combine(outDir, p.RelativePath);
                 if(bProcessProjects && !p.bDefinedAsExternal)
-                    UpdateProjectScript(uinfo, projectPath, p, null, format, false, outPrefix);
+                    UpdateProjectScript(uinfo, p.getFullPath(), p, null, format, false, outPrefix);
                     
                 // Defines group / in which sub-folder we are.
                 groupParts.Clear();
                 Project pScan = p.parent;
                 for (; pScan != null; pScan = pScan.parent)
-                    groupParts.Insert(0, pScan.ProjectName);
+                    // Solution root does not have project name
+                    if (pScan.ProjectName!= null )
+                        groupParts.Insert(0, pScan.ProjectName);
 
                 String newGroup = String.Join("/", groupParts);
                 if (wasInSubGroup != newGroup)
@@ -607,7 +610,7 @@ public class SolutionOrProject
                 wasInSubGroup = newGroup;
 
                 // Define project
-                String name = Path.GetFileNameWithoutExtension(p.RelativePath);
+                String name = Path.GetFileNameWithoutExtension(p.getFullPath());
                 String dir = Path.GetDirectoryName(p.RelativePath);
                 o.AppendLine();
 
@@ -800,6 +803,7 @@ public class SolutionOrProject
                 });
 
                 ConfigationSpecificValue(proj, proj.projectConfig, "CLRSupport", lines2dump, (s) => {
+                    if (s == "None") return null;
                     return "commonLanguageRuntime" + brO + "ECLRSupport." + s + brC;
                 });
             }

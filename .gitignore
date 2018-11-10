@@ -6,3 +6,7 @@
 /syncProjCache
 /syncproj.csproj.user
 /projexport.bat
+/TestResults
+/tests/TestCompile/_test3.cs
+/tests/TestCompile/_test2.cs
+/tests/TestCompile/_test1.cs

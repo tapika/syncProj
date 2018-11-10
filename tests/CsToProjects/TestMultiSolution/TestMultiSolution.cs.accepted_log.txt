@@ -4,4 +4,8 @@ TestMultiSolution
 TestMultiSolution
 TestMultiSolution.cs
 TestMultiSolution.cs
+File updated: out_TestMultiSolution.sln
+File updated: out_TestMultiSolution.vcxproj.filters
+File updated: out_TestMultiSolution.vcxproj
+File updated: out_TestMultiSolution2.sln
 4 files updated
