@@ -508,7 +508,7 @@ public class FileConfigurationInfo
         else
             platform = this.confName.Split('|')[1];
 
-        if (platform == "Win32" || platform == "x86")
+        if (platform.ToLower() == "win32" || platform == "x86")
             return EDebugInformationFormat.EditAndContinue;
 
         if (platform == "x64")

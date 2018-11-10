@@ -5,3 +5,4 @@
 *.pdb
 /syncProjCache
 /syncproj.csproj.user
+/projexport.bat

@@ -2186,11 +2186,12 @@
             "LinkTimeOptimization" - Enable link-time (i.e. whole program) optimizations.<para />
             </param>
         </member>
-        <member name="M:SolutionProjectBuilder.systemversion(System.String)">
+        <member name="M:SolutionProjectBuilder.systemversion(System.String,System.Boolean)">
             <summary>
-            Sets platform version.
+            Sets windows SDK version.
             </summary>
             <param name="ver">Target Platform Version, e.g. "8.1" or "10.0.14393.0"</param>
+            <param name="force">true - to force set, false - set only if not yet selected.</param>
         </member>
         <member name="M:SolutionProjectBuilder.links(System.String[])">
             <summary>

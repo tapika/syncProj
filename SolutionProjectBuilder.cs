@@ -474,7 +474,11 @@ public class SolutionProjectBuilder
                     case 2012: toolset("v110", force); break;
                     case 2013: toolset("v120", force); break;
                     case 2015: toolset("v140", force); break;
-                    case 2017: toolset("v141", force); break;
+                    case 2017:
+                        toolset("v141", force);
+                        // vs2017 also sets up Windows SDK version
+                        systemversion("10.0.17134.0", force);
+                        break;
                     default:
                         // Try to guess the future. 2019 => "v160" ?
                         toolset("v" + (((m_project.fileFormatVersion - 2019) + 16) * 10).ToString());
@@ -1996,12 +2000,18 @@ public class SolutionProjectBuilder
     } //flags
 
     /// <summary>
-    /// Sets platform version.
+    /// Sets windows SDK version.
     /// </summary>
     /// <param name="ver">Target Platform Version, e.g. "8.1" or "10.0.14393.0"</param>
-    static public void systemversion(String ver)
-    { 
+    /// <param name="force">true - to force set, false - set only if not yet selected.</param>
+    static public void systemversion(String ver, bool force = false)
+    {
         requireProjectSelected();
+
+        if (!force && m_project.WindowsTargetPlatformVersion != null)
+            // Already selected.
+            return;
+
         m_project.WindowsTargetPlatformVersion = ver;
     }
 
