@@ -1240,6 +1240,20 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Enables / disables CLR support
+    /// </summary>
+    /// <param name="clr">clr value</param>
+    static public void commonLanguageRuntime(ECLRSupport clr)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+        {
+            conf.CLRSupport = clr;
+            optimize_symbols_recheck(conf);
+        }
+    }
+
+
+    /// <summary>
     /// Enables incremental linking. 
     /// Enabling incremental linking increases size of produced executable or dll approximately by 50%.
     /// </summary>
@@ -2072,7 +2086,9 @@ public class SolutionProjectBuilder
                 // If WholeProgramOptimization == UseLinkTimeCodeGeneration is in use - cannot use EditAndContinue
 
                 // Windows
-                if (conf.Optimization == EOptimization.Full || conf.WholeProgramOptimization == EWholeProgramOptimization.UseLinkTimeCodeGeneration)
+                if (conf.Optimization == EOptimization.Full || conf.WholeProgramOptimization == EWholeProgramOptimization.UseLinkTimeCodeGeneration ||
+                    // cl : Command line error D8016: '/ZI' and '/clr' command-line options are incompatible
+                    conf.CLRSupport != ECLRSupport.None)
                 {
                     debugFormat = EDebugInformationFormat.ProgramDatabase;
                 }

@@ -940,6 +940,31 @@
             Ansi
             </summary>
         </member>
+        <member name="T:ECLRSupport">
+            <summary>
+            Clr support
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.None">
+            <summary>
+            Common Language Runtime Support is not enabled.
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.True">
+            <summary>
+            Common Language Runtime Support (/clr)
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.Pure">
+            <summary>
+            Pure MSIL Common Language Runtime Support (/clr:pure)
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.Safe">
+            <summary>
+            Safe MSIL Common Language Runtime Support (/clr:safe)
+            </summary>
+        </member>
         <member name="T:EWholeProgramOptimization">
             <summary>
             Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
@@ -1269,6 +1294,11 @@
         <member name="F:Configuration.CharacterSet">
             <summary>
             Specifies project character set
+            </summary>
+        </member>
+        <member name="F:Configuration.CLRSupport">
+            <summary>
+            Enable clr support
             </summary>
         </member>
         <member name="F:Configuration.UseOfMfc">
@@ -2010,6 +2040,12 @@
             Selects character set.
             </summary>
             <param name="charset">One of following: "Unicode", "Multibyte", "MBCS", "None"</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.commonLanguageRuntime(ECLRSupport)">
+            <summary>
+            Enables / disables CLR support
+            </summary>
+            <param name="clr">clr value</param>
         </member>
         <member name="M:SolutionProjectBuilder.Linker_General_EnableIncrementalLinking(System.Boolean)">
             <summary>

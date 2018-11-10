@@ -793,10 +793,16 @@ public class SolutionOrProject
             });
 
             if (!proj.bIsPackagingProject)
+            {
                 ConfigationSpecificValue(proj, proj.projectConfig, "CharacterSet", lines2dump, (s) => {
                     String r = typeof(ECharacterSet).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
                     return "characterset" + brO + "\"" + r + "\"" + brC;
                 });
+
+                ConfigationSpecificValue(proj, proj.projectConfig, "CLRSupport", lines2dump, (s) => {
+                    return "commonLanguageRuntime" + brO + "ECLRSupport." + s + brC;
+                });
+            }
 
             ConfigationSpecificValue(proj, proj.projectConfig, "UseOfMfc", lines2dump, (s) => {
                 if (s == "Static")

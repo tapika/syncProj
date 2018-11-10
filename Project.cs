@@ -1379,6 +1379,12 @@ public class Project
             if (Keyword == EKeyword.Win32Proj || Keyword == EKeyword.MFCProj)
                 o.AppendLine("    <CharacterSet>" + conf.CharacterSet.ToString() + "</CharacterSet>");
 
+            if (conf.CLRSupport != ECLRSupport.None)
+            {
+                String value = typeof(ECLRSupport).GetMember(conf.CLRSupport.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
+                o.AppendLine("    <CLRSupport>" + value + "</CLRSupport>");
+            }
+
             if (Keyword == EKeyword.MFCProj && conf.UseOfMfc != EUseOfMfc.None)
                 o.AppendLine("    <UseOfMfc>" + conf.UseOfMfc + "</UseOfMfc>");
 
