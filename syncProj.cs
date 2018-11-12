@@ -89,6 +89,7 @@ public class UpdateInfo
     /// <param name="bWasSaved">true if file was saved, false if file is up-to-date</param>
     public void MarkFileUpdated(String path, bool bWasSaved)
     {
+        path = Path.GetFullPath(path);
         if (!bWasSaved)
         {
             filesUpToDate.Add(path);
@@ -109,6 +110,7 @@ public class UpdateInfo
     /// <summary>
     /// Prints summary about update
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public void DisplaySummary()
     {
         // When testing is in progress we don't want detailed information on what was updated as what was not updated, as long as
@@ -588,15 +590,16 @@ public class SolutionOrProject
                 if (p.IsSubFolder())
                     continue;
 
-                String projectPath = Path.Combine(outDir, p.RelativePath);
-                if(bProcessProjects)
-                    UpdateProjectScript(uinfo, projectPath, p, null, format, false, outPrefix);
+                if(bProcessProjects && !p.bDefinedAsExternal)
+                    UpdateProjectScript(uinfo, p.getFullPath(), p, null, format, false, outPrefix);
                     
                 // Defines group / in which sub-folder we are.
                 groupParts.Clear();
                 Project pScan = p.parent;
                 for (; pScan != null; pScan = pScan.parent)
-                    groupParts.Insert(0, pScan.ProjectName);
+                    // Solution root does not have project name
+                    if (pScan.ProjectName!= null )
+                        groupParts.Insert(0, pScan.ProjectName);
 
                 String newGroup = String.Join("/", groupParts);
                 if (wasInSubGroup != newGroup)
@@ -607,11 +610,11 @@ public class SolutionOrProject
                 wasInSubGroup = newGroup;
 
                 // Define project
-                String name = Path.GetFileNameWithoutExtension(p.RelativePath);
+                String name = Path.GetFileNameWithoutExtension(p.getFullPath());
                 String dir = Path.GetDirectoryName(p.RelativePath);
                 o.AppendLine();
 
-                if (bProcessProjects)
+                if (!p.bDefinedAsExternal && bProcessProjects)
                 {
                     String fileInclude = name;
                     if (outPrefix != "") fileInclude = outPrefix + name;
@@ -634,7 +637,7 @@ public class SolutionOrProject
                     o.AppendLine(head + "    externalproject" + brO + "\"" + name + "\"" + brC);
                     o.AppendLine(head + "        location" + brO + "\"" + dir.Replace("\\", "/") + "\"" + brC);
                     o.AppendLine(head + "        uuid" + brO + "\"" + p.ProjectGuid.Substring(1, p.ProjectGuid.Length - 2) + "\"" + brC);
-                    o.AppendLine(head + "        language" + brO + "\"C++\"" + brC);
+                    o.AppendLine(head + "        language" + brO + "\"" + p.getLanguage() + "\"" + brC);
                     o.AppendLine(head + "        kind" + brO + "\"SharedLib\"" + brC);
                 } //if-else
 
@@ -793,10 +796,17 @@ public class SolutionOrProject
             });
 
             if (!proj.bIsPackagingProject)
+            {
                 ConfigationSpecificValue(proj, proj.projectConfig, "CharacterSet", lines2dump, (s) => {
                     String r = typeof(ECharacterSet).GetMember(s)[0].GetCustomAttribute<FunctionNameAttribute>().tag;
                     return "characterset" + brO + "\"" + r + "\"" + brC;
                 });
+
+                ConfigationSpecificValue(proj, proj.projectConfig, "CLRSupport", lines2dump, (s) => {
+                    if (s == "None") return null;
+                    return "commonLanguageRuntime" + brO + "ECLRSupport." + s + brC;
+                });
+            }
 
             ConfigationSpecificValue(proj, proj.projectConfig, "UseOfMfc", lines2dump, (s) => {
                 if (s == "Static")

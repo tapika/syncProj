@@ -1,3 +1,8 @@
 syncProj exited with no error
 TestRefenceProject.cs :
+File updated: out_test.sln
+File updated: out_lib.vcxproj.filters
+File updated: out_lib.vcxproj
+File updated: out_test.vcxproj.filters
+File updated: out_test.vcxproj
 5 files updated

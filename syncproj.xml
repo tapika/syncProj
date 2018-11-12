@@ -156,6 +156,12 @@
             if null - RelativePath includes file extension, if non-null - "C++" or "C#" - defines project file extension.
             </summary>
         </member>
+        <member name="M:Project.getLanguage">
+            <summary>
+            Gets programming language of project.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Project.getRelativePath">
             <summary>
             gets relative path based on programming language
@@ -341,6 +347,11 @@
             </summary>
             <param name="path">path. By default same as project directory.</param>
             <returns>true if rooted.</returns>
+        </member>
+        <member name="M:Project.Clone">
+            <summary>
+            Clones project
+            </summary>
         </member>
         <member name="T:FunctionNameAttribute">
             <summary>
@@ -929,6 +940,31 @@
             Ansi
             </summary>
         </member>
+        <member name="T:ECLRSupport">
+            <summary>
+            Clr support
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.None">
+            <summary>
+            Common Language Runtime Support is not enabled.
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.True">
+            <summary>
+            Common Language Runtime Support (/clr)
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.Pure">
+            <summary>
+            Pure MSIL Common Language Runtime Support (/clr:pure)
+            </summary>
+        </member>
+        <member name="F:ECLRSupport.Safe">
+            <summary>
+            Safe MSIL Common Language Runtime Support (/clr:safe)
+            </summary>
+        </member>
         <member name="T:EWholeProgramOptimization">
             <summary>
             Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
@@ -1260,6 +1296,11 @@
             Specifies project character set
             </summary>
         </member>
+        <member name="F:Configuration.CLRSupport">
+            <summary>
+            Enable clr support
+            </summary>
+        </member>
         <member name="F:Configuration.UseOfMfc">
             <summary>
             Defines how MFC is linked in
@@ -1484,6 +1525,44 @@
             Gradle batch to execute, normally gradlew.bat.
             </summary>
         </member>
+        <member name="T:ReflectionEx">
+            <summary>
+            Reflection helper class.
+            </summary>
+        </member>
+        <member name="M:ReflectionEx.GetFieldsAndProperties(System.Type)">
+            <summary>
+            Gets fields and properties into one array.
+            Order of properties / fields will be preserved in order of appearance in class / struct. (MetadataToken is used for sorting such cases)
+            </summary>
+            <param name="type">Type from which to get</param>
+            <returns>array of fields and properties</returns>
+        </member>
+        <member name="M:ReflectionEx.GetValue(System.Reflection.MemberInfo,System.Object)">
+            <summary>
+            Queries value of field or property.
+            </summary>
+            <param name="member">member to query from</param>
+            <param name="target">target object</param>
+            <returns>member value</returns>
+        </member>
+        <member name="M:ReflectionEx.SetValue(System.Reflection.MemberInfo,System.Object,System.Object)">
+            <summary>
+            Sets value to target class.
+            </summary>
+            <param name="member">member</param>
+            <param name="target">object</param>
+            <param name="value">value to set</param>
+        </member>
+        <member name="M:ReflectionEx.DeepClone(System.Object)">
+            <summary>
+            Deep clones specific object.
+            Analogue can be found here: https://stackoverflow.com/questions/129389/how-do-you-do-a-deep-copy-an-object-in-net-c-specifically
+            This is now improved version (list support added)
+            </summary>
+            <param name="obj">object to be cloned</param>
+            <returns>full copy of object.</returns>
+        </member>
         <member name="T:TestStarter">
             <summary>
             Just a helper class so Visual studio would be able to see our test system and
@@ -1608,10 +1687,42 @@
             </summary>
             <exception cref="T:System.IO.FileNotFoundException">The file specified in path was not found.</exception>
         </member>
-        <member name="M:Solution.SaveSolution(UpdateInfo)">
+        <member name="M:Solution.SaveSolution(System.String)">
+            <summary>
+            Saves solution into file.
+            </summary>
+        </member>
+        <member name="M:Solution.SaveSolution(UpdateInfo,System.String)">
             <summary>
             Saves solution into .sln file. Where to save is defined by path.
             </summary>
+            <param name="_path">path to .sln, null if use from 'path' variable.</param>
+            <param name="uinfo">Update information</param>
+        </member>
+        <member name="M:Solution.RemoveEmptyFolders(Project)">
+            <summary>
+            Removes empty folder nodes from solution.
+            </summary>
+            <param name="p">Must be null on first call</param>
+            <returns>true if p was removed, should not be used by caller</returns>
+        </member>
+        <member name="M:Solution.ChangeProjectDependenciesFromGuidsToNames">
+            <summary>
+            By default after solution is loaded - all dependent projects are specified by project guids.
+            This function will replace project guids with project names.
+            </summary>
+        </member>
+        <member name="M:Solution.EnableProjectBuild(System.Func{Project,System.Nullable{System.Boolean}})">
+            <summary>
+            Lambda function gets called for each project, return true or false to enable/disable project build, null if don't change
+            </summary>
+            <param name="func">Callback function, which selects / deselects project for building</param>
+        </member>
+        <member name="M:Solution.Clone">
+            <summary>
+            Clone Solution.
+            </summary>
+            <returns>new solution</returns>
         </member>
         <member name="T:SolutionProjectBuilder">
             <summary>
@@ -1925,6 +2036,12 @@
             </summary>
             <param name="charset">One of following: "Unicode", "Multibyte", "MBCS", "None"</param>
         </member>
+        <member name="M:SolutionProjectBuilder.commonLanguageRuntime(ECLRSupport)">
+            <summary>
+            Enables / disables CLR support
+            </summary>
+            <param name="clr">clr value</param>
+        </member>
         <member name="M:SolutionProjectBuilder.Linker_General_EnableIncrementalLinking(System.Boolean)">
             <summary>
             Enables incremental linking. 
@@ -2100,11 +2217,12 @@
             "LinkTimeOptimization" - Enable link-time (i.e. whole program) optimizations.<para />
             </param>
         </member>
-        <member name="M:SolutionProjectBuilder.systemversion(System.String)">
+        <member name="M:SolutionProjectBuilder.systemversion(System.String,System.Boolean)">
             <summary>
-            Sets platform version.
+            Sets windows SDK version.
             </summary>
             <param name="ver">Target Platform Version, e.g. "8.1" or "10.0.14393.0"</param>
+            <param name="force">true - to force set, false - set only if not yet selected.</param>
         </member>
         <member name="M:SolutionProjectBuilder.links(System.String[])">
             <summary>

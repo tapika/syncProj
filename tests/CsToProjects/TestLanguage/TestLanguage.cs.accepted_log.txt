@@ -1,3 +1,10 @@
 syncProj exited with no error
 TestLanguage.cs :
+File updated: out_test.sln
+File updated: out_lan1.vcxproj.filters
+File updated: out_lan1.vcxproj
+File updated: out_lan2.vcxproj.filters
+File updated: out_lan2.vcxproj
+File updated: out_lan3.vcxproj.filters
+File updated: out_lan3.vcxproj
 7 files updated

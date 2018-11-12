@@ -39,6 +39,11 @@ public class Project
     /// </summary>
     public bool bDefinedAsExternal = true;
 
+    const String csharp_uuid = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}";
+    const String cpp_uuid = "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}";
+    const String folder_uuid = "{2150E333-8FDC-42A3-9474-1A3956D46DE8}";
+    const String packagingProject_uuid = "{39E2626F-3545-4960-A6E8-258AD8476CE5}";
+
     /// <summary>
     /// Made as a property so can be set over reflection.
     /// </summary>
@@ -48,23 +53,38 @@ public class Project
         {
             if (bIsFolder)
             {
-                return "{2150E333-8FDC-42A3-9474-1A3956D46DE8}";
+                return folder_uuid;
             }
             else
             {
                 if (bIsPackagingProject)
-                    return "{39E2626F-3545-4960-A6E8-258AD8476CE5}";
+                    return packagingProject_uuid;
 
-                return "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}";
+                if (language != null && language == "C#")
+                    return csharp_uuid;
+
+                return cpp_uuid;
             }
         }
         set
         {
             switch (value)
             {
-                case "{2150E333-8FDC-42A3-9474-1A3956D46DE8}": bIsFolder = true; break;
-                case "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}": bIsFolder = false; break;
-                case "{39E2626F-3545-4960-A6E8-258AD8476CE5}": bIsFolder = false; bIsPackagingProject = true; break;
+                case folder_uuid:
+                    bIsFolder = true;
+                    break;
+                case cpp_uuid:
+                    bIsFolder = false;
+                    language = "C++";
+                    break;
+                case csharp_uuid:
+                    bIsFolder = false;
+                    language = "C#";
+                    break;
+                case packagingProject_uuid:
+                    bIsFolder = false;
+                    bIsPackagingProject = true;
+                    break;
                 default:
                     throw new Exception2("Invalid project host guid '" + value + "'");
             }
@@ -198,6 +218,16 @@ public class Project
     public string language;
 
     /// <summary>
+    /// Gets programming language of project.
+    /// </summary>
+    /// <returns></returns>
+    public string getLanguage()
+    {
+        if (language == null) return "C++";
+        return language;
+    }
+
+    /// <summary>
     /// gets relative path based on programming language
     /// </summary>
     /// <returns></returns>
@@ -226,7 +256,7 @@ public class Project
     {
         switch (language)
         {
-            default: return ".vcxproj";
+            default: return "";
             case "C": return ".vcxproj";
             case "C++": return ".vcxproj";
             case "C#": return ".csproj";
@@ -721,14 +751,19 @@ public class Project
     /// <param name="loadLevel">1 if interested only in guid</param>
     static public Project LoadProject(Solution solution, String path, Project project = null, int loadLevel = 0 )
     {
-        if (path == null)
-            path = Path.Combine(Path.GetDirectoryName(solution.path) , project.RelativePath);
-
         if (project == null)
             project = new Project() { solution = solution };
 
-        if (!File.Exists(path))
-            return null;
+        if (path == null)
+            path = project.getFullPath();
+
+        // .csproj loading is not supported at the moment.
+        if (project.language == "C#" || !File.Exists(path))
+        {
+            project.bDefinedAsExternal = true;
+            return project;
+        }
+        project.bDefinedAsExternal = false;
 
         XDocument p = XDocument.Load(path);
 
@@ -1345,6 +1380,12 @@ public class Project
             if (Keyword == EKeyword.Win32Proj || Keyword == EKeyword.MFCProj)
                 o.AppendLine("    <CharacterSet>" + conf.CharacterSet.ToString() + "</CharacterSet>");
 
+            if (conf.CLRSupport != ECLRSupport.None)
+            {
+                String value = typeof(ECLRSupport).GetMember(conf.CLRSupport.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
+                o.AppendLine("    <CLRSupport>" + value + "</CLRSupport>");
+            }
+
             if (Keyword == EKeyword.MFCProj && conf.UseOfMfc != EUseOfMfc.None)
                 o.AppendLine("    <UseOfMfc>" + conf.UseOfMfc + "</UseOfMfc>");
 
@@ -1928,7 +1969,13 @@ public class Project
         return false;
     }
 
-
+    /// <summary>
+    /// Clones project
+    /// </summary>
+    public Project Clone()
+    {
+        return (Project)ReflectionEx.DeepClone(this);
+    }
 
 } //Project
 

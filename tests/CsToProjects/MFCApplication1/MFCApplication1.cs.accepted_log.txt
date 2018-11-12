@@ -1,3 +1,5 @@
 syncProj exited with no error
 MFCApplication1.cs :
+File updated: out_MFCApplication1.vcxproj.filters
+File updated: out_MFCApplication1.vcxproj
 2 files updated

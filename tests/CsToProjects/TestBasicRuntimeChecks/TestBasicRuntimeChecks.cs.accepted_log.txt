@@ -10,4 +10,6 @@ File updated: out_rtcdefault.vcxproj.filters
 File updated: out_rtcdefault.vcxproj
 File updated: out_rtcprojectdefault.vcxproj.filters
 File updated: out_rtcprojectdefault.vcxproj
+File updated: out_ReleaseWithSymbols.vcxproj.filters
+File updated: out_ReleaseWithSymbols.vcxproj
 12 files updated

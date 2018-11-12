@@ -2,4 +2,6 @@ syncProj exited with no error
 TestMultiProcessorCompile.cs :
 File updated: out_enablemultiprocessor_windows.vcxproj.filters
 File updated: out_enablemultiprocessor_windows.vcxproj
+File updated: out_enablemultiprocessor_android.vcxproj.filters
+File updated: out_enablemultiprocessor_android.vcxproj
 4 files updated

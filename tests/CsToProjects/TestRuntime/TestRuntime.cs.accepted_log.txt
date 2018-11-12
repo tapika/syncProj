@@ -8,4 +8,14 @@ File updated: out_rtmultithreadeddebug.vcxproj.filters
 File updated: out_rtmultithreadeddebug.vcxproj
 File updated: out_rtmultithreadeddll.vcxproj.filters
 File updated: out_rtmultithreadeddll.vcxproj
-10 files updated
+File updated: out_rtmultithreadeddebugdll.vcxproj.filters
+File updated: out_rtmultithreadeddebugdll.vcxproj
+File updated: out_clr_none.vcxproj.filters
+File updated: out_clr_none.vcxproj
+File updated: out_clr_true.vcxproj.filters
+File updated: out_clr_true.vcxproj
+File updated: out_clr_pure.vcxproj.filters
+File updated: out_clr_pure.vcxproj
+File updated: out_clr_safe.vcxproj.filters
+File updated: out_clr_safe.vcxproj
+18 files updated

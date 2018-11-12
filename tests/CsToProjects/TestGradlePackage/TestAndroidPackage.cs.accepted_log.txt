@@ -1,3 +1,11 @@
 syncProj exited with no error
 TestAndroidPackage.cs :
+File updated: out_TestAndroidJNI_vs2015.sln
+File updated: out_native_lib_vs2015.vcxproj.filters
+File updated: out_native_lib_vs2015.vcxproj
+File updated: out_JavaApp_vs2015.androidproj
+File updated: out_TestAndroidJNI_vs2017.sln
+File updated: out_native_lib_vs2017.vcxproj.filters
+File updated: out_native_lib_vs2017.vcxproj
+File updated: out_JavaApp_vs2017.androidproj
 8 files updated

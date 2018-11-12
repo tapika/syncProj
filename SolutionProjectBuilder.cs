@@ -186,7 +186,7 @@ public class SolutionProjectBuilder
             if (!bSaveGeneratedProjects && !bForce)
                 return;
 
-            UpdateInfo uinfo = new UpdateInfo();
+            UpdateInfo uinfo = new UpdateInfo(true);
 
             if (m_solutions.Count != 0)
             {
@@ -474,7 +474,11 @@ public class SolutionProjectBuilder
                     case 2012: toolset("v110", force); break;
                     case 2013: toolset("v120", force); break;
                     case 2015: toolset("v140", force); break;
-                    case 2017: toolset("v141", force); break;
+                    case 2017:
+                        toolset("v141", force);
+                        // vs2017 also sets up Windows SDK version
+                        systemversion("10.0.17134.0", force);
+                        break;
                     default:
                         // Try to guess the future. 2019 => "v160" ?
                         toolset("v" + (((m_project.fileFormatVersion - 2019) + 16) * 10).ToString());
@@ -524,7 +528,7 @@ public class SolutionProjectBuilder
             if (!Path.IsPathRooted(_path))
                 absPath = Path.Combine(m_project.getProjectFolder(), _path);
 
-            if( !Directory.Exists( absPath ) )
+            if(!m_project.bDefinedAsExternal && !Directory.Exists( absPath ) )
                 throw new Exception2( "Path '" + _path + "' does not exists");
 
             // Measure relative path against solution path if that one is present or against working path.
@@ -608,6 +612,7 @@ public class SolutionProjectBuilder
         {
             case null:
                 compileAs = ECompileAs.Default;
+                lang = "C++";       // File extension will be .vcxproj anyway, but to what to compile file will be left to VS.
                 break;
             case "C":  
                 compileAs = ECompileAs.CompileAsC;
@@ -621,15 +626,18 @@ public class SolutionProjectBuilder
                 throw new Exception2("Language '" + lang + "' is not supported");
         } //switch
 
-        // Set up default compilation language
-        foreach (var conf in getSelectedConfigurations(false))
-            conf.CompileAs = compileAs;
+        if (!m_project.bDefinedAsExternal)
+        {
+            // Set up default compilation language
+            foreach (var conf in getSelectedConfigurations(false))
+                conf.CompileAs = compileAs;
+        }
 
         if (!bLastSetFilterWasFileSpecific)
             m_project.language = lang;
     } //language
 
-    static Regex guidMatcher = new Regex("^[{(]?([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})[)}]?$");
+    public static Regex guidMatcher = new Regex("^[{(]?([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})[)}]?$");
 
     /// <summary>
     /// Specify one or more non-linking project build order dependencies.
@@ -1094,10 +1102,13 @@ public class SolutionProjectBuilder
             }
         }
 
-        foreach (var conf in getSelectedProjectConfigurations())
+        if (!m_project.bDefinedAsExternal)
         {
-            conf.ConfigurationType = type;
-            conf.SubSystem = subsystem;
+            foreach (var conf in getSelectedProjectConfigurations())
+            {
+                conf.ConfigurationType = type;
+                conf.SubSystem = subsystem;
+            }
         }
 
         selectDefaultToolset();
@@ -1228,6 +1239,20 @@ public class SolutionProjectBuilder
         foreach (var conf in getSelectedProjectConfigurations())
             conf.CharacterSet = cs;
     }
+
+    /// <summary>
+    /// Enables / disables CLR support
+    /// </summary>
+    /// <param name="clr">clr value</param>
+    static public void commonLanguageRuntime(ECLRSupport clr)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+        {
+            conf.CLRSupport = clr;
+            optimize_symbols_recheck(conf);
+        }
+    }
+
 
     /// <summary>
     /// Enables incremental linking. 
@@ -1990,12 +2015,18 @@ public class SolutionProjectBuilder
     } //flags
 
     /// <summary>
-    /// Sets platform version.
+    /// Sets windows SDK version.
     /// </summary>
     /// <param name="ver">Target Platform Version, e.g. "8.1" or "10.0.14393.0"</param>
-    static public void systemversion(String ver)
-    { 
+    /// <param name="force">true - to force set, false - set only if not yet selected.</param>
+    static public void systemversion(String ver, bool force = false)
+    {
         requireProjectSelected();
+
+        if (!force && m_project.WindowsTargetPlatformVersion != null)
+            // Already selected.
+            return;
+
         m_project.WindowsTargetPlatformVersion = ver;
     }
 
@@ -2056,7 +2087,9 @@ public class SolutionProjectBuilder
                 // If WholeProgramOptimization == UseLinkTimeCodeGeneration is in use - cannot use EditAndContinue
 
                 // Windows
-                if (conf.Optimization == EOptimization.Full || conf.WholeProgramOptimization == EWholeProgramOptimization.UseLinkTimeCodeGeneration)
+                if (conf.Optimization == EOptimization.Full || conf.WholeProgramOptimization == EWholeProgramOptimization.UseLinkTimeCodeGeneration ||
+                    // cl : Command line error D8016: '/ZI' and '/clr' command-line options are incompatible
+                    conf.CLRSupport != ECLRSupport.None)
                 {
                     debugFormat = EDebugInformationFormat.ProgramDatabase;
                 }

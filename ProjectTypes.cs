@@ -508,7 +508,7 @@ public class FileConfigurationInfo
         else
             platform = this.confName.Split('|')[1];
 
-        if (platform == "Win32" || platform == "x86")
+        if (platform.ToLower() == "win32" || platform == "x86")
             return EDebugInformationFormat.EditAndContinue;
 
         if (platform == "x64")
@@ -731,6 +731,39 @@ public enum ECharacterSet
     [FunctionName("MBCS")]
     MultiByte
 }
+
+/// <summary>
+/// Clr support
+/// </summary>
+[Description("")]   // Marker to switch Enum value / Description when parsing
+public enum ECLRSupport
+{
+    /// <summary>
+    /// Common Language Runtime Support is not enabled.
+    /// </summary>
+    [Description("false")]
+    None = 0,
+
+    /// <summary>
+    /// Common Language Runtime Support (/clr)
+    /// </summary>
+    [Description("true")]
+    True,
+
+    /// <summary>
+    /// Pure MSIL Common Language Runtime Support (/clr:pure)
+    /// </summary>
+    [Description("Pure")]
+    Pure,
+
+    /// <summary>
+    /// Safe MSIL Common Language Runtime Support (/clr:safe)
+    /// </summary>
+    [Description("Safe")]
+    Safe
+}
+
+
 
 /// <summary>
 /// Enables cross-module optimizations by delaying code generation to link-time; requires that linker option 'Link Time Code Generation' be turned on.
@@ -1170,6 +1203,11 @@ public class Configuration : FileConfigurationInfo
     /// Specifies project character set
     /// </summary>
     public ECharacterSet CharacterSet = ECharacterSet.Unicode;
+
+    /// <summary>
+    /// Enable clr support
+    /// </summary>
+    public ECLRSupport CLRSupport = ECLRSupport.None;
 
     /// <summary>
     /// Defines how MFC is linked in

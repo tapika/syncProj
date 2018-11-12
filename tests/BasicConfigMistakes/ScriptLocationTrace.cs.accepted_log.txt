@@ -9,4 +9,11 @@ ScriptLocationTrace.cs :
 3. I'm in folder 'subdir\subdir2'
 4. I'm in folder 'subdir'
 1. I'm in folder ''
+File updated: out_dummy.sln
+File updated: out_dummy.vcxproj.filters
+File updated: out_dummy.vcxproj
+File updated: _out_ScriptLocationTrace2.vcxproj.filters
+File updated: _out_ScriptLocationTrace2.vcxproj
+File updated: out_ScriptLocationTrace4.vcxproj.filters
+File updated: out_ScriptLocationTrace4.vcxproj
 7 files updated

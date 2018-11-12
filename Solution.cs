@@ -118,7 +118,22 @@ public class Solution
         if (vsNumber > 2000)
             s.fileFormatVersion = vsNumber;
         else
-            s.fileFormatVersion = vsNumber - 14 + 2015;     // Visual Studio 14 => vs2015, formula might not be applicable for future vs versions.
+        {
+            switch (vsNumber)
+            {
+                case 14:
+                    s.fileFormatVersion = 2015;
+                    break;
+                case 15:
+                    s.fileFormatVersion = 2017;
+                    break;
+                default:
+                    // Every two years new release ?
+                    s.fileFormatVersion = (vsNumber - 14) * 2 + 2015;
+                    break;
+            }
+
+        }
 
         foreach (String line in new String[] { "VisualStudioVersion", "MinimumVisualStudioVersion" })
         {
@@ -173,6 +188,14 @@ public class Solution
                 //
                 p.ProjectDependencies = new Regex("\\s*?({[A-F0-9-]+}) = ({[A-F0-9-]+})[\r\n]+", RegexOptions.Multiline).Matches(depsv).Cast<Match>().Select(x => x.Groups[1].Value).ToList();
             } //foreach
+
+            // Defining language removes the need of project extension
+            if (p.language != null)
+                p.RelativePath = Path.Combine(Path.GetDirectoryName(p.RelativePath), Path.GetFileNameWithoutExtension(p.RelativePath));
+            
+            // Even thus solution does have project name written down - VS ignores that name completely - it uses .vcxproj's ProjectName instead.
+            if (!p.bIsFolder)
+                p.ProjectName = Path.GetFileName(p.RelativePath);
 
             s.projects.Add(p);
             return "";
@@ -257,16 +280,39 @@ public class Solution
         }
         ));
 
+        s.solutionRoot = new Project();
+
+        // All projects which don't have root will become attached to root.
+        foreach (Project p in s.projects)
+            if (p.parent == null)
+            {
+                p.parent = s.solutionRoot;
+                s.solutionRoot.nodes.Add(p);
+            }
+
         return s;
     } //LoadSolution
 
 
     /// <summary>
+    /// Saves solution into file.
+    /// </summary>
+    public void SaveSolution(String _path)
+    {
+        SaveSolution(new UpdateInfo(), _path);
+    }
+
+    /// <summary>
     /// Saves solution into .sln file. Where to save is defined by path.
     /// </summary>
-    public void SaveSolution(UpdateInfo uinfo)
+    /// <param name="_path">path to .sln, null if use from 'path' variable.</param>
+    /// <param name="uinfo">Update information</param>
+    public void SaveSolution(UpdateInfo uinfo, String _path = null)
     {
-        String slnPath = path;
+        String slnPath = _path;
+
+        if (_path == null)
+            slnPath = path;
 
         //
         //  For all projects which does not have uuid, we generated uuid based on project name.
@@ -342,9 +388,23 @@ public class Solution
                 o.AppendLine("	ProjectSection(ProjectDependencies) = postProject");
                 foreach (String depProjName in p.ProjectDependencies)
                 {
-                    Project dproj = projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
-                    if (dproj != null)
-                        o.AppendLine("		" + dproj.ProjectGuid.ToUpper() + " = " + dproj.ProjectGuid.ToUpper());
+                    String guid = null;
+
+                    // Dependency specified by {guid}
+                    if (SolutionProjectBuilder.guidMatcher.Match(depProjName).Success)
+                    {
+                        guid = depProjName;
+                    }
+                    else
+                    {
+                        // Dependency specified by project name
+                        Project dproj = projects.Where(x => x.ProjectName == depProjName).FirstOrDefault();
+                        if (dproj != null)
+                            guid = dproj.ProjectGuid.ToUpper();
+                    }
+
+                    if(guid != null)
+                        o.AppendLine("		" + guid + " = " + guid);
                 }
                 o.AppendLine("	EndProjectSection");
             } //if
@@ -396,30 +456,37 @@ public class Solution
                     mappedConf = p.slnConfigurations[iConf];
                 }
                 else {
-                    //
-                    // Try to map configuration by ourselfs. Map x86 to Win32 automatically.
-                    //
-                    if (!p.configurations.Contains(conf))
+                    if (p.bDefinedAsExternal)
                     {
-                        String[] confPlat = conf.Split('|');
-
-                        if (projConfs.Contains(confPlat[0]) && confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
+                        // Hack - assume one to one mapping for timebeing.
+                        mappedConf = conf;
+                    } else
+                    {
+                        //
+                        // Try to map configuration by ourselfs. Map x86 to Win32 automatically.
+                        //
+                        if (!p.configurations.Contains(conf))
                         {
-                            mappedConf = confPlat[0] + '|' + "Win32";
-                        }
-                        else
-                        {
-                            // Configuration cannot be mapped (E.g. Solution has "Debug|Arm", project supports only "Debug|Win32".
-                            // We disable project build, but try to map configuration anyway - otherwise Visual Studio will 
-                            // try to save solution by itself.
-                            bPeformBuild = false;
-                            bPerformDeploy = null;
+                            String[] confPlat = conf.Split('|');
 
-                            mappedConf = p.configurations.Where(x => x.StartsWith(confPlat[0])).FirstOrDefault();
-                            if (mappedConf == null)
-                                mappedConf = p.configurations[0];
-                        } //if-else
-                    } //if
+                            if (projConfs.Contains(confPlat[0]) && confPlat[1] == "x86" && projPlatforms.Contains("Win32"))
+                            {
+                                mappedConf = confPlat[0] + '|' + "Win32";
+                            }
+                            else
+                            {
+                                // Configuration cannot be mapped (E.g. Solution has "Debug|Arm", project supports only "Debug|Win32".
+                                // We disable project build, but try to map configuration anyway - otherwise Visual Studio will 
+                                // try to save solution by itself.
+                                bPeformBuild = false;
+                                bPerformDeploy = null;
+
+                                mappedConf = p.configurations.Where(x => x.StartsWith(confPlat[0])).FirstOrDefault();
+                                if (mappedConf == null)
+                                    mappedConf = p.configurations[0];
+                            } //if-else
+                        } //if
+                    }
                 }
 
                 if (p.slnBuildProject != null && iConf < p.slnBuildProject.Count)
@@ -496,6 +563,110 @@ public class Solution
             uinfo.MarkFileUpdated(slnPath, true);
         } //if-else
     } //SaveSolution
+
+
+    /// <summary>
+    /// Removes empty folder nodes from solution.
+    /// </summary>
+    /// <param name="p">Must be null on first call</param>
+    /// <returns>true if p was removed, should not be used by caller</returns>
+    public bool RemoveEmptyFolders(Project p = null)
+    {
+        if (p == null)
+            p = solutionRoot;
+
+        for (int i = 0; i < p.nodes.Count;i++)
+        {
+            var p2 = p.nodes[i];
+            if (p2.bIsFolder)
+                if (RemoveEmptyFolders(p2))
+                    i--;
+        }
+
+        if (p.nodes.Count == 0 && p.bIsFolder)
+        {
+            p.parent.nodes.Remove(p);
+            p.parent = null;
+            projects.Remove(p);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// By default after solution is loaded - all dependent projects are specified by project guids.
+    /// This function will replace project guids with project names.
+    /// </summary>
+    public void ChangeProjectDependenciesFromGuidsToNames()
+    {
+        foreach (Project p in projects)
+        {
+            if (p.ProjectDependencies == null)
+                continue;
+
+            for (int i = 0; i < p.ProjectDependencies.Count; i++)
+            {
+                Project depp = projects.Where(x => x.ProjectGuid == p.ProjectDependencies[i]).FirstOrDefault();
+                if (depp == null)
+                    throw new Exception("Project '" + p.ProjectName + "' has dependency on project guid '" + p.ProjectDependencies[i] + "' which does not exists in solution");
+
+                p.ProjectDependencies[i] = depp.ProjectName;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Lambda function gets called for each project, return true or false to enable/disable project build, null if don't change
+    /// </summary>
+    /// <param name="func">Callback function, which selects / deselects project for building</param>
+    public void EnableProjectBuild(Func<Project, bool?> func)
+    {
+        foreach (Project p in projects)
+        {
+            bool? enable = func(p);
+
+            if (!enable.HasValue)
+                continue;
+
+            var l = p.slnBuildProject;
+            for (int i = 0; i < l.Count; i++)
+                l[i] = enable.Value;
+        }
+    }
+
+
+    /// <summary>
+    /// Clone Solution.
+    /// </summary>
+    /// <returns>new solution</returns>
+    public Solution Clone()
+    {
+        Solution s = (Solution)ReflectionEx.DeepClone(this);
+
+        for (int iProject = 0; iProject < s.projects.Count; iProject++)
+        {
+            Project newp = s.projects[iProject];
+            newp.solution = s;
+            Project oldp = projects[iProject];
+
+            // References either solutionRoot or some of project.
+            if (oldp.parent == solutionRoot)
+            {
+                newp.parent = s.solutionRoot;
+                s.solutionRoot.nodes.Add(newp);
+            }
+            else
+                newp.parent = s.projects[projects.IndexOf(oldp.parent)];
+
+            // References solution projects.
+            for (int i = 0; i < oldp.nodes.Count; i++)
+                newp.nodes.Add(s.projects[projects.IndexOf(oldp.nodes[i])]);
+        }
+
+        return s;
+    }
 
 
 } //class Solution

@@ -1,3 +1,6 @@
 syncProj exited with no error
 TestIncludeDef.cs :
+File updated: Test.sln
+File updated: out_Test.vcxproj.filters
+File updated: out_Test.vcxproj
 3 files updated
