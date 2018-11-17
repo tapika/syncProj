@@ -1435,6 +1435,11 @@ public enum EKeyword
     Win32Proj,
 
     /// <summary>
+    /// Same as Win32Proj, for some reason exists as separate value
+    /// </summary>
+    ManagedCProj,
+
+    /// <summary>
     /// Android project
     /// </summary>
     Android,

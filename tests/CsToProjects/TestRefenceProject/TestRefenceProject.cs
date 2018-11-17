@@ -18,7 +18,7 @@ partial class Builder : SolutionProjectBuilder
                 platforms("Win32");
                 kind("ConsoleApp");
 
-                references("out_lib.vcxproj", "");
+                referencesProject("out_lib.vcxproj", "");
 
         }
         catch (Exception ex)

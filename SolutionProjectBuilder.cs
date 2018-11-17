@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using Microsoft.Build.Utilities;
 
 /// <summary>
 /// Helper class for generating solution or projects.
@@ -658,7 +659,7 @@ public class SolutionProjectBuilder
     /// If project guid is not provided, it will be loaded from project itself. (Slight performance penalties)
     /// </summary>
     /// <param name="fileGuidList">Project file path + project guid list</param>
-    static public void references(params String[] fileGuidList)
+    static public void referencesProject(params String[] fileGuidList)
     { 
         requireProjectSelected();
 
@@ -695,12 +696,12 @@ public class SolutionProjectBuilder
                     throw new Exception2("Referenced project '" + Exception2.getPath(path) + "' does not exists.\r\n" +
                         "You can avoid loading project by specifying project guid after project path, for example:\r\n" +
                         "\r\n" +
-                        "    references(\"project.vcxproj\", \"{E3A9D624-DA07-DBBF-B4DD-0E33BE2390AE}\" ); \r\n" +
+                        "    referencesProject(\"project.vcxproj\", \"{E3A9D624-DA07-DBBF-B4DD-0E33BE2390AE}\" ); \r\n" +
                         "\r\n" +
                         "or if you're using syncProj on that project:\r\n" +
                         "\r\n" +
-                        "    references(\"project.vcxproj\", \"unique name\" ); or \r\n" +
-                        "    references(\"project.vcxproj\", \"\" );  - same as references(\"project.vcproj\", \"project\" );"
+                        "    referencesProject(\"project.vcxproj\", \"unique name\" ); or \r\n" +
+                        "    referencesProject(\"project.vcxproj\", \"\" );  - same as referencesProject(\"project.vcproj\", \"project\" );"
                         );
 
                 guid = Project.getProjectGuid(path);
@@ -712,7 +713,91 @@ public class SolutionProjectBuilder
             fi.includeType = IncludeType.ProjectReference;
             fi.Project = guid;
         } //for
-    } //references
+    }
+
+
+    /// <summary>
+    /// For C++/cli - adds reference to specific assembly
+    /// </summary>
+    /// <param name="assemblyNames">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
+    /// supress assembly name check</param>
+    static public void references(params String[] assemblyNames)
+    {
+        requireProjectSelected();
+        List<Tuple<String, bool>> dirs = null;
+
+        // If at least one name does not contains checking disabled.
+        if (assemblyNames.Count(x => x.StartsWith("?") ) != 0)
+        {
+            String netVer = m_project.TargetFrameworkVersion;
+            if (netVer == null) netVer = "v4.0";
+
+            var dotnetDirs = ToolLocationHelper.GetPathToReferenceAssemblies(".NETFramework", netVer, "");
+            if (dotnetDirs.Count == 0)
+                throw new Exception2("Cannot locate .NET Framework " + netVer + "directory, is it possible that it's not installed ?\r\n"
+                    + "Use TargetFrameworkVersion() to specify correct .NET version");
+
+            dirs = dotnetDirs.Select(x => new Tuple<String, bool>(x, false)).ToList();
+            dirs.Add(new Tuple<String, bool>(m_project.getProjectFolder(), true));
+        }
+
+        foreach (String _name in assemblyNames)
+        {
+            String name = _name;
+            bool bCheck = true;
+            if (_name.StartsWith("?"))
+            {
+                bCheck = false;
+                name = _name.Substring(1);
+            }
+
+            bool bIsHintPath = name.IndexOf('\\') != -1 || Path.GetExtension(name) != "";
+
+            if (bCheck)
+            {
+                bool bExists = false;
+                if (Path.IsPathRooted(name))
+                    bExists = File.Exists(name);
+                else {
+                    foreach (var dir in dirs)
+                    {
+                        String dll = Path.Combine(dir.Item1, name);
+
+                        if (Path.GetExtension(dll) == "")
+                            dll += ".dll";
+
+                        if (File.Exists(dll))
+                        {
+                            bIsHintPath = dir.Item2;
+                            bExists = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!bExists)
+                {
+                    String paths = String.Join("\r\n", dirs.Select( x => "    " + x.Item1).ToArray() );
+                    throw new Exception2("Assembly referred by name '" + name + "' was not found.\r\n" +
+                        "Was searching within following paths: \r\n" + paths );
+                }
+            }
+
+            FileInfo fi = new FileInfo();
+            fi.includeType = IncludeType.Reference;
+            if (bIsHintPath)
+            {
+                fi.relativePath = Path.GetFileName(name);
+                fi.HintPath = name;
+            }
+            else
+            {
+                fi.relativePath = name;
+            }
+            m_project.files.Add(fi);
+        }
+    }
+
 
     static Regex unrecognizedEscapeSequence = new Regex("[\x00-\x0D]");
 
@@ -2030,6 +2115,16 @@ public class SolutionProjectBuilder
         m_project.WindowsTargetPlatformVersion = ver;
     }
 
+    /// <summary>
+    /// Sets .NET Target Framework Version
+    /// </summary>
+    /// <param name="ver">For example "v4.7.2"</param>
+    static public void TargetFrameworkVersion(String ver)
+    {
+        requireProjectSelected();
+        m_project.TargetFrameworkVersion = ver;
+    }
+    
     /// <summary>
     /// Adds one or more obj or lib into project to link against.
     /// </summary>

@@ -719,8 +719,16 @@ public class SolutionOrProject
             else
             {
                 foreach (FileInfo fi in projReferences)
-                    o.AppendLine(head + "    references(\"" + fi.relativePath.Replace("\\", "/") + "\", \"" + fi.Project.Substring(1, fi.Project.Length - 2) + "\");");
+                    o.AppendLine(head + "    referencesProject(\"" + fi.relativePath.Replace("\\", "/") + "\", \"" + fi.Project.Substring(1, fi.Project.Length - 2) + "\");");
             }
+
+            // ---------------------------------------------------------------------------------
+            // Assembly references
+            // ---------------------------------------------------------------------------------
+            List<FileInfo> asmReferences = proj.files.Where(x => x.includeType == IncludeType.Reference).ToList();
+            foreach (FileInfo fi in asmReferences)
+                o.AppendLine(head + "    references(\"" + fi.relativePath.Replace("\\", "/") + "\");");
+
 
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
 
@@ -790,6 +798,9 @@ public class SolutionOrProject
 
             if (!String.IsNullOrEmpty(proj.WindowsTargetPlatformVersion))
                 o.AppendLine(head + "    systemversion" + brO + "\"" + proj.WindowsTargetPlatformVersion + "\"" + brC);
+
+            if (!String.IsNullOrEmpty(proj.TargetFrameworkVersion))
+                o.AppendLine(head + "    TargetFrameworkVersion" + brO + "\"" + proj.TargetFrameworkVersion + "\"" + brC);
 
             ConfigationSpecificValue(proj, proj.projectConfig, "PlatformToolset", lines2dump, (s) => {
                 return "toolset" + brO + "\"" + s + "\"" + brC;
@@ -861,7 +872,7 @@ public class SolutionOrProject
             WriteLinesToDump(o, lines2dump, ref bFiltersActive, null);
 
 
-            List<FileInfo> files2dump = proj.files.Where(x => x.includeType != IncludeType.ProjectReference).ToList();
+            List<FileInfo> files2dump = proj.files.Where(x => x.includeType != IncludeType.ProjectReference && x.includeType != IncludeType.Reference).ToList();
 
             // Sort files by path, so it would be easier to check what is included and what is not included.
             files2dump.Sort(delegate (FileInfo f1, FileInfo f2) { return String.Compare(f1.relativePath, f2.relativePath); });
@@ -1995,7 +2006,7 @@ class MakeLogToSolutionBuilder : SolutionProjectBuilder
 
                                 if (p != null)
                                 {
-                                    references("?" + p.getRelativePath(), "");
+                                    referencesProject("?" + p.getRelativePath(), "");
                                     continue;
                                 }
 

@@ -141,6 +141,11 @@
             Target Platform Version, e.g. "8.1" or "10.0.14393.0"
             </summary>
         </member>
+        <member name="F:Project.TargetFrameworkVersion">
+            <summary>
+            .NET Target Framework Version, for example "v4.7.2"
+            </summary>
+        </member>
         <member name="F:Project.ProjectName">
             <summary>
             Project name and it's relative path in form: "subdir\\name"
@@ -281,7 +286,7 @@
             <summary>
             Copies field by "field" - name, from node.
             </summary>
-            <returns>false if fails (value does not exists(</returns>
+            <returns>false if fails (value does not exists)</returns>
         </member>
         <member name="M:Project.copyNodeToObject(System.Reflection.FieldInfo,System.Xml.Linq.XElement,System.Object)">
             <summary>
@@ -1470,6 +1475,11 @@
             Windows project (32 or 64 bit)
             </summary>
         </member>
+        <member name="F:EKeyword.ManagedCProj">
+            <summary>
+            Same as Win32Proj, for some reason exists as separate value
+            </summary>
+        </member>
         <member name="F:EKeyword.Android">
             <summary>
             Android project
@@ -1907,12 +1917,19 @@
             </summary>
             <param name="dependencies">List of dependent projects</param>
         </member>
-        <member name="M:SolutionProjectBuilder.references(System.String[])">
+        <member name="M:SolutionProjectBuilder.referencesProject(System.String[])">
             <summary>
             Specifies reference to another project. As an input you should provide project path, with optional project guid.
             If project guid is not provided, it will be loaded from project itself. (Slight performance penalties)
             </summary>
             <param name="fileGuidList">Project file path + project guid list</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.references(System.String[])">
+            <summary>
+            For C++/cli - adds reference to specific assembly
+            </summary>
+            <param name="assemblyNames">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
+            supress assembly name check</param>
         </member>
         <member name="M:SolutionProjectBuilder.group(System.String)">
             <summary>
@@ -2223,6 +2240,12 @@
             </summary>
             <param name="ver">Target Platform Version, e.g. "8.1" or "10.0.14393.0"</param>
             <param name="force">true - to force set, false - set only if not yet selected.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.TargetFrameworkVersion(System.String)">
+            <summary>
+            Sets .NET Target Framework Version
+            </summary>
+            <param name="ver">For example "v4.7.2"</param>
         </member>
         <member name="M:SolutionProjectBuilder.links(System.String[])">
             <summary>

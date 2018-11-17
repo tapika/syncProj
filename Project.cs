@@ -197,6 +197,11 @@ public class Project
     /// </summary>
     public String WindowsTargetPlatformVersion;
 
+    /// <summary>
+    /// .NET Target Framework Version, for example "v4.7.2"
+    /// </summary>
+    public string TargetFrameworkVersion;
+
     [XmlIgnore]
     public List<Project> nodes = new List<Project>();   // Child nodes (Empty folder also does not have any children)
     [XmlIgnore]
@@ -546,7 +551,7 @@ public class Project
     /// <summary>
     /// Copies field by "field" - name, from node.
     /// </summary>
-    /// <returns>false if fails (value does not exists(</returns>
+    /// <returns>false if fails (value does not exists)</returns>
     static bool CopyField(object o2set, String field, XElement node)
     {
         FieldInfo fi = o2set.GetType().GetField(field);
@@ -566,7 +571,6 @@ public class Project
             break;
         }
 
-
         if (fi.FieldType == typeof(EKeyword))
         {
             if (oValue == null)
@@ -575,7 +579,7 @@ public class Project
         }
 
         fi.SetValue(o2set, oValue);
-        return true;
+        return oValue != null;
     }
 
     static bool IsSimpleDataType(Type type)
@@ -825,9 +829,11 @@ public class Project
                         switch (label)
                         {
                             case "Globals":
-                                foreach (String field in new String[] { "ProjectGuid", "Keyword", "WindowsTargetPlatformVersion" /*, "RootNamespace"*/ })
+                                foreach (String field in new String[] { "ProjectGuid", "Keyword", "WindowsTargetPlatformVersion", "TargetFrameworkVersion" /*, "RootNamespace"*/ })
                                 {
-                                    if (!CopyField(project, field, node) && field == "Keyword")
+                                    bool bCopied = CopyField(project, field, node);
+
+                                    if (!bCopied && field == "Keyword")
                                     {
                                         if (Path.GetExtension(path).ToLower() == ".androidproj")
                                         {
@@ -839,6 +845,10 @@ public class Project
                                                 project.Keyword = EKeyword.AntPackage;
                                         }
                                     } //if
+
+                                    // Is defined only in vs2017 or higher.
+                                    if (bCopied && field == "WindowsTargetPlatformVersion" && project.fileFormatVersion < 2017)
+                                        project.fileFormatVersion = 2017;
 
                                     if (project.ProjectGuid != null && loadLevel == 1)
                                         return project;

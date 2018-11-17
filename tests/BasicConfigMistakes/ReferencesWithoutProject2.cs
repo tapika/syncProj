@@ -8,7 +8,7 @@ partial class Builder : SolutionProjectBuilder
         try
         {
             project("test");
-            references("test_DoesNotExists.vcxproj", "");
+            referencesProject("test_DoesNotExists.vcxproj", "");
         }
         catch (Exception ex)
         {

@@ -11,7 +11,7 @@ class Builder: SolutionProjectBuilder
                 configurations(  "Debug","Release" );
                 platforms( "Win32","x64" );
                 uuid("60378CC4-9C63-4026-962D-35FD3447499D");
-                vsver(2015);
+                vsver(2017);
                 projectScript("out_MFCApplication1.cs");
                 flags("MFC");
                 systemversion("8.1");

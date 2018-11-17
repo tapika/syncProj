@@ -37,7 +37,7 @@ class Builder: SolutionProjectBuilder
         targetdir("bin/$(Configuration)_$(Platform)");
         objdir("obj/$(ProjectName)_$(Configuration)_$(Platform)");
         GradleProjectDirectory();
-        references("out_native_lib" + vsSuffix +  ".vcxproj", "");
+        referencesProject("out_native_lib" + vsSuffix +  ".vcxproj", "");
         kind("Application", "gradlepackage");
         GradleVersion("4.1");
         files(

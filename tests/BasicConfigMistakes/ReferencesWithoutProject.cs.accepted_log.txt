@@ -3,9 +3,9 @@ ReferencesWithoutProject.cs :
 ReferencesWithoutProject.cs(11,13): error: Referenced project 'test_DoesNotExists.vcxproj' does not exists.
 You can avoid loading project by specifying project guid after project path, for example:
 
-    references("project.vcxproj", "{E3A9D624-DA07-DBBF-B4DD-0E33BE2390AE}" ); 
+    referencesProject("project.vcxproj", "{E3A9D624-DA07-DBBF-B4DD-0E33BE2390AE}" ); 
 
 or if you're using syncProj on that project:
 
-    references("project.vcxproj", "unique name" ); or 
-    references("project.vcxproj", "" );  - same as references("project.vcproj", "project" );
+    referencesProject("project.vcxproj", "unique name" ); or 
+    referencesProject("project.vcxproj", "" );  - same as referencesProject("project.vcproj", "project" );
