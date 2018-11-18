@@ -837,6 +837,21 @@
             C# - location of .dll assembly
             </summary>
         </member>
+        <member name="F:FileInfo.Private">
+            <summary>
+            "Copy Local" = true|false
+            </summary>
+        </member>
+        <member name="F:FileInfo.CopyLocalSatelliteAssemblies">
+            <summary>
+            Copy Local Satellite Assemblies
+            </summary>
+        </member>
+        <member name="F:FileInfo.ReferenceOutputAssembly">
+            <summary>
+            Reference Output Assembly
+            </summary>
+        </member>
         <member name="F:FileInfo.fileConfig">
             <summary>
             Per configuration specific file configuration. It's acceptable for this list to have 0 entries if no file specific configuration

@@ -727,7 +727,7 @@ public class SolutionProjectBuilder
         List<Tuple<String, bool>> dirs = null;
 
         // If at least one name does not contains checking disabled.
-        if (assemblyNames.Count(x => x.StartsWith("?") ) != 0)
+        if (assemblyNames.Count(x => !x.StartsWith("?") ) != 0)
         {
             String netVer = m_project.TargetFrameworkVersion;
             if (netVer == null) netVer = "v4.0";
@@ -763,7 +763,7 @@ public class SolutionProjectBuilder
                     {
                         String dll = Path.Combine(dir.Item1, name);
 
-                        if (Path.GetExtension(dll) == "")
+                        if (Path.GetExtension(dll).ToLower() != ".dll")
                             dll += ".dll";
 
                         if (File.Exists(dll))
@@ -778,8 +778,8 @@ public class SolutionProjectBuilder
                 if (!bExists)
                 {
                     String paths = String.Join("\r\n", dirs.Select( x => "    " + x.Item1).ToArray() );
-                    throw new Exception2("Assembly referred by name '" + name + "' was not found.\r\n" +
-                        "Was searching within following paths: \r\n" + paths );
+                    throw new Exception2("Assembly referred by name '" + name + "' was not found.\r\n\r\n" +
+                        "was searching within following paths: \r\n" + paths );
                 }
             }
 
@@ -787,7 +787,14 @@ public class SolutionProjectBuilder
             fi.includeType = IncludeType.Reference;
             if (bIsHintPath)
             {
-                fi.relativePath = Path.GetFileName(name);
+                //
+                // Theoretically name should be resolved from assembly name, which can be different from
+                // .dll filename (Only in .net you have "System" assembly name => "System.dll" assembly filename)
+                // But when loading project visual studio ignores 'Include=<name>' and replaces it with
+                // correct assembly name. From our perspective it does not matter as VS does not try to save project
+                // back
+                //
+                fi.relativePath = Path.GetFileNameWithoutExtension(name);
                 fi.HintPath = name;
             }
             else

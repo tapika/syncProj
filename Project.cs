@@ -809,7 +809,19 @@ public class Project
                                 f.relativePath = f.relativePath.Substring(2);
 
                             if (f.includeType == IncludeType.Reference)
-                                f.HintPath = igNode.Elements().Where(x => x.Name.LocalName == "HintPath").FirstOrDefault()?.Value;
+                            {
+                                foreach (XElement refNode in igNode.Elements())
+                                {
+                                    // HintPath, Private, CopyLocalSatelliteAssemblies, ReferenceOutputAssembly
+                                    FieldInfo fi = f.GetType().GetField(refNode.Name.LocalName);
+                                    if (fi == null)
+                                        continue;
+
+                                    // "false" to false for bool
+                                    object oValue = Convert.ChangeType(refNode.Value, fi.FieldType);
+                                    fi.SetValue(f, oValue);
+                                }
+                            }
 
                             if (f.includeType == IncludeType.ClCompile || f.includeType == IncludeType.CustomBuild)
                                 project.ExtractCompileOptions(igNode, f, (f.includeType == IncludeType.CustomBuild) ? "customBuildRule" : null );
@@ -1761,8 +1773,23 @@ public class Project
                 }
             }
 
+            bool bCanTerminateIncludeTag = fi.fileConfig.Count == 0;
 
-            if (fi.fileConfig.Count == 0)
+            String[] referenceFields = new[] { "HintPath", "Private", "CopyLocalSatelliteAssemblies", "ReferenceOutputAssembly" };
+
+            foreach (String fName in referenceFields)
+            {
+                object v = fi.GetType().GetField(fName).GetValue(fi);
+                if (v == null) continue;
+
+                if (v is String)
+                    bCanTerminateIncludeTag = false;
+
+                if (v is bool && ((bool) v) != true)
+                    bCanTerminateIncludeTag = false;
+            }
+
+            if (bCanTerminateIncludeTag)
             {
                 o.AppendLine(" />");
             }
@@ -1770,12 +1797,22 @@ public class Project
             {
                 o.AppendLine(">");
 
-                // We have file specific configuration options
-                for (int iConf = 0; iConf < configurations.Count; iConf++)
+                foreach (String fName in referenceFields)
                 {
-                    String confName = configurations[iConf];
-                    FileConfigurationInfo conf = fi.fileConfig[iConf];
-                    DumpConfiguration(conf, confName, projectConfig[iConf]);
+                    object v = fi.GetType().GetField(fName).GetValue(fi);
+                    if((v is bool && ((bool) v) != true) || v != null)
+                        o.AppendLine("      <" + fName + ">" + v.ToString() + "</" + fName + ">");
+                }
+
+                // We have file specific configuration options
+                if (fi.fileConfig.Count != 0)
+                {
+                    for (int iConf = 0; iConf < configurations.Count; iConf++)
+                    {
+                        String confName = configurations[iConf];
+                        FileConfigurationInfo conf = fi.fileConfig[iConf];
+                        DumpConfiguration(conf, confName, projectConfig[iConf]);
+                    }
                 }
                 o.AppendLine("    </" + fi.includeType + ">");
             } //if-else

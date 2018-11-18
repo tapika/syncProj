@@ -594,6 +594,21 @@ public class FileInfo
     public String HintPath;
 
     /// <summary>
+    /// "Copy Local" = true|false
+    /// </summary>
+    public bool Private = true;
+
+    /// <summary>
+    /// Copy Local Satellite Assemblies
+    /// </summary>
+    public bool CopyLocalSatelliteAssemblies = true;
+
+    /// <summary>
+    /// Reference Output Assembly
+    /// </summary>
+    public bool ReferenceOutputAssembly = true;
+
+    /// <summary>
     /// Per configuration specific file configuration. It's acceptable for this list to have 0 entries if no file specific configuration
     /// is introduced.
     /// </summary>

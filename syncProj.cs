@@ -727,8 +727,14 @@ public class SolutionOrProject
             // ---------------------------------------------------------------------------------
             List<FileInfo> asmReferences = proj.files.Where(x => x.includeType == IncludeType.Reference).ToList();
             foreach (FileInfo fi in asmReferences)
-                o.AppendLine(head + "    references(\"" + fi.relativePath.Replace("\\", "/") + "\");");
+            {
+                String name = fi.relativePath;
 
+                if (!String.IsNullOrEmpty(fi.HintPath))
+                    name = fi.HintPath;
+
+                o.AppendLine(head + "    references(\"" + name + "\");");
+            }
 
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
 
