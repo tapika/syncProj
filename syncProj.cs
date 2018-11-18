@@ -726,14 +726,69 @@ public class SolutionOrProject
             // Assembly references
             // ---------------------------------------------------------------------------------
             List<FileInfo> asmReferences = proj.files.Where(x => x.includeType == IncludeType.Reference).ToList();
-            foreach (FileInfo fi in asmReferences)
+            asmReferences.Sort(delegate (FileInfo f1, FileInfo f2)
+                {
+                    int r = f1.GetSortTag() - f2.GetSortTag();
+                    if (r != 0)
+                        return r;
+
+                    return f1.relativePath.CompareTo(f2.relativePath);
+                }
+            );
+
+            bool bOpenedJustNow = false;
+            bool bOpened = false;
+            int sortTag = -1;
+
+            for( int iAsmRef = 0; iAsmRef < asmReferences.Count; iAsmRef++)
             {
+                FileInfo fi = asmReferences[iAsmRef];
+                FileInfo nextFi = (iAsmRef+1 < asmReferences.Count) ? asmReferences[iAsmRef+1]: null;
                 String name = fi.relativePath;
 
                 if (!String.IsNullOrEmpty(fi.HintPath))
                     name = fi.HintPath;
 
-                o.AppendLine(head + "    references(\"" + name + "\");");
+                if (!bOpened)
+                {
+                    o.Append(head + "    references(");
+                    sortTag = fi.GetSortTag();
+                    bOpened = true;
+                    bOpenedJustNow = true;
+                }
+                else {
+                    bOpenedJustNow = false;
+                }
+
+                bool bClose = nextFi == null || fi.GetSortTag() != nextFi.GetSortTag();
+
+                if (!(bOpenedJustNow && bClose))
+                {
+                    o.AppendLine();
+                    o.Append(head + "       ");
+                }
+
+                o.Append("\"" + name + "\"");
+
+                if (bClose)
+                {
+                    bOpened = false;
+                    if (!bOpenedJustNow)
+                    {
+                        o.AppendLine();
+                        o.Append(head + "    ");
+                    }
+
+                    String args = fi.GetCopyFlagsAsCallParameters();
+                    if (args != "")
+                        o.Append(",");
+
+                    o.AppendLine(args + ");");
+                }
+                else
+                {
+                    o.Append(",");
+                }
             }
 
             Dictionary2<String, List<String>> lines2dump = new Dictionary2<string, List<string>>();
@@ -801,6 +856,9 @@ public class SolutionOrProject
 
             if (proj.Keyword == EKeyword.MFCProj)
                 o.AppendLine(head + "    flags" + brO + "\"MFC\"" + brC);
+
+            if(proj.CLRSupport != ECLRSupport.None)
+                o.AppendLine(head + "    commonLanguageRuntime" + brO + "ECLRSupport." + proj.CLRSupport.ToString() + brC);
 
             if (!String.IsNullOrEmpty(proj.WindowsTargetPlatformVersion))
                 o.AppendLine(head + "    systemversion" + brO + "\"" + proj.WindowsTargetPlatformVersion + "\"" + brC);

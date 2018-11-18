@@ -363,6 +363,11 @@ public class Project
     public List<bool?> slnDeployProject = null;
 
     /// <summary>
+    /// Enable clr support
+    /// </summary>
+    public ECLRSupport CLRSupport = ECLRSupport.None;
+
+    /// <summary>
     /// Project guid, for example "{65787061-7400-0000-0000-000000000000}"
     /// </summary>
     public string ProjectGuid;
@@ -571,11 +576,20 @@ public class Project
             break;
         }
 
-        if (fi.FieldType == typeof(EKeyword))
+        // EKeyword, ECLRSupport
+        if (fi.FieldType.IsEnum)
         {
             if (oValue == null)
                 return false;
-            oValue = Enum.Parse(typeof(EKeyword), (String)oValue);
+
+            // ECLRSupport, enum resolving via Description-attribute.
+            if (fi.FieldType.GetCustomAttribute<DescriptionAttribute>() != null)
+            {
+                int value = fi.FieldType.GetEnumNames().Select(x => fi.FieldType.GetMember(x)[0].GetCustomAttribute<DescriptionAttribute>().Description).ToList().IndexOf(oValue.ToString());
+                oValue = fi.FieldType.GetEnumNames()[value];
+            }
+
+            oValue = Enum.Parse(fi.FieldType, (String)oValue);
         }
 
         fi.SetValue(o2set, oValue);
@@ -818,7 +832,11 @@ public class Project
                                         continue;
 
                                     // "false" to false for bool
-                                    object oValue = Convert.ChangeType(refNode.Value, fi.FieldType);
+                                    Type fieldType = Nullable.GetUnderlyingType(fi.FieldType);      //typeof(bool?) => typeof(bool)
+                                    if (fieldType == null)  
+                                        fieldType = fi.FieldType;
+
+                                    object oValue = Convert.ChangeType(refNode.Value, fieldType);
                                     fi.SetValue(f, oValue);
                                 }
                             }
@@ -841,7 +859,9 @@ public class Project
                         switch (label)
                         {
                             case "Globals":
-                                foreach (String field in new String[] { "ProjectGuid", "Keyword", "WindowsTargetPlatformVersion", "TargetFrameworkVersion" /*, "RootNamespace"*/ })
+                                foreach (String field in new String[] { "ProjectGuid",
+                                    "Keyword", "WindowsTargetPlatformVersion",
+                                    "TargetFrameworkVersion", "CLRSupport" /*, "RootNamespace"*/ })
                                 {
                                     bool bCopied = CopyField(project, field, node);
 
@@ -1264,6 +1284,12 @@ public class Project
         if (!bIsAntPackagingProject && !bIsGradlePackagingProject)
             o.AppendLine("    <ProjectGuid>" + ProjectGuid + "</ProjectGuid>");
 
+        if (CLRSupport != ECLRSupport.None)
+        {
+            String value = typeof(ECLRSupport).GetMember(CLRSupport.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
+            o.AppendLine("    <CLRSupport>" + value + "</CLRSupport>");
+        }
+
         //
         // Copied from premake5: VS 2013 adds the <IgnoreWarnCompileDuplicatedFilename> to get rid
         // of spurious warnings when the same filename is present in different
@@ -1677,6 +1703,21 @@ public class Project
 
         IncludeType inctype = IncludeType.Invalid;
         bool bItemGroupOpened = false;
+
+        files.Sort((FileInfo f1, FileInfo f2) =>
+        {
+            int r = ((int)f1.includeType - (int)f2.includeType);
+            if (r != 0)
+                return r;
+
+            // Reference types are reordered by default by Visual studio, we reorder by name as well.
+            if ( f1.includeType == IncludeType.Reference )
+                return f1.relativePath.CompareTo(f2.relativePath);
+
+            // Don't sort filenames if does not need to.
+            return 0;
+        });
+
         //
         // Dump files array
         //
@@ -1785,7 +1826,7 @@ public class Project
                 if (v is String)
                     bCanTerminateIncludeTag = false;
 
-                if (v is bool && ((bool) v) != true)
+                if (v is bool && ((bool) v) != fi.GetDefaultValue(fName))
                     bCanTerminateIncludeTag = false;
             }
 
@@ -1800,7 +1841,16 @@ public class Project
                 foreach (String fName in referenceFields)
                 {
                     object v = fi.GetType().GetField(fName).GetValue(fi);
-                    if((v is bool && ((bool) v) != true) || v != null)
+
+                    if (v is bool)
+                    {
+                        if ((bool)v == fi.GetDefaultValue(fName))
+                            continue;
+
+                        v = ((bool)v).ToString().ToLower();
+                    }
+
+                    if (v != null)
                         o.AppendLine("      <" + fName + ">" + v.ToString() + "</" + fName + ">");
                 }
 
@@ -1921,6 +1971,9 @@ public class Project
         foreach (String enumName in typeof(IncludeType).GetEnumNames())
         {
             IncludeType elemType = (IncludeType)Enum.Parse(typeof(IncludeType), enumName);
+
+            if (elemType == IncludeType.Reference)
+                continue;       // Not serialized into .filters file
 
             // Should not reflect to filter file.
             if (elemType == IncludeType.ProjectReference)

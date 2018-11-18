@@ -719,42 +719,44 @@ public class SolutionProjectBuilder
     /// <summary>
     /// For C++/cli - adds reference to specific assembly
     /// </summary>
-    /// <param name="assemblyNames">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
-    /// supress assembly name check</param>
-    static public void references(params String[] assemblyNames)
+    /// <param name="assemblyNamesAndParameters">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
+    /// supress assembly name check. Assemby name can be followed by extra 0-3 booleans to configure assembly copy options</param>
+    static public void references(params object[] assemblyNamesAndParameters)
     {
         requireProjectSelected();
         List<Tuple<String, bool>> dirs = null;
+        String[] referenceFields = new[] { "HintPath", "Private", "CopyLocalSatelliteAssemblies", "ReferenceOutputAssembly" };
+        int iFilesFromIndex = m_project.files.Count;
 
-        // If at least one name does not contains checking disabled.
-        if (assemblyNames.Count(x => !x.StartsWith("?") ) != 0)
+        for ( int i = 0; i < assemblyNamesAndParameters.Length; i++)
         {
-            String netVer = m_project.TargetFrameworkVersion;
-            if (netVer == null) netVer = "v4.0";
-
-            var dotnetDirs = ToolLocationHelper.GetPathToReferenceAssemblies(".NETFramework", netVer, "");
-            if (dotnetDirs.Count == 0)
-                throw new Exception2("Cannot locate .NET Framework " + netVer + "directory, is it possible that it's not installed ?\r\n"
-                    + "Use TargetFrameworkVersion() to specify correct .NET version");
-
-            dirs = dotnetDirs.Select(x => new Tuple<String, bool>(x, false)).ToList();
-            dirs.Add(new Tuple<String, bool>(m_project.getProjectFolder(), true));
-        }
-
-        foreach (String _name in assemblyNames)
-        {
-            String name = _name;
+            String name = assemblyNamesAndParameters[i].ToString();
             bool bCheck = true;
-            if (_name.StartsWith("?"))
+            if (name.StartsWith("?"))
             {
                 bCheck = false;
-                name = _name.Substring(1);
+                name = name.Substring(1);
             }
 
             bool bIsHintPath = name.IndexOf('\\') != -1 || Path.GetExtension(name) != "";
 
             if (bCheck)
             {
+                if (dirs == null)
+                {
+                    String netVer = m_project.TargetFrameworkVersion;
+                    if (netVer == null) netVer = "v4.0";
+
+                    var dotnetDirs = ToolLocationHelper.GetPathToReferenceAssemblies(".NETFramework", netVer, "");
+                    if (dotnetDirs.Count == 0)
+                        throw new Exception2("Cannot locate .NET Framework " + netVer + "directory, is it possible that it's not installed ?\r\n"
+                            + "Use TargetFrameworkVersion() to specify correct .NET version");
+
+                    dirs = dotnetDirs.Select(x => new Tuple<String, bool>(x, false)).ToList();
+                    dirs.Add(new Tuple<String, bool>(m_project.getProjectFolder(), true));
+                }
+
+
                 bool bExists = false;
                 if (Path.IsPathRooted(name))
                     bExists = File.Exists(name);
@@ -802,6 +804,32 @@ public class SolutionProjectBuilder
                 fi.relativePath = name;
             }
             m_project.files.Add(fi);
+
+            //
+            // If next parameter is boolean, we mark all freshly added files with same copy options
+            //
+            if (i + 1 < assemblyNamesAndParameters.Length && assemblyNamesAndParameters[i + 1] is bool)
+            {
+                bool Private = (bool)assemblyNamesAndParameters[++i];
+                bool CopyLocalSatelliteAssemblies = true;
+                bool ReferenceOutputAssembly = true;
+
+                if (i + 1 < assemblyNamesAndParameters.Length && assemblyNamesAndParameters[i + 1] is bool)
+                    CopyLocalSatelliteAssemblies = (bool)assemblyNamesAndParameters[++i];
+
+                if (i + 1 < assemblyNamesAndParameters.Length && assemblyNamesAndParameters[i + 1] is bool)
+                    ReferenceOutputAssembly = (bool)assemblyNamesAndParameters[++i];
+
+                for (int iFile = iFilesFromIndex; iFile < m_project.files.Count; iFile++)
+                {
+                    fi = m_project.files[iFile];
+                    fi.Private = Private;
+                    fi.CopyLocalSatelliteAssemblies = CopyLocalSatelliteAssemblies;
+                    fi.ReferenceOutputAssembly = ReferenceOutputAssembly;
+                }
+
+                iFilesFromIndex = m_project.files.Count;
+            }
         }
     }
 
@@ -1338,7 +1366,26 @@ public class SolutionProjectBuilder
     /// <param name="clr">clr value</param>
     static public void commonLanguageRuntime(ECLRSupport clr)
     {
-        foreach (var conf in getSelectedProjectConfigurations())
+        List<Configuration> selConfs = getSelectedProjectConfigurations();
+        List<Configuration> projConfs = m_project.projectConfig;
+
+        bool bProjectSelected = selConfs.Count == projConfs.Count;
+
+        if (bProjectSelected)
+            for (int i = 0; i < selConfs.Count; i++)
+                if (selConfs[i] != projConfs[i])
+                {
+                    bProjectSelected = false;
+                    break;
+                }
+
+        if (bProjectSelected)
+        {
+            m_project.CLRSupport = clr;
+            return;
+        }
+
+        foreach (var conf in selConfs)
         {
             conf.CLRSupport = clr;
             optimize_symbols_recheck(conf);

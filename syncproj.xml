@@ -233,6 +233,11 @@
             true to deploy project, false - not, null - invalid. List is null if not used at all.
             </summary>
         </member>
+        <member name="F:Project.CLRSupport">
+            <summary>
+            Enable clr support
+            </summary>
+        </member>
         <member name="F:Project.ProjectGuid">
             <summary>
             Project guid, for example "{65787061-7400-0000-0000-000000000000}"
@@ -513,6 +518,18 @@
             <summary>
             Defines what needs to be done with given item. Not all project types support all enumerations - for example
             packaging projects / C# projects does not support CustomBuild.
+            
+            Order of IncludeType must be the same as appear in .vcxproj (first comes first)
+            </summary>
+        </member>
+        <member name="F:IncludeType.Reference">
+            <summary>
+            C# references to .net assemblies
+            </summary>
+        </member>
+        <member name="F:IncludeType.ClCompile">
+            <summary>
+            Source codes (.cpp) files
             </summary>
         </member>
         <member name="F:IncludeType.ClInclude">
@@ -523,11 +540,6 @@
         <member name="F:IncludeType.CustomBuild">
             <summary>
             Any custom file with custom build step
-            </summary>
-        </member>
-        <member name="F:IncludeType.ClCompile">
-            <summary>
-            Source codes (.cpp) files
             </summary>
         </member>
         <member name="F:IncludeType.None">
@@ -558,11 +570,6 @@
         <member name="F:IncludeType.Invalid">
             <summary>
             Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
-            </summary>
-        </member>
-        <member name="F:IncludeType.Reference">
-            <summary>
-            C# references to .net assemblies
             </summary>
         </member>
         <member name="F:IncludeType.Compile">
@@ -839,7 +846,7 @@
         </member>
         <member name="F:FileInfo.Private">
             <summary>
-            "Copy Local" = true|false
+            "Copy Local" = true|false. This option is by default true for local assemblies and false for system assemblies.
             </summary>
         </member>
         <member name="F:FileInfo.CopyLocalSatelliteAssemblies">
@@ -850,6 +857,23 @@
         <member name="F:FileInfo.ReferenceOutputAssembly">
             <summary>
             Reference Output Assembly
+            </summary>
+        </member>
+        <member name="M:FileInfo.GetSortTag">
+            <summary>
+            Will be used to determine how to sort options, reflects to bool copy options above.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:FileInfo.GetDefaultValue(System.String)">
+            <summary>
+            Queries default value for specific field.
+            </summary>
+            <param name="field">Field name</param>
+        </member>
+        <member name="M:FileInfo.GetCopyFlagsAsCallParameters">
+            <summary>
+            Gets Private,CopyLocalSatelliteAssemblies,ReferenceOutputAssembly as call arguments, e.g. "true, false, false"
             </summary>
         </member>
         <member name="F:FileInfo.fileConfig">
@@ -967,7 +991,7 @@
         </member>
         <member name="F:ECLRSupport.None">
             <summary>
-            Common Language Runtime Support is not enabled.
+            Common Language Runtime Support is not enabled or use same value as parent project is configured.
             </summary>
         </member>
         <member name="F:ECLRSupport.True">
@@ -1939,12 +1963,12 @@
             </summary>
             <param name="fileGuidList">Project file path + project guid list</param>
         </member>
-        <member name="M:SolutionProjectBuilder.references(System.String[])">
+        <member name="M:SolutionProjectBuilder.references(System.Object[])">
             <summary>
             For C++/cli - adds reference to specific assembly
             </summary>
-            <param name="assemblyNames">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
-            supress assembly name check</param>
+            <param name="assemblyNamesAndParameters">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
+            supress assembly name check. Assemby name can be followed by extra 0-3 booleans to configure assembly copy options</param>
         </member>
         <member name="M:SolutionProjectBuilder.group(System.String)">
             <summary>

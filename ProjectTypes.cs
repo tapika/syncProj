@@ -170,9 +170,21 @@ public enum EWarningLevel
 /// <summary>
 /// Defines what needs to be done with given item. Not all project types support all enumerations - for example
 /// packaging projects / C# projects does not support CustomBuild.
+/// 
+/// Order of IncludeType must be the same as appear in .vcxproj (first comes first)
 /// </summary>
 public enum IncludeType
 {
+    /// <summary>
+    /// C# references to .net assemblies
+    /// </summary>
+    Reference,
+
+    /// <summary>
+    /// Source codes (.cpp) files
+    /// </summary>
+    ClCompile,
+
     /// <summary>
     /// Header file (.h)
     /// </summary>
@@ -182,11 +194,6 @@ public enum IncludeType
     /// Any custom file with custom build step
     /// </summary>
     CustomBuild,
-
-    /// <summary>
-    /// Source codes (.cpp) files
-    /// </summary>
-    ClCompile,
 
     /// <summary>
     /// .def / .bat
@@ -223,11 +230,6 @@ public enum IncludeType
     /// Intentionally not valid value, so can be replaced with correct one. (Visual studio does not supports one)
     /// </summary>
     Invalid,
-
-    /// <summary>
-    /// C# references to .net assemblies
-    /// </summary>
-    Reference,
 
     /// <summary>
     /// C# - source codes to compile
@@ -594,9 +596,9 @@ public class FileInfo
     public String HintPath;
 
     /// <summary>
-    /// "Copy Local" = true|false
+    /// "Copy Local" = true|false. This option is by default true for local assemblies and false for system assemblies.
     /// </summary>
-    public bool Private = true;
+    public bool? Private;
 
     /// <summary>
     /// Copy Local Satellite Assemblies
@@ -607,6 +609,78 @@ public class FileInfo
     /// Reference Output Assembly
     /// </summary>
     public bool ReferenceOutputAssembly = true;
+
+    /// <summary>
+    /// Will be used to determine how to sort options, reflects to bool copy options above.
+    /// </summary>
+    /// <returns></returns>
+    public int GetSortTag()
+    {
+        int tag = 0;
+        if (ReferenceOutputAssembly)
+            tag += 1;
+
+        if (CopyLocalSatelliteAssemblies)
+            tag += 2;
+
+        if (Private.HasValue)
+            if( Private.Value )
+                tag += 8;
+            else
+                tag += 4;
+
+        return tag;
+    }
+
+
+    /// <summary>
+    /// Queries default value for specific field.
+    /// </summary>
+    /// <param name="field">Field name</param>
+    public bool GetDefaultValue(String field)
+    {
+        switch (field)
+        {
+            default:
+                //CopyLocalSatelliteAssemblies or ReferenceOutputAssembly
+                return true;
+            case "Private":
+                if (HintPath == null)
+                    return false;
+                return true;
+        }
+    }
+
+
+    /// <summary>
+    /// Gets Private,CopyLocalSatelliteAssemblies,ReferenceOutputAssembly as call arguments, e.g. "true, false, false"
+    /// </summary>
+    public String GetCopyFlagsAsCallParameters()
+    {
+        String r = "";
+
+        if (!ReferenceOutputAssembly)
+            r = ",false";
+
+        if (r != "" || !CopyLocalSatelliteAssemblies)
+            r = "," + CopyLocalSatelliteAssemblies.ToString().ToLower() + r;
+
+        if (r != "")
+        {
+            if (Private.HasValue)
+                r = Private.Value.ToString().ToLower() + r;
+            else
+                r = (HintPath != null).ToString().ToLower();
+        }
+        else {
+            if (Private.HasValue)
+                r = Private.Value.ToString().ToLower();
+        }
+
+        return r;
+    }
+
+
 
     /// <summary>
     /// Per configuration specific file configuration. It's acceptable for this list to have 0 entries if no file specific configuration
@@ -754,7 +828,7 @@ public enum ECharacterSet
 public enum ECLRSupport
 {
     /// <summary>
-    /// Common Language Runtime Support is not enabled.
+    /// Common Language Runtime Support is not enabled or use same value as parent project is configured.
     /// </summary>
     [Description("false")]
     None = 0,
