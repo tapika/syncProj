@@ -126,17 +126,17 @@
     <IntDir>obj\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="build.gradle" />
+    <None Include="gradlew.bat" />
+    <None Include="getSignInfo.bat" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="out_native_lib_vs2015.vcxproj">
       <Project>{DF2CEA6E-DA03-8AA4-DE9C-85320B4FAA41}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <JavaCompile Include="src\main\java\MainActivity.java" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="build.gradle" />
-    <None Include="gradlew.bat" />
-    <None Include="getSignInfo.bat" />
   </ItemGroup>
   <Import Project="$(AndroidTargetsPath)\Android.targets" />
   <ImportGroup Label="ExtensionTargets" />

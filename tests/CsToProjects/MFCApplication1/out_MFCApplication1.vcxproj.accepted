@@ -156,29 +156,6 @@
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="MFCApplication1.cs">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
-echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
-echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
-echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"></Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
-echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'"></Message>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="MFCApplication1.h" />
     <ClInclude Include="MFCApplication1Dlg.h" />
     <ClInclude Include="Resource.h" />
@@ -199,10 +176,33 @@ echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
     <ResourceCompile Include="MFCApplication1.rc" />
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="MFCApplication1.cs">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">&quot;..\..\..\syncproj.exe&quot; $(ProjectDir)MFCApplication1.cs
+echo 1&gt;$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntermediateOutputPath)MFCApplication1_cs_log.txt</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'"></Message>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="res\MFCApplication1.rc2" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\MFCApplication1.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -181,14 +181,19 @@ public enum IncludeType
     Reference,
 
     /// <summary>
+    /// Header file (.h)
+    /// </summary>
+    ClInclude,
+
+    /// <summary>
     /// Source codes (.cpp) files
     /// </summary>
     ClCompile,
 
     /// <summary>
-    /// Header file (.h)
+    /// .rc / resource files.
     /// </summary>
-    ClInclude,
+    ResourceCompile,
 
     /// <summary>
     /// Any custom file with custom build step
@@ -201,19 +206,14 @@ public enum IncludeType
     None,
 
     /// <summary>
-    /// .txt files.
-    /// </summary>
-    Text,
-
-    /// <summary>
-    /// .rc / resource files.
-    /// </summary>
-    ResourceCompile,
-
-    /// <summary>
     /// .ico files.
     /// </summary>
     Image,
+
+    /// <summary>
+    /// .txt files.
+    /// </summary>
+    Text,
 
     // Following enumerations are used in android packaging project (.androidproj)
     Content,

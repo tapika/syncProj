@@ -1380,15 +1380,16 @@ public class SolutionProjectBuilder
                 }
 
         if (bProjectSelected)
-        {
             m_project.CLRSupport = clr;
-            return;
-        }
 
         foreach (var conf in selConfs)
         {
-            conf.CLRSupport = clr;
-            optimize_symbols_recheck(conf);
+            if( clr == m_project.CLRSupport)
+                conf.CLRSupport = ECLRSupport.None; //Project selected CLR settings, no need to configure per configuration
+            else
+                conf.CLRSupport = clr;
+
+            m_project.optimize_symbols_recheck(conf);
         }
     }
 
@@ -1516,7 +1517,7 @@ public class SolutionProjectBuilder
         {
             conf.GenerateDebugInformation = d;
             conf.UseDebugLibraries = bUseDebugLibraries;
-            optimize_symbols_recheck(conf);
+            m_project.optimize_symbols_recheck(conf);
         } //foreach
     }
 
@@ -2212,52 +2213,6 @@ public class SolutionProjectBuilder
 
 
     /// <summary>
-    /// optimize and symbols reflect to debug format chosen.
-    /// </summary>
-    /// <param name="fconf"></param>
-    static void optimize_symbols_recheck(FileConfigurationInfo fconf)
-    {
-        Configuration conf = fconf as Configuration;
-        if (conf == null) 
-            return;     // Project wide configuration only.
-
-        EDebugInformationFormat debugFormat = EDebugInformationFormat.None;
-        if (conf.UseDebugLibraries)
-        {
-            if (m_project.Keyword == EKeyword.Android)
-            {
-                // Android
-                debugFormat = EDebugInformationFormat.FullDebug;
-            }
-            else
-            {
-                //
-                // cl : Command line error D8016: '/ZI' and '/GL' command-line options are incompatible =>
-                // If WholeProgramOptimization == UseLinkTimeCodeGeneration is in use - cannot use EditAndContinue
-
-                // Windows
-                if (conf.Optimization == EOptimization.Full || conf.WholeProgramOptimization == EWholeProgramOptimization.UseLinkTimeCodeGeneration ||
-                    // cl : Command line error D8016: '/ZI' and '/clr' command-line options are incompatible
-                    conf.CLRSupport != ECLRSupport.None)
-                {
-                    debugFormat = EDebugInformationFormat.ProgramDatabase;
-                }
-                else
-                {
-                    debugFormat = EDebugInformationFormat.EditAndContinue;
-                }
-            }
-        }
-        else 
-        { 
-            debugFormat = EDebugInformationFormat.None;
-        }
-
-        conf.DebugInformationFormat = debugFormat;
-    } //optimize_symbols_recheck
-
-
-    /// <summary>
     /// Specifies optimization level to be used.
     /// </summary>
     /// <param name="optLevel">Optimization level to enable - one of following: off, size, speed, on(or full)</param>
@@ -2302,7 +2257,7 @@ public class SolutionProjectBuilder
             conf.IntrinsicFunctions = bIntrinsicFunctions;
             conf.EnableCOMDATFolding = bEnableCOMDATFolding;
             conf.OptimizeReferences = bOptimizeReferences;
-            optimize_symbols_recheck(conf);
+            m_project.optimize_symbols_recheck(conf);
         }
     } //optimize
 
@@ -2380,7 +2335,7 @@ public class SolutionProjectBuilder
         foreach (var conf in getSelectedProjectConfigurations())
         {
             conf.WholeProgramOptimization = wpgen;
-            optimize_symbols_recheck(conf);
+            m_project.optimize_symbols_recheck(conf);
         }
     }
 

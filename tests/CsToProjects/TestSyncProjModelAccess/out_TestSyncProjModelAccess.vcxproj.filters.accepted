@@ -9,6 +9,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="some.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <CustomBuild Include="x86\1.asm">
       <Filter>x86</Filter>
     </CustomBuild>
@@ -21,8 +24,5 @@
     <CustomBuild Include="x86\subdir\4.asm">
       <Filter>x86\subdir</Filter>
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="some.cpp" />
   </ItemGroup>
 </Project>

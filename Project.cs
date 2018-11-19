@@ -2070,6 +2070,58 @@ public class Project
     }
 
     /// <summary>
+    /// optimize and symbols reflect to debug format chosen.
+    /// </summary>
+    /// <param name="fconf"></param>
+    public void optimize_symbols_recheck(FileConfigurationInfo fconf)
+    {
+        Configuration conf = fconf as Configuration;
+        if (conf == null)
+            return;     // Project wide configuration only.
+
+        EDebugInformationFormat debugFormat = EDebugInformationFormat.None;
+        if (conf.UseDebugLibraries)
+        {
+            if (Keyword == EKeyword.Android)
+            {
+                // Android
+                debugFormat = EDebugInformationFormat.FullDebug;
+            }
+            else
+            {
+                ECLRSupport clr = conf.CLRSupport;
+
+                if (clr == ECLRSupport.None)    //Reflect from project
+                    clr = CLRSupport;
+
+                
+                //
+                // cl : Command line error D8016: '/ZI' and '/GL' command-line options are incompatible =>
+                // If WholeProgramOptimization == UseLinkTimeCodeGeneration is in use - cannot use EditAndContinue
+
+                // Windows
+                if (conf.Optimization == EOptimization.Full || conf.WholeProgramOptimization == EWholeProgramOptimization.UseLinkTimeCodeGeneration ||
+                    // cl : Command line error D8016: '/ZI' and '/clr' command-line options are incompatible
+                    clr != ECLRSupport.None )
+                {
+                    debugFormat = EDebugInformationFormat.ProgramDatabase;
+                }
+                else
+                {
+                    debugFormat = EDebugInformationFormat.EditAndContinue;
+                }
+            }
+        }
+        else
+        {
+            debugFormat = EDebugInformationFormat.None;
+        }
+
+        conf.DebugInformationFormat = debugFormat;
+    } //optimize_symbols_recheck
+
+
+    /// <summary>
     /// Clones project
     /// </summary>
     public Project Clone()

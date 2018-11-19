@@ -358,6 +358,12 @@
             <param name="path">path. By default same as project directory.</param>
             <returns>true if rooted.</returns>
         </member>
+        <member name="M:Project.optimize_symbols_recheck(FileConfigurationInfo)">
+            <summary>
+            optimize and symbols reflect to debug format chosen.
+            </summary>
+            <param name="fconf"></param>
+        </member>
         <member name="M:Project.Clone">
             <summary>
             Clones project
@@ -527,14 +533,19 @@
             C# references to .net assemblies
             </summary>
         </member>
+        <member name="F:IncludeType.ClInclude">
+            <summary>
+            Header file (.h)
+            </summary>
+        </member>
         <member name="F:IncludeType.ClCompile">
             <summary>
             Source codes (.cpp) files
             </summary>
         </member>
-        <member name="F:IncludeType.ClInclude">
+        <member name="F:IncludeType.ResourceCompile">
             <summary>
-            Header file (.h)
+            .rc / resource files.
             </summary>
         </member>
         <member name="F:IncludeType.CustomBuild">
@@ -547,19 +558,14 @@
             .def / .bat
             </summary>
         </member>
-        <member name="F:IncludeType.Text">
-            <summary>
-            .txt files.
-            </summary>
-        </member>
-        <member name="F:IncludeType.ResourceCompile">
-            <summary>
-            .rc / resource files.
-            </summary>
-        </member>
         <member name="F:IncludeType.Image">
             <summary>
             .ico files.
+            </summary>
+        </member>
+        <member name="F:IncludeType.Text">
+            <summary>
+            .txt files.
             </summary>
         </member>
         <member name="F:IncludeType.ProjectReference">
@@ -2297,12 +2303,6 @@
             Adds one or more library directory from where to search .obj / .lib files.
             </summary>
             <param name="folders"></param>
-        </member>
-        <member name="M:SolutionProjectBuilder.optimize_symbols_recheck(FileConfigurationInfo)">
-            <summary>
-            optimize and symbols reflect to debug format chosen.
-            </summary>
-            <param name="fconf"></param>
         </member>
         <member name="M:SolutionProjectBuilder.optimize(System.String)">
             <summary>

@@ -12,11 +12,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="TestAndroidPackage.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="src\main\cpp\native-lib.cpp">
       <Filter>src\main\cpp</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="TestAndroidPackage.cs" />
   </ItemGroup>
 </Project>

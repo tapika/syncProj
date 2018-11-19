@@ -13,12 +13,15 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="MFCApplication1.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="MFCApplication1.cpp" />
     <ClCompile Include="MFCApplication1Dlg.cpp" />
     <ClCompile Include="stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MFCApplication1.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="MFCApplication1.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\MFCApplication1.rc2">
@@ -26,14 +29,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="MFCApplication1.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="res\MFCApplication1.ico">
       <Filter>res</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
   </ItemGroup>
 </Project>
