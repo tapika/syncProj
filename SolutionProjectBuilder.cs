@@ -1537,6 +1537,21 @@ public class SolutionProjectBuilder
     }
 
     /// <summary>
+    /// Specifies additional #using directories.
+    /// </summary>
+    /// <param name="dirs">List of additional #using directories.</param>
+    static public void usingdirs(params String[] dirs)
+    {
+        foreach (var conf in getSelectedConfigurations(false))
+        {
+            if (conf.AdditionalUsingDirectories.Length != 0)
+                conf.AdditionalUsingDirectories += ";";
+
+            conf.AdditionalUsingDirectories += String.Join(";", dirs);
+        }
+    }
+
+    /// <summary>
     /// Disables specific compilation warnings.
     /// </summary>
     /// <param name="warnings">Warnings to disable</param>

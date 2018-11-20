@@ -499,7 +499,8 @@ public class Project
             }
 
             //
-            // FileConfigurationInfo: PrecompiledHeader, PreprocessorDefinitions, AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
+            // FileConfigurationInfo: PrecompiledHeader, PreprocessorDefinitions, AdditionalUsingDirectories, 
+            //  AdditionalIncludeDirectories, ObjectFileName, XMLDocumentationFileName
             // CustomBuildRule: Command, Message, Outputs, AdditionalInputs, DisableSpecificWarnings
             //
             while (file2compile.fileConfig.Count < configurations.Count)
@@ -1031,6 +1032,9 @@ public class Project
         // false forces not to use multiprocessor compilation, which is VS default (no value)
         if( Keyword != EKeyword.Android && conf.MultiProcessorCompilation )
             o.AppendLine("      <MultiProcessorCompilation" + sCond + ">true</MultiProcessorCompilation>");
+
+        if(conf.AdditionalUsingDirectories.Length != 0)
+            o.AppendLine("      <AdditionalUsingDirectories" + sCond + ">" + conf.AdditionalUsingDirectories + ";%(AdditionalUsingDirectories)</AdditionalUsingDirectories>");
 
         if (conf.AdditionalIncludeDirectories.Length != 0 )
             o.AppendLine("      <AdditionalIncludeDirectories" + sCond + ">" + conf.AdditionalIncludeDirectories + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>");

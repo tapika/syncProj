@@ -668,6 +668,11 @@
             Defines, ';' separated list.
             </summary>
         </member>
+        <member name="F:FileConfigurationInfo.AdditionalUsingDirectories">
+            <summary>
+            Additional #using Directories, ';' separated list.
+            </summary>
+        </member>
         <member name="F:FileConfigurationInfo.AdditionalIncludeDirectories">
             <summary>
             Additional Include Directories, ';' separated list.
@@ -2160,6 +2165,12 @@
             Specifies additional include directories.
             </summary>
             <param name="dirs">List of additional include directories.</param>
+        </member>
+        <member name="M:SolutionProjectBuilder.usingdirs(System.String[])">
+            <summary>
+            Specifies additional #using directories.
+            </summary>
+            <param name="dirs">List of additional #using directories.</param>
         </member>
         <member name="M:SolutionProjectBuilder.disablewarnings(System.String[])">
             <summary>

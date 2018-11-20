@@ -1194,7 +1194,7 @@ public class SolutionOrProject
         //  Like defines, additional include directories, libraries
         //---------------------------------------------------------------------------------
         String[] fieldNames = new String[] { 
-            "PreprocessorDefinitions", "AdditionalIncludeDirectories", 
+            "PreprocessorDefinitions", "AdditionalUsingDirectories", "AdditionalIncludeDirectories", 
             "AdditionalDependencies", "LibraryDependencies", 
             "AdditionalLibraryDirectories",
             "IncludePath", "LibraryPath",
@@ -1202,7 +1202,7 @@ public class SolutionOrProject
         };
 
         String[] funcNames = new String[] { 
-            "defines", "includedirs", 
+            "defines", "usingdirs", "includedirs", 
             "links", "links", 
             "libdirs",
             "sysincludedirs", "syslibdirs",
@@ -1262,7 +1262,8 @@ public class SolutionOrProject
                 fi.SetValue(configList[i], origValues[i]);
         } //for
 
-        String[] funcNames2 = new String[] { "defines", "includedirs", "links", "libdirs", "sysincludedirs", "syslibdirs", "disablewarnings" };
+        String[] funcNames2 = new String[] { "defines", "usingdirs",
+            "includedirs", "links", "libdirs", "sysincludedirs", "syslibdirs", "disablewarnings" };
 
         foreach (String funcName in funcNames2)
         {
@@ -1286,6 +1287,8 @@ public class SolutionOrProject
 
                     if (oneEntryValue == "" ||
                         // Special kind of define which simply tells to inherit from project settings.
+                        (funcName == "usingdirs" && oneEntryValue == "%(AdditionalUsingDirectories)") ||
+                        (funcName == "includedirs" && oneEntryValue == "%(AdditionalIncludeDirectories)") ||
                         (funcName == "defines" && oneEntryValue == "%(PreprocessorDefinitions)") ||
                         (funcName == "links" && oneEntryValue == "%(AdditionalDependencies)") ||
                         // Android project

@@ -350,6 +350,11 @@ public class FileConfigurationInfo
     public String PreprocessorDefinitions = "";
 
     /// <summary>
+    /// Additional #using Directories, ';' separated list.
+    /// </summary>
+    public String AdditionalUsingDirectories = "";
+
+    /// <summary>
     /// Additional Include Directories, ';' separated list.
     /// </summary>
     public String AdditionalIncludeDirectories = "";
