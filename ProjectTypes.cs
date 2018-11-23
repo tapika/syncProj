@@ -1012,7 +1012,13 @@ public enum EGenerateDebugInformation
     /// Use fast linking
     /// </summary>
     [Description("DebugFastLink"), FunctionName("fastlink")]
-    OptimizeForFasterLinking
+    OptimizeForFasterLinking,
+
+    /// <summary>
+    /// Generate Debug Information optimized for sharing and publishing (/DEBUG:FULL)
+    /// </summary>
+    [Description("DebugFull"), FunctionName("full")]
+    OptimizeForSharingAndPublishing
 }
 
 /// <summary>
@@ -1458,6 +1464,11 @@ public class Configuration : FileConfigurationInfo
     /// Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
     /// </summary>
     public EGenerateDebugInformation GenerateDebugInformation;
+
+    /// <summary>
+    /// /ASSEMBLYDEBUG Emits the DebuggableAssembly attribute with debug information tracking and disables JIT optimizations
+    /// </summary>
+    public bool AssemblyDebug = false;
 
     /// <summary>
     /// .def file location

@@ -734,7 +734,7 @@ public class Project
                         // Extract from Description attributes their values and map corresponding enumeration.
                         int value = fi.FieldType.GetEnumNames().Select(x => fi.FieldType.GetMember(x)[0].GetCustomAttribute<DescriptionAttribute>().Description).ToList().IndexOf(cfgNode.Value);
                         if (value == -1)
-                            new Exception2("Invalid / not supported value '" + cfgNode.Value + "'");
+                            throw new Exception2("Invalid / not supported value '" + cfgNode.Value + "'");
                         fi.SetValue(cfg, Enum.Parse(fi.FieldType, fi.FieldType.GetEnumNames()[value]));
                     }
 
@@ -1624,15 +1624,11 @@ public class Project
 
             if (Keyword != EKeyword.Android)
             {
-                String v = "";
-                switch (conf.GenerateDebugInformation)
-                {
-                    default:
-                    case EGenerateDebugInformation.No: v = "false"; break;
-                    case EGenerateDebugInformation.OptimizeForDebugging: v = "true"; break;
-                    case EGenerateDebugInformation.OptimizeForFasterLinking: v = "DebugFastLink"; break;
-                }
-                o.AppendLine("      <GenerateDebugInformation>" + v + "</GenerateDebugInformation>");
+                if(conf.AssemblyDebug)
+                    o.AppendLine("      <AssemblyDebug>true</AssemblyDebug>");
+
+                String value = typeof(EGenerateDebugInformation).GetMember(conf.GenerateDebugInformation.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
+                o.AppendLine("      <GenerateDebugInformation>" + value + "</GenerateDebugInformation>");
 
                 if( conf.ModuleDefinitionFile != "" )
                     o.AppendLine("      <ModuleDefinitionFile>" + conf.ModuleDefinitionFile + "</ModuleDefinitionFile>");

@@ -1140,6 +1140,11 @@
             Use fast linking
             </summary>
         </member>
+        <member name="F:EGenerateDebugInformation.OptimizeForSharingAndPublishing">
+            <summary>
+            Generate Debug Information optimized for sharing and publishing (/DEBUG:FULL)
+            </summary>
+        </member>
         <member name="T:ECompileAs">
             <summary>
             Compile As option.
@@ -1458,6 +1463,11 @@
         <member name="F:Configuration.GenerateDebugInformation">
             <summary>
             Visual studio defaults: OptimizeForDebugging for release, OptimizeForFasterLinking for debug.
+            </summary>
+        </member>
+        <member name="F:Configuration.AssemblyDebug">
+            <summary>
+            /ASSEMBLYDEBUG Emits the DebuggableAssembly attribute with debug information tracking and disables JIT optimizations
             </summary>
         </member>
         <member name="F:Configuration.ModuleDefinitionFile">
@@ -2158,7 +2168,14 @@
             "on" - debug symbols are enabled<para />
             "off" - debug symbols are disabled<para />
             "fastlink" - debug symbols are enabled + faster linking enabled.<para />
+            "fulldebug" - Generate Debug Information optimized for sharing and publishing<para />
             </param>
+        </member>
+        <member name="M:SolutionProjectBuilder.AssemblyDebug(System.Boolean)">
+            <summary>
+            /ASSEMBLYDEBUG Emits the DebuggableAssembly attribute with debug information tracking and disables JIT optimizations
+            </summary>
+            <param name="b">true to enable, false to disable</param>
         </member>
         <member name="M:SolutionProjectBuilder.includedirs(System.String[])">
             <summary>

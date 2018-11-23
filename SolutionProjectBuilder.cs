@@ -1495,6 +1495,7 @@ public class SolutionProjectBuilder
     /// "on" - debug symbols are enabled<para />
     /// "off" - debug symbols are disabled<para />
     /// "fastlink" - debug symbols are enabled + faster linking enabled.<para />
+    /// "fulldebug" - Generate Debug Information optimized for sharing and publishing<para />
     /// </param>
     static public void symbols(String value)
     {
@@ -1509,8 +1510,9 @@ public class SolutionProjectBuilder
             case "on":          d = EGenerateDebugInformation.OptimizeForDebugging; bUseDebugLibraries = true;  break;
             case "off":         d = EGenerateDebugInformation.No; bUseDebugLibraries = false; break;
             case "fastlink":    d = EGenerateDebugInformation.OptimizeForFasterLinking; bUseDebugLibraries = true; break;
+            case "fulldebug":   d = EGenerateDebugInformation.OptimizeForSharingAndPublishing; bUseDebugLibraries = true; break;
             default:
-                throw new Exception2("Allowed symbols() values are: on, off, fastlink");
+                throw new Exception2("Allowed symbols() values are: on, off, fastlink, fulldebug");
         }
 
         foreach (var conf in getSelectedProjectConfigurations())
@@ -1520,6 +1522,17 @@ public class SolutionProjectBuilder
             m_project.optimize_symbols_recheck(conf);
         } //foreach
     }
+
+    /// <summary>
+    /// /ASSEMBLYDEBUG Emits the DebuggableAssembly attribute with debug information tracking and disables JIT optimizations
+    /// </summary>
+    /// <param name="b">true to enable, false to disable</param>
+    static public void AssemblyDebug(bool b = true)
+    {
+        foreach (var conf in getSelectedProjectConfigurations())
+            conf.AssemblyDebug = b;
+    }
+
 
     /// <summary>
     /// Specifies additional include directories.

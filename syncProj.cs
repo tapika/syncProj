@@ -816,9 +816,17 @@ public class SolutionOrProject
             proj.projectConfig.Where(x => x.ConfigurationType == EConfigurationType.ConsoleApplication).ToList().ForEach(x => x.ConfigurationType = EConfigurationType.Application);
 
             if( !proj.bIsPackagingProject )
+            {
                 ConfigationSpecificValue(proj, proj.projectConfig, "UseDebugLibraries", lines2dump, (s) => {
                     return "symbols" + brO + "\"" + ((s == "True") ? "on" : "off") + "\"" + brC;
                 });
+
+                ConfigationSpecificValue(proj, proj.projectConfig, "AssemblyDebug", lines2dump, (s) => {
+                    String v = s.ToLower();
+                    if (v == "false") return null;
+                    return "AssemblyDebug" + brO + v + brC;
+                });
+            }
 
             if (proj.Keyword == EKeyword.AntPackage || proj.Keyword == EKeyword.Android)
             {
