@@ -1643,6 +1643,7 @@ public class Path2
     /// </summary>
     /// <param name="iFrame">number of frame in stack.</param>
     /// <returns>Source code path, null if cannot be determined</returns>
+    [ExcludeFromCodeCoverage]   // Difficult to test even by myself, not talking about scripting stack trace determination.
     public static String GetScriptPath(int iFrame = 0)
     {
         StackTrace st = new System.Diagnostics.StackTrace(true);

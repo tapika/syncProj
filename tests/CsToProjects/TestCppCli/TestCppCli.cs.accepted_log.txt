@@ -1,0 +1,12 @@
+syncProj exited with no error
+TestCppCli.cs :
+File updated: out_CppCliProjects.sln
+File updated: out_clr_none_NET_v4.5.vcxproj.filters
+File updated: out_clr_none_NET_v4.5.vcxproj
+File updated: out_clr_pure_NET_v4.7.2.vcxproj.filters
+File updated: out_clr_pure_NET_v4.7.2.vcxproj
+File updated: out_clr_safe_NET_v4.7.1.vcxproj.filters
+File updated: out_clr_safe_NET_v4.7.1.vcxproj
+File updated: out_clr_true_NET_v4.7.2_debug_custom.vcxproj.filters
+File updated: out_clr_true_NET_v4.7.2_debug_custom.vcxproj
+9 files updated

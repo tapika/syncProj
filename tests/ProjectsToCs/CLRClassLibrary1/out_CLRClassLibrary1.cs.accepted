@@ -1,0 +1,66 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            project("out_CLRClassLibrary1");
+                configurations(  "Debug","Release" );
+                platforms( "Win32","x64" );
+                uuid("DFB0B778-8E2E-453A-8C0E-9F8D2BA9C6CF");
+                vsver(2017);
+                projectScript("out_CLRClassLibrary1.cs");
+                references(
+                   "System",
+                   "System.Data",
+                   "System.Xml"
+                );
+                references("..\..\..\syncproj.exe",false,false,false);
+                systemversion("10.0.17763.0");
+                TargetFrameworkVersion("v4.5.1");
+                kind("SharedLib");
+                toolset("v141");
+                characterset("Unicode");
+                commonLanguageRuntime(ECLRSupport.True);
+                pchheader("stdafx.h");
+                usingdirs( "usingFolder1", "usingFolder2" );
+                includedirs( "includeFolder1", "includeFolder2" );
+                filter ( "Debug" );
+                    symbols("on");
+                    optimize("off");
+                    defines( "_DEBUG" );
+
+                filter ( "Release" );
+                    symbols("off");
+                    AssemblyDebug(true);
+                    optimize("speed");
+                    defines( "NDEBUG" );
+
+                filter ( "platforms:Win32" );
+                    defines( "WIN32" );
+
+                filter (  );
+
+                files( 
+                    "app.ico",
+                    "app.rc",
+                    "AssemblyInfo.cpp",
+                    "CLRClassLibrary1.cpp",
+                    "CLRClassLibrary1.h",
+                    "Resource.h",
+                    "stdafx.cpp",
+                    "stdafx.h"
+                 );
+                filter (  );
+                pchsource("stdafx.cpp");
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+

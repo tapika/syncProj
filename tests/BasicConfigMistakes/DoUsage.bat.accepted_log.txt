@@ -1,0 +1,18 @@
+Batch exited with ERROR: -2
+Usage(1): syncProj <.sln or .vcxproj file> (-lua|-cs) [-o file]
+
+         Parses solution or project and generates premake5 .lua script or syncProj C# script.
+
+ -cs     - C# script output
+ -lua    - premake5's lua script output
+
+ -o      - sets output file (without extension)
+ -p      - sets prefix for all output files
+ -sln    - does not processes projects (Solution only load)
+ -t      - starts self-diagnostic tests (requires tests directory)
+ -keep   - keeps test results
+
+Usage(2): syncProj <.cs>
+
+         Executes syncProj C# script.
+

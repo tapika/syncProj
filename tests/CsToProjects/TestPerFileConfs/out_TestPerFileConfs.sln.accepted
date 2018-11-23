@@ -13,6 +13,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestAndroid_symbols_off
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_on_vs2017", "out_TestWindows_symbols_on_vs2017.vcxproj", "{A732DA6E-74C6-4B92-3881-35A006A99120}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_fastlink_vs2017", "out_TestWindows_symbols_fastlink_vs2017.vcxproj", "{32605105-CA8D-8779-DA2D-A3C83F673DCA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_fulldebug_vs2017", "out_TestWindows_symbols_fulldebug_vs2017.vcxproj", "{CC277F5A-E4EC-6BBA-BE55-2DEEECCA6A19}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 	EndGlobalSection

@@ -1292,6 +1292,9 @@ public class Project
         {
             String value = typeof(ECLRSupport).GetMember(CLRSupport.ToString())[0].GetCustomAttribute<DescriptionAttribute>().Description;
             o.AppendLine("    <CLRSupport>" + value + "</CLRSupport>");
+
+            if ( !String.IsNullOrEmpty(TargetFrameworkVersion) )
+                o.AppendLine("    <TargetFrameworkVersion>" + TargetFrameworkVersion + "</TargetFrameworkVersion>");
         }
 
         //

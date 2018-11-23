@@ -1,0 +1,24 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            solution("out_CLRClassLibrary1_sln");
+                vsver(2017);
+                configurations(  "Debug","Release" );
+                platforms( "x64","x86" );
+                solutionScript("out_CLRClassLibrary1_sln.cs");
+
+                invokeScript("out_CLRClassLibrary1.cs");
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+

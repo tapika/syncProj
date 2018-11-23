@@ -1986,10 +1986,16 @@
         </member>
         <member name="M:SolutionProjectBuilder.references(System.Object[])">
             <summary>
-            For C++/cli - adds reference to specific assembly
+            For C++/cli - adds reference to specific assemblies.
             </summary>
             <param name="assemblyNamesAndParameters">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
-            supress assembly name check. Assemby name can be followed by extra 0-3 booleans to configure assembly copy options</param>
+            supress assembly name check. Assemby name can be followed by extra 0-3 booleans to configure assembly copy options.
+            Once you use booleans - they are applied to all previously listed assemblies. Make separate calls to distingvish different options.
+            
+            references("System", "System.Data");
+            references("my1.dll", "my2.dll", false);   Copy local will be disabled for both dll's.
+            
+            </param>
         </member>
         <member name="M:SolutionProjectBuilder.group(System.String)">
             <summary>

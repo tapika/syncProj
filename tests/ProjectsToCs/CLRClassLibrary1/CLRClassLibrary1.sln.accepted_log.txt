@@ -1,0 +1,2 @@
+syncProj exited with no error
+CLRClassLibrary1.sln: 2 files updated

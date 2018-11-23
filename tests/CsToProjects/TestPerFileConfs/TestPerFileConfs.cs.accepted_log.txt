@@ -13,4 +13,8 @@ File updated: out_TestAndroid_symbols_off_vs2015.vcxproj.filters
 File updated: out_TestAndroid_symbols_off_vs2015.vcxproj
 File updated: out_TestWindows_symbols_on_vs2017.vcxproj.filters
 File updated: out_TestWindows_symbols_on_vs2017.vcxproj
-13 files updated
+File updated: out_TestWindows_symbols_fastlink_vs2017.vcxproj.filters
+File updated: out_TestWindows_symbols_fastlink_vs2017.vcxproj
+File updated: out_TestWindows_symbols_fulldebug_vs2017.vcxproj.filters
+File updated: out_TestWindows_symbols_fulldebug_vs2017.vcxproj
+17 files updated

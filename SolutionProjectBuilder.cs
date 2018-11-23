@@ -717,10 +717,16 @@ public class SolutionProjectBuilder
 
 
     /// <summary>
-    /// For C++/cli - adds reference to specific assembly
+    /// For C++/cli - adds reference to specific assemblies.
     /// </summary>
     /// <param name="assemblyNamesAndParameters">List of assembly names, for example "System" or path to specific assembly. use '?' as first character to
-    /// supress assembly name check. Assemby name can be followed by extra 0-3 booleans to configure assembly copy options</param>
+    /// supress assembly name check. Assemby name can be followed by extra 0-3 booleans to configure assembly copy options.
+    /// Once you use booleans - they are applied to all previously listed assemblies. Make separate calls to distingvish different options.
+    /// 
+    /// references("System", "System.Data");
+    /// references("my1.dll", "my2.dll", false);   Copy local will be disabled for both dll's.
+    /// 
+    /// </param>
     static public void references(params object[] assemblyNamesAndParameters)
     {
         requireProjectSelected();
@@ -763,14 +769,17 @@ public class SolutionProjectBuilder
                 else {
                     foreach (var dir in dirs)
                     {
+                        bool bIsCustomDll = dir.Item2;
                         String dll = Path.Combine(dir.Item1, name);
 
-                        if (Path.GetExtension(dll).ToLower() != ".dll")
+                        // User will have to provide file extension, for .NET framework assemblies we try to add
+                        // ".dll" automatically
+                        if (!bIsCustomDll && Path.GetExtension(dll).ToLower() != ".dll")
                             dll += ".dll";
 
                         if (File.Exists(dll))
                         {
-                            bIsHintPath = dir.Item2;
+                            bIsHintPath = bIsCustomDll;
                             bExists = true;
                             break;
                         }
