@@ -9,6 +9,8 @@ class Builder: SolutionProjectBuilder
 
             solution("out_MFCApplication1_sln");
                 vsver(2015);
+                VisualStudioVersion("14.0.25420.1");
+                MinimumVisualStudioVersion("10.0.40219.1");
                 configurations(  "Debug","Release" );
                 platforms( "x64","x86" );
                 solutionScript("out_MFCApplication1_sln.cs");

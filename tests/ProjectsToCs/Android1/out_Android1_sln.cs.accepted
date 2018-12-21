@@ -9,6 +9,8 @@ class Builder: SolutionProjectBuilder
 
             solution("out_Android1_sln");
                 vsver(2015);
+                VisualStudioVersion("14.0.25420.1");
+                MinimumVisualStudioVersion("10.0.40219.1");
                 configurations(  "Debug","Release" );
                 platforms( "ARM","ARM64","x64","x86" );
                 solutionScript("out_Android1_sln.cs");

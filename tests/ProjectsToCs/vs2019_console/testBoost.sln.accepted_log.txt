@@ -1,0 +1,2 @@
+syncProj exited with no error
+testBoost.sln: 2 files updated

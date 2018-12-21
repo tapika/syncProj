@@ -148,8 +148,12 @@ public class Project
             fileFormatVersion = 2015;
         else if (dVer <= 15.0)
             fileFormatVersion = 2017;
-        else 
-            fileFormatVersion = 2017 + ((int)(dVer) * 2);
+        else if (dVer <= 16.0)
+            fileFormatVersion = 2019;
+        else
+            // Try guess the future
+            // 16 => 2019, increase by 2 years every major version.
+            fileFormatVersion = 2019 + (((int)(dVer) - 16) * 2);
     } //setToolsVersion
 
     public EKeyword Keyword = EKeyword.None;

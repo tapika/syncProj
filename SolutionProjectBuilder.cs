@@ -477,12 +477,15 @@ public class SolutionProjectBuilder
                     case 2015: toolset("v140", force); break;
                     case 2017:
                         toolset("v141", force);
-                        // vs2017 also sets up Windows SDK version
-                        systemversion("10.0.17134.0", force);
+                        systemversion("10.0.17134.0", force);       // Newer visual studio's also enforces specific Windows SDK version
+                        break;
+                    case 2019:
+                        toolset("v141", force);
+                        systemversion("10.0.17763.0", force);
                         break;
                     default:
-                        // Try to guess the future. 2019 => "v160" ?
-                        toolset("v" + (((m_project.fileFormatVersion - 2019) + 16) * 10).ToString());
+                        // Try to guess the future. 2020 => "v160" ?
+                        toolset("v" + (((m_project.fileFormatVersion - 2020) + 16) * 10).ToString());
                         break;
                 } //switch
             } //using
@@ -511,6 +514,30 @@ public class SolutionProjectBuilder
             m_solution.fileFormatVersion = vsVersion;
         }
     } //vsver
+
+
+    /// <summary>
+    /// Sets visual studio version
+    /// </summary>
+    static public void VisualStudioVersion(String v, bool force = true)
+    {
+        requireSolutionSelected();
+        if (!force && m_solution.VisualStudioVersion != null)
+            return;
+        m_solution.VisualStudioVersion = v;
+    }
+
+    /// <summary>
+    /// Sets minimum visual studio version
+    /// </summary>
+    static public void MinimumVisualStudioVersion(String v, bool force = true)
+    {
+        requireSolutionSelected();
+        if (!force && m_solution.MinimumVisualStudioVersion != null)
+            return;
+        m_solution.MinimumVisualStudioVersion = v;
+    }
+
 
     /// <summary>
     /// The location function sets the destination directory for a generated solution or project file.
@@ -559,7 +586,7 @@ public class SolutionProjectBuilder
 
 
     /// <summary>
-    /// Specifies project uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")
+    /// Specifies project or solution uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")
     /// - use this kind of syntax if you need to produce your project in backwards compatible manner - so existing
     /// solution can load your project.
     /// Could be also written in any string form, but you need to take care that string is unique enough accross where your
@@ -569,8 +596,6 @@ public class SolutionProjectBuilder
     /// <param name="nameOrUuid">Project uuid or some unique name</param>
     static public void uuid(String nameOrUuid)
     {
-        requireProjectSelected();
-
         bool forceGuid = nameOrUuid.Contains('{') || nameOrUuid.Contains('}');
         String uuid = "";
 
@@ -596,7 +621,14 @@ public class SolutionProjectBuilder
                     "For more information refer to uuid() function description.");
         }
 
-        m_project.ProjectGuid = uuid;
+        if (m_project == null && m_solution == null)
+            // You must have at least something selected.
+            requireProjectSelected();
+
+        if (m_project != null)
+            m_project.ProjectGuid = uuid;
+        else
+            m_solution.SolutionGuid = uuid;
 
     } //uuid
 

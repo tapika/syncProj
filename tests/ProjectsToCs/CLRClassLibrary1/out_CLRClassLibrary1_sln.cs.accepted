@@ -9,6 +9,9 @@ class Builder: SolutionProjectBuilder
 
             solution("out_CLRClassLibrary1_sln");
                 vsver(2017);
+                VisualStudioVersion("15.0.28307.102");
+                MinimumVisualStudioVersion("10.0.40219.1");
+                uuid("3FA4CB4E-5B32-4CFD-9D8F-97CA986367CC");
                 configurations(  "Debug","Release" );
                 platforms( "x64","x86" );
                 solutionScript("out_CLRClassLibrary1_sln.cs");

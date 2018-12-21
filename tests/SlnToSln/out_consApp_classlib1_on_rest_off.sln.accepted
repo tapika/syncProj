@@ -1,6 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
+VisualStudioVersion = 15.0.28010.2050
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_consApp1", "_consApp1.csproj", "{353F4C4E-6ADD-41DE-A024-8AED76CB61F9}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -25,6 +26,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D54EB0E-036B-47D3-93D9-F7745E3B32D3}
 	EndGlobalSection
 EndGlobal

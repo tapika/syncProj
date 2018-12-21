@@ -560,6 +560,15 @@ public class SolutionOrProject
             o.AppendLine(head + "solution" + brO + "\"" + fileName + "\"" + brC);
             o.AppendLine(head + "    " + ((format == "lua") ? comment : "") + "vsver" + brO + sln.fileFormatVersion + brC);
 
+            if(sln.VisualStudioVersion != null)
+                o.AppendLine(head + "    " + "VisualStudioVersion" + brO + "\"" + sln.VisualStudioVersion + "\"" + brC);
+
+            if (sln.MinimumVisualStudioVersion != null)
+                o.AppendLine(head + "    " + "MinimumVisualStudioVersion" + brO + "\"" + sln.MinimumVisualStudioVersion + "\"" + brC);
+
+            if (sln.SolutionGuid != null)
+                o.AppendLine(head + "    " + "uuid" + brO + "\"" + sln.SolutionGuid.Substring(1, sln.SolutionGuid.Length -2) + "\"" + brC);
+
             o.AppendLine(head + "    configurations" + arO + " " + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[0] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    platforms" + arO + String.Join(",", sln.configurations.Select(x => "\"" + x.Split('|')[1] + "\"").Distinct()) + arC);
             o.AppendLine(head + "    solutionScript(\"" + fileName + ".cs" + "\");");

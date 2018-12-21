@@ -1,0 +1,40 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            project("out_testBoost");
+                configurations(  "ReleaseDebug" );
+                platforms( "x64" );
+                uuid("74657374-426F-6F73-7400-000000000000");
+                vsver(2019);
+                projectScript("out_testBoost.cs");
+                kind("ConsoleApp");
+                symbols("off");
+                toolset("v141");
+                characterset("Unicode");
+                optimize("speed");
+                flags( "NoPch" );
+                includedirs( "." );
+                files( 
+                    "testBoost.cpp",
+                    "testBoost.cs"
+                 );
+                filter ( "files:testBoost.cs"  );
+                    buildrule( new CustomBuildRule() {
+                        Command = @"""..\..\syncproj.exe"" $(ProjectDir)testBoost.cs
+echo 1>$(IntermediateOutputPath)testBoost_cs_log.txt", 
+                        Outputs = "$(IntermediateOutputPath)testBoost_cs_log.txt"
+                    });
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+

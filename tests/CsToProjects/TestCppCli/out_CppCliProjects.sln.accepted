@@ -1,6 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
+VisualStudioVersion = 15.0.28307.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_clr_none_NET_v4.5", "out_clr_none_NET_v4.5.vcxproj", "{D774272C-59EE-B9F0-1757-D836FDD8AA39}"
 EndProject
@@ -36,6 +37,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {47333BD1-60CC-14B0-7547-96A6ADCF7293}
 	EndGlobalSection
 EndGlobal

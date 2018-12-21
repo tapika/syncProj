@@ -1725,6 +1725,12 @@
             null for old visual studio's
             </summary>
         </member>
+        <member name="F:Solution.SolutionGuid">
+            <summary>
+            Solution guid, for example "{00346907-56E9-4CC1-802F-039B70C1FA48}".
+            Mandatory starting from Visual studio 2017.
+            </summary>
+        </member>
         <member name="F:Solution.projects">
             <summary>
             List of project included into solution.
@@ -1942,6 +1948,16 @@
             <param name="vsVersion">2010, 2012, 2013, ...</param>
             <param name="force">set to true if besides selecting visual studio project format version, also set default toolset for specific project</param>
         </member>
+        <member name="M:SolutionProjectBuilder.VisualStudioVersion(System.String,System.Boolean)">
+            <summary>
+            Sets visual studio version
+            </summary>
+        </member>
+        <member name="M:SolutionProjectBuilder.MinimumVisualStudioVersion(System.String,System.Boolean)">
+            <summary>
+            Sets minimum visual studio version
+            </summary>
+        </member>
         <member name="M:SolutionProjectBuilder.location(System.String)">
             <summary>
             The location function sets the destination directory for a generated solution or project file.
@@ -1956,7 +1972,7 @@
         </member>
         <member name="M:SolutionProjectBuilder.uuid(System.String)">
             <summary>
-            Specifies project uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")
+            Specifies project or solution uuid - could be written in form of normal guid ("{5E40B384-095E-452A-839D-E0B62833256F}")
             - use this kind of syntax if you need to produce your project in backwards compatible manner - so existing
             solution can load your project.
             Could be also written in any string form, but you need to take care that string is unique enough accross where your

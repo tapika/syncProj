@@ -35,6 +35,9 @@ partial class Builder : SolutionProjectBuilder
         try
         {
             solution("out_TestPerFileConfs");
+            vsver(2019);
+            VisualStudioVersion("16.0.28315.86");
+            MinimumVisualStudioVersion("10.0.40219.1");
 
             testProject( 2013, "Windows", "on" );
             testProject( 2013, "Windows", "off" );
@@ -44,6 +47,7 @@ partial class Builder : SolutionProjectBuilder
             testProject( 2017, "Windows", "on" );
             testProject( 2017, "Windows", "fastlink");
             testProject( 2017, "Windows", "fulldebug");
+            testProject( 2019, "Windows", "on" );
 
         }
         catch (Exception ex)

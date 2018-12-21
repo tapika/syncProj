@@ -67,6 +67,12 @@ public class Solution
     public String MinimumVisualStudioVersion;
 
     /// <summary>
+    /// Solution guid, for example "{00346907-56E9-4CC1-802F-039B70C1FA48}".
+    /// Mandatory starting from Visual studio 2017.
+    /// </summary>
+    public string SolutionGuid;
+    
+    /// <summary>
     /// List of project included into solution.
     /// </summary>
     public List<Project> projects = new List<Project>();
@@ -114,7 +120,7 @@ public class Solution
         //
         s.slnVer = Double.Parse(Regex.Match(slnTxt, "[\r\n]?Microsoft Visual Studio Solution File, Format Version ([0-9.]+)", RegexOptions.Multiline).Groups[1].Value, CultureInfo.InvariantCulture);
 
-        int vsNumber = Int32.Parse(Regex.Match(slnTxt, "^\\# Visual Studio (Express )?([0-9]+)", RegexOptions.Multiline).Groups[2].Value);
+        int vsNumber = Int32.Parse(Regex.Match(slnTxt, "^\\# Visual Studio (Express |Version )?([0-9]+)", RegexOptions.Multiline).Groups[2].Value);
         if (vsNumber > 2000)
             s.fileFormatVersion = vsNumber;
         else
@@ -126,6 +132,9 @@ public class Solution
                     break;
                 case 15:
                     s.fileFormatVersion = 2017;
+                    break;
+                case 16:
+                    s.fileFormatVersion = 2019;
                     break;
                 default:
                     // Every two years new release ?
@@ -280,6 +289,26 @@ public class Solution
         }
         ));
 
+
+        new Regex("GlobalSection\\(ExtensibilityGlobals\\).*?[\r\n]+(.*?)EndGlobalSection[\r\n]+", RegexOptions.Singleline).Replace(slnTxt, new MatchEvaluator(m4 =>
+        {
+            String v = m4.Groups[1].Value;
+            new Regex("\\s*(.*)\\s+=\\s+(.*?)[\r\n]+").Replace(v, new MatchEvaluator(m5 =>
+            {
+                String key = m5.Groups[1].Value;
+                String value = m5.Groups[2].Value;
+                FieldInfo fi = s.GetType().GetField(key);
+
+                // SolutionGuid is retrieved from here
+                if (fi != null)
+                    fi.SetValue(s, value);
+                return "";
+            }
+            ));
+            return "";
+        }
+        ));
+
         s.solutionRoot = new Project();
 
         // All projects which don't have root will become attached to root.
@@ -318,6 +347,10 @@ public class Solution
         //  For all projects which does not have uuid, we generated uuid based on project name.
         //
         SolutionProjectBuilder.externalproject(null);   // Release any active project if we have one.
+
+        if (fileFormatVersion >= 2017 && String.IsNullOrEmpty(SolutionGuid))
+            SolutionProjectBuilder.uuid(name + "_solution" /* Add some uniqueness - just not to collise with project guids. */);
+
         foreach (Project p in projects)
         {
             if (String.IsNullOrEmpty(p.ProjectGuid))
@@ -347,13 +380,9 @@ public class Solution
         int verTag2;
         switch (verTag)
         {
-            case 2015:
-                verTag2 = 14;
-                break;
-
-            case 2017:
-                verTag2 = 15;
-                break;
+            case 2015: verTag2 = 14; break;
+            case 2017: verTag2 = 15; break;
+            case 2019: verTag2 = 16; break;
 
             default:
                 // Try to predict the future here...
@@ -361,9 +390,30 @@ public class Solution
                 break;
         }
 
-        o.AppendLine("# Visual Studio " + verTag2.ToString());
+        if( verTag2 >= 16)
+            o.AppendLine("# Visual Studio Version " + verTag2.ToString());
+        else
+            o.AppendLine("# Visual Studio " + verTag2.ToString());
 
-        // For some reason must be specified, otherwise Visual studio will try to save project after load.
+        // Must be specified, otherwise Visual studio will try to save project after load.
+        if (fileFormatVersion >= 2017)
+        {
+            // Those numbers are pretty ugly to hardcode, but no other choice at the moment.
+            String ver = VisualStudioVersion;
+            if (ver == null)
+            {
+                switch (fileFormatVersion)
+                {
+                    case 2017: ver = "15.0.28307.136"; break;
+                    default:
+                    case 2019: ver = "16.0.28315.86"; break;
+                }
+            }
+
+            o.AppendLine("VisualStudioVersion = " + ver);
+        }
+
+        // Must be specified, otherwise Visual studio will try to save project after load.
         if (fileFormatVersion >= 2015)
         {
             String ver = MinimumVisualStudioVersion;
@@ -517,7 +567,6 @@ public class Solution
         if (root != null)
         {
             while (root.parent != null) root = root.parent;
-            o.AppendLine("	GlobalSection(NestedProjects) = preSolution");
 
             //
             // Flatten tree without recursion.
@@ -533,6 +582,11 @@ public class Solution
                 projects2.AddRange(projects2[treeIndex].nodes);
             }
 
+            bool bDump = projects2.Count(x => x.parent.parent != null) != 0;
+
+            if (bDump)
+                o.AppendLine("	GlobalSection(NestedProjects) = preSolution");
+
             foreach (Project p in projects2)
             {
                 if (p.parent.parent == null)
@@ -540,8 +594,16 @@ public class Solution
                 o.AppendLine("		" + p.ProjectGuid.ToUpper() + " = " + p.parent.ProjectGuid.ToUpper());
             }
 
-            o.AppendLine("	EndGlobalSection");
+            if (bDump)
+                o.AppendLine("	EndGlobalSection");
         } //if
+
+        if (SolutionGuid != null)
+        {
+            o.AppendLine("	GlobalSection(ExtensibilityGlobals) = postSolution");
+            o.AppendLine("		SolutionGuid = " + SolutionGuid);
+            o.AppendLine("	EndGlobalSection");
+        }
 
         o.AppendLine("EndGlobal");
 

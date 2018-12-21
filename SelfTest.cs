@@ -354,7 +354,7 @@ partial class syncProj
                             if (!bAcceptedFileExists)   // Just a dummy file so comparison tool would not mind.
                                 File.WriteAllText(logAcceptedFile, "");
 
-                            Process.Start(diffExe, "\"" + logActualFile + "\" \"" + logAcceptedFile + "\"").WaitForExit();
+                            Process.Start(diffExe, "\"" + logAcceptedFile + "\" \"" + logActualFile + "\"").WaitForExit();
                             logActual = File.ReadAllText(logActualFile);
                         } //if-else
                     } //while (file is not the same)

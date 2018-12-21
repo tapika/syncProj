@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28315.86
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_on_vs2013", "out_TestWindows_symbols_on_vs2013.vcxproj", "{3A5B9DCD-0E2D-C759-0517-20B36F2C760A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_off_vs2013", "out_TestWindows_symbols_off_vs2013.vcxproj", "{8092AF58-48EC-7533-FDF6-6F6B4E45096A}"
@@ -17,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_fas
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_fulldebug_vs2017", "out_TestWindows_symbols_fulldebug_vs2017.vcxproj", "{CC277F5A-E4EC-6BBA-BE55-2DEEECCA6A19}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "out_TestWindows_symbols_on_vs2019", "out_TestWindows_symbols_on_vs2019.vcxproj", "{B78A1E6B-A8C6-21D2-E610-44D0F1F0EDEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 	EndGlobalSection
@@ -25,6 +29,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EB14F2FD-D3EA-EF08-3ED0-DD62E47277BD}
 	EndGlobalSection
 EndGlobal

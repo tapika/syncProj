@@ -1,0 +1,27 @@
+//css_ref ..\..\..\syncproj.exe
+using System;
+
+class Builder: SolutionProjectBuilder
+{
+    static void Main(String[] args)
+    {
+        try {
+
+            solution("out_testBoost_sln");
+                vsver(2019);
+                VisualStudioVersion("16.0.28315.86");
+                MinimumVisualStudioVersion("10.0.40219.1");
+                uuid("7346F899-3783-4A6F-A874-23A73D660615");
+                configurations(  "ReleaseDebug" );
+                platforms( "x64" );
+                solutionScript("out_testBoost_sln.cs");
+
+                invokeScript("out_testBoost.cs");
+
+        } catch( Exception ex )
+        {
+            ConsolePrintException(ex, args);
+        }
+    } //Main
+}; //class Builder
+
