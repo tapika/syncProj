@@ -42,6 +42,44 @@ public class TestStarter
 partial class syncProj
 {
     static bool bAllowExceptionThrow = false;
+
+    [ExcludeFromCodeCoverage]
+    static public String getTestDirectory( bool bCheckIfExists = false )
+    { 
+        String testsDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Tests");
+
+        if (bCheckIfExists && !Directory.Exists(testsDir))
+            throw new Exception("Tests directory does not exists: '" + testsDir + "'");
+
+        return testsDir;
+    }
+
+
+    // This is something that will change as more and more tests are added into test suite.
+    [ExcludeFromCodeCoverage]
+    static public List<String> getTestList()
+    {
+        String testsDir = getTestDirectory();
+        List<String> allTests = new List<string>();
+
+        //  Rename folder to start from '_' to exclude it from test scope.
+        String[] dirs = Directory.GetDirectories(getTestDirectory()).Where(x => !Path.GetFileName(x).StartsWith("_")).ToArray();
+
+        foreach (String dir in dirs)
+        {
+            //
+            // All test cases are either .cs or .sln projects.
+            //
+            String[] tests = Directory.GetFiles(dir, "*", SearchOption.AllDirectories).
+                Where(x => (x.EndsWith(".cs") || x.EndsWith(".sln") || x.EndsWith(".bat")) && !Path.GetFileName(x).StartsWith("_")).ToArray();
+
+            allTests.AddRange(tests.Select( x => x.Substring(testsDir.Length + 1)));
+        }
+
+        return allTests;
+    }
+
+
     /// <summary>
     /// Starts self diagnostic tests.
     /// 

@@ -13,6 +13,7 @@ using System.Collections;
 using System.Reflection;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Forms;
 
 class Dictionary2<TKey, TValue> : Dictionary<TKey, TValue>
 {
@@ -1740,8 +1741,9 @@ public partial class syncProj
                     inFile = arg;
                     continue;
                 }
+                arg = arg.TrimStart(new char[] { '/', '-' });
 
-                switch (arg.Substring(1).ToLower())
+                switch (arg.ToLower())
                 {
                     case "lua": formats.Add("lua"); break;
                     case "cs": formats.Add("cs"); break;
@@ -1756,6 +1758,30 @@ public partial class syncProj
                     case "x": Exception2.g_bReportFullPath = false; break;
                     case "css_debug":
                         CsScriptInfo.g_bCsDebug = true; break;
+
+                    case "gtest_list_tests":
+                        {
+                            String testsDir = getTestDirectory(true);
+                            List<String> allTests = getTestList();
+                            String section = "";
+
+                            foreach (String test in allTests)
+                            {
+                                String[] parts = test.Split('\\').ToArray();
+                                if (section != parts.First())
+                                { 
+                                    section = parts.First();
+                                    Console.WriteLine(section);
+                                }
+
+                                String src = parts.Last();
+                                Console.WriteLine("  <loc>" + Path.Combine(testsDir, test) + "(1)");
+                                Console.WriteLine("  " + src);
+                            }
+
+                            return 0;
+                        }
+                        break;
                 }
             } //foreach
 
