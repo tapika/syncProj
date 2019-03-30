@@ -1716,6 +1716,8 @@ public class Path2
 /// </summary>
 public partial class syncProj
 {
+    static public bool bAllowExceptionThrow = false;
+
     /// <summary>
     /// Entry point
     /// </summary>
@@ -1731,6 +1733,15 @@ public partial class syncProj
             String outPrefix = "";
             bool bProcessProjects = true;
             bool bTestsExecuted = false;
+
+            bAllowExceptionThrow = true;
+            bool testingPerformed = GoogleTestBootstrap.TestMain(false, args, new syncProjUnitSuiteInfo());
+            bAllowExceptionThrow = false;
+            if (testingPerformed)
+            {
+                SolutionProjectBuilder.bSaveGeneratedProjects = false;
+                return 0;
+            }
 
             for( int i = 0; i < args.Length; i++ )
             {
@@ -1750,38 +1761,9 @@ public partial class syncProj
                     case "o": i++; outFile = args[i]; break;
                     case "p": i++; outPrefix = args[i]; break;
                     case "sln": bProcessProjects = false; break;
-                    case "t": 
-                        StartSelfTests(args, i + 1); 
-                        bTestsExecuted = true;
-                        SolutionProjectBuilder.bSaveGeneratedProjects = false;
-                        break;
                     case "x": Exception2.g_bReportFullPath = false; break;
                     case "css_debug":
                         CsScriptInfo.g_bCsDebug = true; break;
-
-                    case "gtest_list_tests":
-                        {
-                            String testsDir = getTestDirectory(true);
-                            List<String> allTests = getTestList();
-                            String section = "";
-
-                            foreach (String test in allTests)
-                            {
-                                String[] parts = test.Split('\\').ToArray();
-                                if (section != parts.First())
-                                { 
-                                    section = parts.First();
-                                    Console.WriteLine(section);
-                                }
-
-                                String src = parts.Last();
-                                Console.WriteLine("  <loc>" + Path.Combine(testsDir, test) + "(1)");
-                                Console.WriteLine("  " + src);
-                            }
-
-                            return 0;
-                        }
-                        break;
                 }
             } //foreach
 

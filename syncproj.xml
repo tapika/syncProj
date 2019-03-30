@@ -63,6 +63,44 @@
             Global flag to enable C# script compilation debugging
             </summary>
         </member>
+        <member name="M:UnitSuiteInfo.GetSuites">
+            <summary>
+            Gets list of supported suites (classes with test methods)
+            </summary>
+        </member>
+        <member name="M:UnitSuiteInfo.GetUnitTests">
+            <summary>
+            Queries list of specific unit tests in specific suite (test methods in one class)
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="F:UnitTestInfo.sourceCodePath">
+            <summary>
+            Source code location, full path
+            </summary>
+        </member>
+        <member name="F:UnitTestInfo.line">
+            <summary>
+            Source code line number
+            </summary>
+        </member>
+        <member name="F:UnitTestInfo.ignored">
+            <summary>
+            True if test will not be executed ([Ignore] attribute on), false - executed
+            </summary>
+        </member>
+        <member name="F:UnitTestInfo.ExceptionType">
+            <summary>
+            Exception type which method is allowed to throw, null if exceptions are not allowed
+            </summary>
+        </member>
+        <member name="M:UnitTestInfo.InvokeTest(System.Boolean,TestResults)">
+            <summary>
+            This method is must throw exception if test fails.
+            </summary>
+            <param name="isLastMethod">true if given method is last invoked, and api must clean up / release test class resources</param>
+            <exception cref="T:System.OperationCanceledException">Can be thrown to cancel ongoing tests</exception>
+        </member>
         <member name="T:StringExtensions">
             <summary>
             String helpers.
@@ -1633,52 +1671,6 @@
             <param name="obj">object to be cloned</param>
             <returns>full copy of object.</returns>
         </member>
-        <member name="T:TestStarter">
-            <summary>
-            Just a helper class so Visual studio would be able to see our test system and
-            launch code coverage.
-            </summary>
-        </member>
-        <member name="M:TestStarter.RunAllTests">
-            <summary>
-            Runs all tests
-            </summary>
-        </member>
-        <member name="M:TestStarter.RunTest1">
-            <summary>
-            Modify however you want - to add "shortcut" to any test which is failing, by default RunAllTests
-            will find all tests automatically at run-time.
-            </summary>
-        </member>
-        <member name="T:syncProj">
-            <summary>
-            syncProj tool.
-            </summary>
-        </member>
-        <member name="M:syncProj.StartSelfTests(System.String[],System.Int32)">
-            <summary>
-            Starts self diagnostic tests.
-            
-            Basic concept of syncProj self testing is that syncProj finds all *.sln and *.cs and tries to "execute" them and record console output.
-            
-            Recorded output then is compared against *.accepted_log.txt (console output) or *.accepted (actual xml output)-files - whether they are the same.
-            If not same - developer can accept changes made or continue fixing the code.
-            
-            Developer can use:
-                syncProj.exe -t                 - to start testing
-                syncProj.exe -t someTest        - to start individual test (without .cs extension)
-                syncProj.exe -t someTest -keep  - to keep generated files
-            
-            </summary>
-            <param name="args">command line arguments to syncProj tool</param>
-            <param name="i">args should be parsed from i'th position</param>
-        </member>
-        <!-- Badly formed XML comment ignored for member "M:syncProj.ExecCmd(System.String,System.String@)" -->
-        <member name="M:syncProj.Main(System.String[])">
-            <summary>
-            Entry point
-            </summary>
-        </member>
         <member name="T:Solution">
             <summary>
             .sln loaded into class.
@@ -2695,6 +2687,16 @@
             <param name="_baseDir">Full base directory path (absolute)</param>
             <returns>Relative path to file in respect of baseDir</returns>
         </member>
+        <member name="T:syncProj">
+            <summary>
+            syncProj tool.
+            </summary>
+        </member>
+        <member name="M:syncProj.Main(System.String[])">
+            <summary>
+            Entry point
+            </summary>
+        </member>
         <member name="T:MakeLogToSolutionBuilder">
             <summary>
             This is rather experimental class, which tries to reverse engineere make log file and construct solution / project 
@@ -2702,5 +2704,6 @@
             of 3-rd party executables, etc etc. This class is not main purpose of syncProj, that's why I'm excluding it from code coverage.
             </summary>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:syncProjUnitTestInfo.ExecCmd(System.String,System.String@)" -->
     </members>
 </doc>

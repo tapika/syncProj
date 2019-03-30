@@ -69,14 +69,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CsScript.cs" />
+    <Compile Include="GoogleTestBootstrap.cs" />
     <Compile Include="HelperFunctions.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="ProjectTypes.cs" />
     <Compile Include="ReflectionEx.cs" />
-    <Compile Include="SelfTest.cs" />
     <Compile Include="Solution.cs" />
     <Compile Include="SolutionProjectBuilder.cs" />
     <Compile Include="syncProj.cs" />
+    <Compile Include="syncProjUnitTesting.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
