@@ -244,7 +244,12 @@ public enum IncludeType
     /// <summary>
     /// .java - source codes to compile
     /// </summary>
-    JavaCompile
+    JavaCompile,
+
+    /// <summary>
+    /// Native Visualization file.
+    /// </summary>
+    Natvis
 }
 
 /// <summary>
@@ -571,6 +576,10 @@ public class FileConfigurationInfo
     /// </summary>
     public ECppLanguageStandard CppLanguageStandard = ECppLanguageStandard.ProjectDefault;
 
+    /// <summary>
+    /// Threat warning as error.
+    /// </summary>
+    public bool TreatWarningAsError = false;
 }
 
 
@@ -1562,7 +1571,12 @@ public enum EKeyword
     /// <summary>
     /// Typically set for Android packaging project. (does not exists on file format level)
     /// </summary>
-    GradlePackage
+    GradlePackage,
+
+    /// <summary>
+    /// Linux project
+    /// </summary>
+    Linux
 }
 
 /// <summary>

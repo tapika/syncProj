@@ -138,7 +138,12 @@ public class Project
     public void setToolsVersion(String ver)
     {
         ToolsVersion = ver;
-        double dVer = Double.Parse(ver, CultureInfo.InvariantCulture);
+        double dVer;
+        if (!Double.TryParse(ver, NumberStyles.Any, CultureInfo.InvariantCulture, out dVer))
+        {
+            fileFormatVersion = 2022;
+            return;
+        }
 
         if (dVer <= 4.0)
             fileFormatVersion = 2010;
